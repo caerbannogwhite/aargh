@@ -1,0 +1,385 @@
+nodename,batch,timestamp,task,data,in_rows,question,out_rows,out_cols,solution,version,git,fun,run,time_sec,mem_gb,cache,chk,chk_time_sec,comment,on_disk
+PCMACS,NA,1693776039,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,1,0,NA,TRUE,30027,0.09,NA,FALSE
+PCMACS,NA,1693776039,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,2,0,NA,TRUE,30027,0,NA,FALSE
+PCMACS,NA,1693776039,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 by id1:id2,6272,3,dplyr,1.1.2,,group_by,1,0.06,NA,TRUE,30027,0,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 by id1:id2,6272,3,dplyr,1.1.2,,group_by,2,0.03,NA,TRUE,30027,0,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 mean v3 by id3,100,3,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,30027;4999.383,0.02,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1 mean v3 by id3,100,3,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,30027;4999.383,0.02,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,1,0.05,NA,TRUE,300.146;803.8207;5008.908,0,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,2,0,NA,TRUE,300.146;803.8207;5008.908,0.01,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1:v3 by id6,100,4,dplyr,1.1.2,,group_by,1,0,NA,TRUE,30027;80396;500378.2,0,NA,FALSE
+PCMACS,NA,1693776040,groupby,G1_1e4_1e2_0_0.csv,10000,sum v1:v3 by id6,100,4,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,30027;80396;500378.2,0,NA,FALSE
+PCMACS,NA,1693776041,groupby,G1_1e4_1e2_0_0.csv,10000,median v3 sd v3 by id4 id5,6372,4,dplyr,1.1.2,,group_by,1,0.21,NA,TRUE,319418.8;NA,0,NA,FALSE
+PCMACS,NA,1693776041,groupby,G1_1e4_1e2_0_0.csv,10000,median v3 sd v3 by id4 id5,6372,4,dplyr,1.1.2,,group_by,2,0.2,NA,TRUE,319418.8;NA,0,NA,FALSE
+PCMACS,NA,1693776041,groupby,G1_1e4_1e2_0_0.csv,10000,max v1 - min v2 by id3,100,2,dplyr,1.1.2,,group_by,1,0.01,NA,TRUE,399,0,NA,FALSE
+PCMACS,NA,1693776041,groupby,G1_1e4_1e2_0_0.csv,10000,max v1 - min v2 by id3,100,2,dplyr,1.1.2,,group_by,2,0,NA,TRUE,399,0,NA,FALSE
+PCMACS,NA,1693776041,groupby,G1_1e4_1e2_0_0.csv,10000,sum v3 count by id1:id6,10000,8,dplyr,1.1.2,,group_by,1,0.08,NA,TRUE,500378.2;10000,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_0_0.csv,10000,sum v3 count by id1:id6,10000,8,dplyr,1.1.2,,group_by,2,0.08,NA,TRUE,500378.2;10000,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,1,0.01,NA,TRUE,27044,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,2,0.01,NA,TRUE,27044,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 by id1:id2,5276,3,dplyr,1.1.2,,group_by,1,0.03,NA,TRUE,27044,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 by id1:id2,5276,3,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,27044,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 mean v3 by id3,91,3,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,27044;4546.897,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1 mean v3 by id3,91,3,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,27044;4546.897,0,NA,FALSE
+PCMACS,NA,1693776042,groupby,G1_1e4_1e2_10_0.csv,10000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,1,0,NA,TRUE,272.5269;730.1485;4555.48,0,NA,FALSE
+PCMACS,NA,1693776043,groupby,G1_1e4_1e2_10_0.csv,10000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,2,0.01,NA,TRUE,272.5269;730.1485;4555.48,0,NA,FALSE
+PCMACS,NA,1693776043,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1:v3 by id6,91,4,dplyr,1.1.2,,group_by,1,0,NA,TRUE,27044;72373;449477.7,0,NA,FALSE
+PCMACS,NA,1693776043,groupby,G1_1e4_1e2_10_0.csv,10000,sum v1:v3 by id6,91,4,dplyr,1.1.2,,group_by,2,0,NA,TRUE,27044;72373;449477.7,0,NA,FALSE
+PCMACS,NA,1693776043,groupby,G1_1e4_1e2_10_0.csv,10000,median v3 sd v3 by id4 id5,5347,4,dplyr,1.1.2,,group_by,1,0.18,NA,TRUE,NA;NA,0,NA,FALSE
+PCMACS,NA,1693776043,groupby,G1_1e4_1e2_10_0.csv,10000,median v3 sd v3 by id4 id5,5347,4,dplyr,1.1.2,,group_by,2,0.19,NA,TRUE,NA;NA,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e4_1e2_10_0.csv,10000,max v1 - min v2 by id3,91,2,dplyr,1.1.2,,group_by,1,0,NA,TRUE,363,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e4_1e2_10_0.csv,10000,max v1 - min v2 by id3,91,2,dplyr,1.1.2,,group_by,2,0,NA,TRUE,363,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e4_1e2_10_0.csv,10000,sum v3 count by id1:id6,10000,8,dplyr,1.1.2,,group_by,1,0.08,NA,TRUE,449477.7;10000,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e4_1e2_10_0.csv,10000,sum v3 count by id1:id6,10000,8,dplyr,1.1.2,,group_by,2,0.08,NA,TRUE,449477.7;10000,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,300292,0,NA,FALSE
+PCMACS,NA,1693776044,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,300292,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 by id1:id2,9999,3,dplyr,1.1.2,,group_by,1,0.05,NA,TRUE,300292,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 by id1:id2,9999,3,dplyr,1.1.2,,group_by,2,0.03,NA,TRUE,300292,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 mean v3 by id3,1000,3,dplyr,1.1.2,,group_by,1,0,NA,TRUE,300292;50095.23,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1 mean v3 by id3,1000,3,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,300292;50095.23,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,300.3;800.8632;5009.038,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,2,0,NA,TRUE,300.3;800.8632;5009.038,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1:v3 by id6,1000,4,dplyr,1.1.2,,group_by,1,0.01,NA,TRUE,300292;800809;5009219,0,NA,FALSE
+PCMACS,NA,1693776045,groupby,G1_1e5_1e2_0_0.csv,100000,sum v1:v3 by id6,1000,4,dplyr,1.1.2,,group_by,2,0.01,NA,TRUE,300292;800809;5009219,0,NA,FALSE
+PCMACS,NA,1693776046,groupby,G1_1e5_1e2_0_0.csv,100000,median v3 sd v3 by id4 id5,9999,4,dplyr,1.1.2,,group_by,1,0.32,NA,TRUE,500133.2;NA,0,NA,FALSE
+PCMACS,NA,1693776046,groupby,G1_1e5_1e2_0_0.csv,100000,median v3 sd v3 by id4 id5,9999,4,dplyr,1.1.2,,group_by,2,0.33,NA,TRUE,500133.2;NA,0,NA,FALSE
+PCMACS,NA,1693776047,groupby,G1_1e5_1e2_0_0.csv,100000,max v1 - min v2 by id3,1000,2,dplyr,1.1.2,,group_by,1,0,NA,TRUE,4000,0,NA,FALSE
+PCMACS,NA,1693776047,groupby,G1_1e5_1e2_0_0.csv,100000,max v1 - min v2 by id3,1000,2,dplyr,1.1.2,,group_by,2,0,NA,TRUE,4000,0,NA,FALSE
+PCMACS,NA,1693776047,groupby,G1_1e5_1e2_0_0.csv,100000,sum v3 count by id1:id6,100000,8,dplyr,1.1.2,,group_by,1,0.69,NA,TRUE,5009219;100000,0,NA,FALSE
+PCMACS,NA,1693776048,groupby,G1_1e5_1e2_0_0.csv,100000,sum v3 count by id1:id6,100000,8,dplyr,1.1.2,,group_by,2,0.66,NA,TRUE,5009219;100000,0,NA,FALSE
+PCMACS,NA,1693776048,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,1,0,NA,TRUE,270421,0,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,2,0,NA,TRUE,270421,0,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 by id1:id2,8280,3,dplyr,1.1.2,,group_by,1,0.05,NA,TRUE,270421,0,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 by id1:id2,8280,3,dplyr,1.1.2,,group_by,2,0.03,NA,TRUE,270421,0,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 mean v3 by id3,901,3,dplyr,1.1.2,,group_by,1,0.01,NA,TRUE,270421;45102.88,0,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1 mean v3 by id3,901,3,dplyr,1.1.2,,group_by,2,0,NA,TRUE,270421;45102.88,0.01,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,1,0,NA,TRUE,273.5528;728.9052;4557.974,0.02,NA,FALSE
+PCMACS,NA,1693776049,groupby,G1_1e5_1e2_10_0.csv,100000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,273.5528;728.9052;4557.974,0,NA,FALSE
+PCMACS,NA,1693776050,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1:v3 by id6,901,4,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,270421;720829;4508010,0,NA,FALSE
+PCMACS,NA,1693776050,groupby,G1_1e5_1e2_10_0.csv,100000,sum v1:v3 by id6,901,4,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,270421;720829;4508010,0,NA,FALSE
+PCMACS,NA,1693776050,groupby,G1_1e5_1e2_10_0.csv,100000,median v3 sd v3 by id4 id5,8280,4,dplyr,1.1.2,,group_by,1,0.28,NA,TRUE,NA;NA,0,NA,FALSE
+PCMACS,NA,1693776050,groupby,G1_1e5_1e2_10_0.csv,100000,median v3 sd v3 by id4 id5,8280,4,dplyr,1.1.2,,group_by,2,0.26,NA,TRUE,NA;NA,0,NA,FALSE
+PCMACS,NA,1693776051,groupby,G1_1e5_1e2_10_0.csv,100000,max v1 - min v2 by id3,901,2,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,3604,0,NA,FALSE
+PCMACS,NA,1693776051,groupby,G1_1e5_1e2_10_0.csv,100000,max v1 - min v2 by id3,901,2,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,3604,0,NA,FALSE
+PCMACS,NA,1693776051,groupby,G1_1e5_1e2_10_0.csv,100000,sum v3 count by id1:id6,100000,8,dplyr,1.1.2,,group_by,1,0.63,NA,TRUE,4508010;100000,0.02,NA,FALSE
+PCMACS,NA,1693776052,groupby,G1_1e5_1e2_10_0.csv,100000,sum v3 count by id1:id6,100000,8,dplyr,1.1.2,,group_by,2,0.64,NA,TRUE,4508010;100000,0,NA,FALSE
+PCMACS,NA,1693776053,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,3000297,0.01,NA,FALSE
+PCMACS,NA,1693776053,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,3000297,0,NA,FALSE
+PCMACS,NA,1693776053,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 by id1:id2,10000,3,dplyr,1.1.2,,group_by,1,0.07,NA,TRUE,3000297,0,NA,FALSE
+PCMACS,NA,1693776053,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 by id1:id2,10000,3,dplyr,1.1.2,,group_by,2,0.05,NA,TRUE,3000297,0,NA,FALSE
+PCMACS,NA,1693776053,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 mean v3 by id3,10000,3,dplyr,1.1.2,,group_by,1,0.12,NA,TRUE,3000297;500393.5,0,NA,FALSE
+PCMACS,NA,1693776054,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1 mean v3 by id3,10000,3,dplyr,1.1.2,,group_by,2,0.12,NA,TRUE,3000297;500393.5,0,NA,FALSE
+PCMACS,NA,1693776054,groupby,G1_1e6_1e2_0_0.csv,1000000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,1,0.07,NA,TRUE,300.03;799.8114;5003.666,0,NA,FALSE
+PCMACS,NA,1693776054,groupby,G1_1e6_1e2_0_0.csv,1000000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,2,0.06,NA,TRUE,300.03;799.8114;5003.666,0,NA,FALSE
+PCMACS,NA,1693776054,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1:v3 by id6,10000,4,dplyr,1.1.2,,group_by,1,0.08,NA,TRUE,3000297;7998131;50037099,0,NA,FALSE
+PCMACS,NA,1693776054,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v1:v3 by id6,10000,4,dplyr,1.1.2,,group_by,2,0.08,NA,TRUE,3000297;7998131;50037099,0,NA,FALSE
+PCMACS,NA,1693776055,groupby,G1_1e6_1e2_0_0.csv,1000000,median v3 sd v3 by id4 id5,10000,4,dplyr,1.1.2,,group_by,1,0.39,NA,TRUE,500419.4;288429.9,0,NA,FALSE
+PCMACS,NA,1693776055,groupby,G1_1e6_1e2_0_0.csv,1000000,median v3 sd v3 by id4 id5,10000,4,dplyr,1.1.2,,group_by,2,0.39,NA,TRUE,500419.4;288429.9,0,NA,FALSE
+PCMACS,NA,1693776056,groupby,G1_1e6_1e2_0_0.csv,1000000,max v1 - min v2 by id3,10000,2,dplyr,1.1.2,,group_by,1,0.03,NA,TRUE,39992,0,NA,FALSE
+PCMACS,NA,1693776056,groupby,G1_1e6_1e2_0_0.csv,1000000,max v1 - min v2 by id3,10000,2,dplyr,1.1.2,,group_by,2,0.04,NA,TRUE,39992,0,NA,FALSE
+PCMACS,NA,1693776064,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v3 count by id1:id6,1000000,8,dplyr,1.1.2,,group_by,1,7.61,NA,TRUE,50037099;1000000,0,NA,FALSE
+PCMACS,NA,1693776071,groupby,G1_1e6_1e2_0_0.csv,1000000,sum v3 count by id1:id6,1000000,8,dplyr,1.1.2,,group_by,2,7.2,NA,TRUE,50037099;1000000,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,1,0.02,NA,TRUE,2700684,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,2,0.02,NA,TRUE,2700684,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 by id1:id2,8281,3,dplyr,1.1.2,,group_by,1,0.04,NA,TRUE,2700684,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 by id1:id2,8281,3,dplyr,1.1.2,,group_by,2,0.05,NA,TRUE,2700684,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 mean v3 by id3,9001,3,dplyr,1.1.2,,group_by,1,0.09,NA,TRUE,2700684;450406,0,NA,FALSE
+PCMACS,NA,1693776072,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1 mean v3 by id3,9001,3,dplyr,1.1.2,,group_by,2,0.09,NA,TRUE,2700684;450406,0,NA,FALSE
+PCMACS,NA,1693776073,groupby,G1_1e6_1e2_10_0.csv,1000000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,1,0.05,NA,TRUE,273.0936;727.7933;4554.073,0,NA,FALSE
+PCMACS,NA,1693776073,groupby,G1_1e6_1e2_10_0.csv,1000000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,2,0.06,NA,TRUE,273.0936;727.7933;4554.073,0,NA,FALSE
+PCMACS,NA,1693776073,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1:v3 by id6,9001,4,dplyr,1.1.2,,group_by,1,0.08,NA,TRUE,2700684;7198551;45036571,0,NA,FALSE
+PCMACS,NA,1693776073,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v1:v3 by id6,9001,4,dplyr,1.1.2,,group_by,2,0.08,NA,TRUE,2700684;7198551;45036571,0,NA,FALSE
+PCMACS,NA,1693776074,groupby,G1_1e6_1e2_10_0.csv,1000000,median v3 sd v3 by id4 id5,8281,4,dplyr,1.1.2,,group_by,1,0.33,NA,TRUE,414357.1;238737.8,0,NA,FALSE
+PCMACS,NA,1693776074,groupby,G1_1e6_1e2_10_0.csv,1000000,median v3 sd v3 by id4 id5,8281,4,dplyr,1.1.2,,group_by,2,0.32,NA,TRUE,414357.1;238737.8,0,NA,FALSE
+PCMACS,NA,1693776074,groupby,G1_1e6_1e2_10_0.csv,1000000,max v1 - min v2 by id3,9001,2,dplyr,1.1.2,,group_by,1,0.05,NA,TRUE,35981,0,NA,FALSE
+PCMACS,NA,1693776074,groupby,G1_1e6_1e2_10_0.csv,1000000,max v1 - min v2 by id3,9001,2,dplyr,1.1.2,,group_by,2,0.05,NA,TRUE,35981,0,NA,FALSE
+PCMACS,NA,1693776082,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v3 count by id1:id6,999997,8,dplyr,1.1.2,,group_by,1,7.67,NA,TRUE,45036571;1000000,0,NA,FALSE
+PCMACS,NA,1693776090,groupby,G1_1e6_1e2_10_0.csv,1000000,sum v3 count by id1:id6,999997,8,dplyr,1.1.2,,group_by,2,7.27,NA,TRUE,45036571;1000000,0,NA,FALSE
+PCMACS,NA,1693776093,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,1,0.11,NA,TRUE,29998789,0,NA,FALSE
+PCMACS,NA,1693776094,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 by id1,100,2,dplyr,1.1.2,,group_by,2,0.11,NA,TRUE,29998789,0,NA,FALSE
+PCMACS,NA,1693776094,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 by id1:id2,10000,3,dplyr,1.1.2,,group_by,1,0.2,NA,TRUE,29998789,0,NA,FALSE
+PCMACS,NA,1693776094,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 by id1:id2,10000,3,dplyr,1.1.2,,group_by,2,0.21,NA,TRUE,29998789,0,NA,FALSE
+PCMACS,NA,1693776096,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 mean v3 by id3,100000,3,dplyr,1.1.2,,group_by,1,1.32,NA,TRUE,29998789;4999720,0,NA,FALSE
+PCMACS,NA,1693776097,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1 mean v3 by id3,100000,3,dplyr,1.1.2,,group_by,2,1.38,NA,TRUE,29998789;4999720,0,NA,FALSE
+PCMACS,NA,1693776098,groupby,G1_1e7_1e2_0_0.csv,10000000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,1,0.54,NA,TRUE,299.988;799.8942;4999.767,0,NA,FALSE
+PCMACS,NA,1693776099,groupby,G1_1e7_1e2_0_0.csv,10000000,mean v1:v3 by id4,100,4,dplyr,1.1.2,,group_by,2,0.55,NA,TRUE,299.988;799.8942;4999.767,0,NA,FALSE
+PCMACS,NA,1693776100,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1:v3 by id6,100000,4,dplyr,1.1.2,,group_by,1,1.02,NA,TRUE,29998789;79989360;499976651,0,NA,FALSE
+PCMACS,NA,1693776101,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v1:v3 by id6,100000,4,dplyr,1.1.2,,group_by,2,1.06,NA,TRUE,29998789;79989360;499976651,0,NA,FALSE
+PCMACS,NA,1693776102,groupby,G1_1e7_1e2_0_0.csv,10000000,median v3 sd v3 by id4 id5,10000,4,dplyr,1.1.2,,group_by,1,0.81,NA,TRUE,499920.1;288648.1,0,NA,FALSE
+PCMACS,NA,1693776103,groupby,G1_1e7_1e2_0_0.csv,10000000,median v3 sd v3 by id4 id5,10000,4,dplyr,1.1.2,,group_by,2,0.83,NA,TRUE,499920.1;288648.1,0,NA,FALSE
+PCMACS,NA,1693776104,groupby,G1_1e7_1e2_0_0.csv,10000000,max v1 - min v2 by id3,100000,2,dplyr,1.1.2,,group_by,1,0.6,NA,TRUE,399882,0,NA,FALSE
+PCMACS,NA,1693776105,groupby,G1_1e7_1e2_0_0.csv,10000000,max v1 - min v2 by id3,100000,2,dplyr,1.1.2,,group_by,2,0.62,NA,TRUE,399882,0,NA,FALSE
+PCMACS,NA,1693776184,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v3 count by id1:id6,10000000,8,dplyr,1.1.2,,group_by,1,78.35,NA,TRUE,499976651;10000000,0.04,NA,FALSE
+PCMACS,NA,1693776267,groupby,G1_1e7_1e2_0_0.csv,10000000,sum v3 count by id1:id6,10000000,8,dplyr,1.1.2,,group_by,2,80.46,NA,TRUE,499976651;10000000,0.03,NA,FALSE
+PCMACS,NA,1693776271,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,1,0.11,NA,TRUE,26998588,0,NA,FALSE
+PCMACS,NA,1693776271,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 by id1,91,2,dplyr,1.1.2,,group_by,2,0.13,NA,TRUE,26998588,0,NA,FALSE
+PCMACS,NA,1693776272,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 by id1:id2,8281,3,dplyr,1.1.2,,group_by,1,0.23,NA,TRUE,26998588,0,NA,FALSE
+PCMACS,NA,1693776272,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 by id1:id2,8281,3,dplyr,1.1.2,,group_by,2,0.21,NA,TRUE,26998588,0,NA,FALSE
+PCMACS,NA,1693776273,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 mean v3 by id3,90001,3,dplyr,1.1.2,,group_by,1,1.11,NA,TRUE,26998588;4498638,0,NA,FALSE
+PCMACS,NA,1693776275,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1 mean v3 by id3,90001,3,dplyr,1.1.2,,group_by,2,1.08,NA,TRUE,26998588;4498638,0.01,NA,FALSE
+PCMACS,NA,1693776275,groupby,G1_1e7_1e2_10_0.csv,10000000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,1,0.47,NA,TRUE,272.9736;727.9377;4549.184,0,NA,FALSE
+PCMACS,NA,1693776276,groupby,G1_1e7_1e2_10_0.csv,10000000,mean v1:v3 by id4,91,4,dplyr,1.1.2,,group_by,2,0.49,NA,TRUE,272.9736;727.9377;4549.184,0,NA,FALSE
+PCMACS,NA,1693776277,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1:v3 by id6,90001,4,dplyr,1.1.2,,group_by,1,0.93,NA,TRUE,26998588;71993788;449932870,0,NA,FALSE
+PCMACS,NA,1693776278,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v1:v3 by id6,90001,4,dplyr,1.1.2,,group_by,2,0.93,NA,TRUE,26998588;71993788;449932870,0.02,NA,FALSE
+PCMACS,NA,1693776279,groupby,G1_1e7_1e2_10_0.csv,10000000,median v3 sd v3 by id4 id5,8281,4,dplyr,1.1.2,,group_by,1,0.72,NA,TRUE,413825.5;239012.5,0,NA,FALSE
+PCMACS,NA,1693776280,groupby,G1_1e7_1e2_10_0.csv,10000000,median v3 sd v3 by id4 id5,8281,4,dplyr,1.1.2,,group_by,2,0.7,NA,TRUE,413825.5;239012.5,0,NA,FALSE
+PCMACS,NA,1693776281,groupby,G1_1e7_1e2_10_0.csv,10000000,max v1 - min v2 by id3,90001,2,dplyr,1.1.2,,group_by,1,0.5,NA,TRUE,359814,0,NA,FALSE
+PCMACS,NA,1693776281,groupby,G1_1e7_1e2_10_0.csv,10000000,max v1 - min v2 by id3,90001,2,dplyr,1.1.2,,group_by,2,0.5,NA,TRUE,359814,0,NA,FALSE
+PCMACS,NA,1693776358,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v3 count by id1:id6,9999458,8,dplyr,1.1.2,,group_by,1,76,NA,TRUE,449932870;10000000,0.03,NA,FALSE
+PCMACS,NA,1693776435,groupby,G1_1e7_1e2_10_0.csv,10000000,sum v3 count by id1:id6,9999458,8,dplyr,1.1.2,,group_by,2,75.64,NA,TRUE,449932870;10000000,0.03,NA,FALSE
+pcmacs,,1693776773.9221876,groupby,G1_1e4_1e2_0_0,10000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,1,0.004762,0.059,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776773.9221876,groupby,G1_1e4_1e2_0_0,10000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,2,0.001517,0.06,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776773.9477692,groupby,G1_1e4_1e2_0_0,10000,sum v1 by id1:id2,6272,3,pandas,2.1.0,,.groupby,1,0.003587,0.06,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776773.9492753,groupby,G1_1e4_1e2_0_0,10000,sum v1 by id1:id2,6272,3,pandas,2.1.0,,.groupby,2,0.003039,0.06,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776773.9653792,groupby,G1_1e4_1e2_0_0,10000,sum v1 mean v3 by id3,100,3,pandas,2.1.0,,.groupby,1,0.001861,0.06,TRUE,30027;4999.383,0.0,,FALSE
+pcmacs,,1693776773.9810221,groupby,G1_1e4_1e2_0_0,10000,sum v1 mean v3 by id3,100,3,pandas,2.1.0,,.groupby,2,0.002384,0.06,TRUE,30027;4999.383,0.0,,FALSE
+pcmacs,,1693776773.989124,groupby,G1_1e4_1e2_0_0,10000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,1,0.001582,0.06,TRUE,300.146;803.821;5008.908,0.0,,FALSE
+pcmacs,,1693776773.9987838,groupby,G1_1e4_1e2_0_0,10000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,2,0.001896,0.06,TRUE,300.146;803.821;5008.908,0.0,,FALSE
+pcmacs,,1693776774.019679,groupby,G1_1e4_1e2_0_0,10000,sum v1:v3 by id6,100,4,pandas,2.1.0,,.groupby,1,0.001913,0.06,TRUE,30027;80396;500378.167,0.0,,FALSE
+pcmacs,,1693776774.02915,groupby,G1_1e4_1e2_0_0,10000,sum v1:v3 by id6,100,4,pandas,2.1.0,,.groupby,2,0.001233,0.06,TRUE,30027;80396;500378.167,0.0,,FALSE
+pcmacs,,1693776774.045226,groupby,G1_1e4_1e2_0_0,10000,median v3 sd v3 by id4 id5,6372,4,pandas,2.1.0,,.groupby,1,0.003603,0.06,TRUE,319418.835;65338.945,0.001,,FALSE
+pcmacs,,1693776774.0624995,groupby,G1_1e4_1e2_0_0,10000,median v3 sd v3 by id4 id5,6372,4,pandas,2.1.0,,.groupby,2,0.002876,0.06,TRUE,319418.835;65338.945,0.001,,FALSE
+pcmacs,,1693776774.0783813,groupby,G1_1e4_1e2_0_0,10000,max v1 - min v2 by id3,100,2,pandas,2.1.0,,.groupby,1,0.002435,0.06,TRUE,399,0.0,,FALSE
+pcmacs,,1693776774.0929074,groupby,G1_1e4_1e2_0_0,10000,max v1 - min v2 by id3,100,2,pandas,2.1.0,,.groupby,2,0.002291,0.06,TRUE,399,0.0,,FALSE
+pcmacs,,1693776774.1112235,groupby,G1_1e4_1e2_0_0,10000,sum v3 count by id1:id6,10000,8,pandas,2.1.0,,.groupby,1,0.005748,0.061,TRUE,500378.167;10000,0.0,,FALSE
+pcmacs,,1693776774.12475,groupby,G1_1e4_1e2_0_0,10000,sum v3 count by id1:id6,10000,8,pandas,2.1.0,,.groupby,2,0.006359,0.06,TRUE,500378.167;10000,0.0,,FALSE
+pcmacs,,1693776774.2042718,groupby,G1_1e5_1e2_0_0,100000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,1,0.005708,0.066,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776774.2199323,groupby,G1_1e5_1e2_0_0,100000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,2,0.005667,0.066,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776774.2520545,groupby,G1_1e5_1e2_0_0,100000,sum v1 by id1:id2,9999,3,pandas,2.1.0,,.groupby,1,0.013111,0.067,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776774.2677145,groupby,G1_1e5_1e2_0_0,100000,sum v1 by id1:id2,9999,3,pandas,2.1.0,,.groupby,2,0.012484,0.066,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776774.299334,groupby,G1_1e5_1e2_0_0,100000,sum v1 mean v3 by id3,1000,3,pandas,2.1.0,,.groupby,1,0.007202,0.066,TRUE,300292;50095.228,0.0,,FALSE
+pcmacs,,1693776774.3149824,groupby,G1_1e5_1e2_0_0,100000,sum v1 mean v3 by id3,1000,3,pandas,2.1.0,,.groupby,2,0.007663,0.066,TRUE,300292;50095.228,0.0,,FALSE
+pcmacs,,1693776774.3313682,groupby,G1_1e5_1e2_0_0,100000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,1,0.003881,0.068,TRUE,300.3;800.863;5009.038,0.0,,FALSE
+pcmacs,,1693776774.347392,groupby,G1_1e5_1e2_0_0,100000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,2,0.003189,0.068,TRUE,300.3;800.863;5009.038,0.0,,FALSE
+pcmacs,,1693776774.3650088,groupby,G1_1e5_1e2_0_0,100000,sum v1:v3 by id6,1000,4,pandas,2.1.0,,.groupby,1,0.003126,0.068,TRUE,300292;800809;5009219.287,0.0,,FALSE
+pcmacs,,1693776774.370261,groupby,G1_1e5_1e2_0_0,100000,sum v1:v3 by id6,1000,4,pandas,2.1.0,,.groupby,2,0.003097,0.068,TRUE,300292;800809;5009219.287,0.0,,FALSE
+pcmacs,,1693776774.395137,groupby,G1_1e5_1e2_0_0,100000,median v3 sd v3 by id4 id5,9999,4,pandas,2.1.0,,.groupby,1,0.008423,0.066,TRUE,500133.239;283471.551,0.001,,FALSE
+pcmacs,,1693776774.4132469,groupby,G1_1e5_1e2_0_0,100000,median v3 sd v3 by id4 id5,9999,4,pandas,2.1.0,,.groupby,2,0.009837,0.066,TRUE,500133.239;283471.551,0.001,,FALSE
+pcmacs,,1693776774.4473531,groupby,G1_1e5_1e2_0_0,100000,max v1 - min v2 by id3,1000,2,pandas,2.1.0,,.groupby,1,0.007808,0.066,TRUE,4000,0.0,,FALSE
+pcmacs,,1693776774.4636137,groupby,G1_1e5_1e2_0_0,100000,max v1 - min v2 by id3,1000,2,pandas,2.1.0,,.groupby,2,0.007772,0.066,TRUE,4000,0.0,,FALSE
+pcmacs,,1693776774.5245154,groupby,G1_1e5_1e2_0_0,100000,sum v3 count by id1:id6,100000,8,pandas,2.1.0,,.groupby,1,0.048958,0.073,TRUE,5009219.287;100000,0.0,,FALSE
+pcmacs,,1693776774.5718744,groupby,G1_1e5_1e2_0_0,100000,sum v3 count by id1:id6,100000,8,pandas,2.1.0,,.groupby,2,0.039406,0.073,TRUE,5009219.287;100000,0.0,,FALSE
+pcmacs,,1693776775.0888195,groupby,G1_1e6_1e2_0_0,1000000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,1,0.044227,0.137,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776775.146926,groupby,G1_1e6_1e2_0_0,1000000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,2,0.044343,0.137,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776775.262423,groupby,G1_1e6_1e2_0_0,1000000,sum v1 by id1:id2,10000,3,pandas,2.1.0,,.groupby,1,0.106752,0.139,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776775.3732324,groupby,G1_1e6_1e2_0_0,1000000,sum v1 by id1:id2,10000,3,pandas,2.1.0,,.groupby,2,0.106505,0.138,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776775.4677672,groupby,G1_1e6_1e2_0_0,1000000,sum v1 mean v3 by id3,10000,3,pandas,2.1.0,,.groupby,1,0.078216,0.138,TRUE,3000297;500393.462,0.0,,FALSE
+pcmacs,,1693776775.563359,groupby,G1_1e6_1e2_0_0,1000000,sum v1 mean v3 by id3,10000,3,pandas,2.1.0,,.groupby,2,0.082526,0.138,TRUE,3000297;500393.462,0.0,,FALSE
+pcmacs,,1693776775.5970328,groupby,G1_1e6_1e2_0_0,1000000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,1,0.019923,0.138,TRUE,300.03;799.811;5003.666,0.0,,FALSE
+pcmacs,,1693776775.6264553,groupby,G1_1e6_1e2_0_0,1000000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,2,0.019533,0.138,TRUE,300.03;799.811;5003.666,0.0,,FALSE
+pcmacs,,1693776775.676685,groupby,G1_1e6_1e2_0_0,1000000,sum v1:v3 by id6,10000,4,pandas,2.1.0,,.groupby,1,0.031557,0.138,TRUE,3000297;7998131;50037098.685,0.0,,FALSE
+pcmacs,,1693776775.7216191,groupby,G1_1e6_1e2_0_0,1000000,sum v1:v3 by id6,10000,4,pandas,2.1.0,,.groupby,2,0.031379,0.138,TRUE,3000297;7998131;50037098.685,0.0,,FALSE
+pcmacs,,1693776775.8033168,groupby,G1_1e6_1e2_0_0,1000000,median v3 sd v3 by id4 id5,10000,4,pandas,2.1.0,,.groupby,1,0.064629,0.139,TRUE,500419.393;288429.897,0.001,,FALSE
+pcmacs,,1693776775.882073,groupby,G1_1e6_1e2_0_0,1000000,median v3 sd v3 by id4 id5,10000,4,pandas,2.1.0,,.groupby,2,0.061428,0.138,TRUE,500419.393;288429.897,0.001,,FALSE
+pcmacs,,1693776775.9585993,groupby,G1_1e6_1e2_0_0,1000000,max v1 - min v2 by id3,10000,2,pandas,2.1.0,,.groupby,1,0.07639,0.138,TRUE,39992,0.0,,FALSE
+pcmacs,,1693776776.0526736,groupby,G1_1e6_1e2_0_0,1000000,max v1 - min v2 by id3,10000,2,pandas,2.1.0,,.groupby,2,0.077669,0.138,TRUE,39992,0.0,,FALSE
+pcmacs,,1693776776.4813685,groupby,G1_1e6_1e2_0_0,1000000,sum v3 count by id1:id6,1000000,8,pandas,2.1.0,,.groupby,1,0.405116,0.196,TRUE,50037098.685;1000000,0.002,,FALSE
+pcmacs,,1693776776.915924,groupby,G1_1e6_1e2_0_0,1000000,sum v3 count by id1:id6,1000000,8,pandas,2.1.0,,.groupby,2,0.420784,0.196,TRUE,50037098.685;1000000,0.002,,FALSE
+pcmacs,,1693776782.425058,groupby,G1_1e7_1e2_0_0,10000000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,1,0.43556,1.182,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776782.8782904,groupby,G1_1e7_1e2_0_0,10000000,sum v1 by id1,100,2,pandas,2.1.0,,.groupby,2,0.438523,1.182,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776783.894325,groupby,G1_1e7_1e2_0_0,10000000,sum v1 by id1:id2,10000,3,pandas,2.1.0,,.groupby,1,1.005885,1.182,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776784.879869,groupby,G1_1e7_1e2_0_0,10000000,sum v1 by id1:id2,10000,3,pandas,2.1.0,,.groupby,2,0.971819,1.182,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776785.9109874,groupby,G1_1e7_1e2_0_0,10000000,sum v1 mean v3 by id3,100000,3,pandas,2.1.0,,.groupby,1,1.020578,1.185,TRUE,29998789;4999719.622,0.0,,FALSE
+pcmacs,,1693776786.92703,groupby,G1_1e7_1e2_0_0,10000000,sum v1 mean v3 by id3,100000,3,pandas,2.1.0,,.groupby,2,1.006801,1.185,TRUE,29998789;4999719.622,0.0,,FALSE
+pcmacs,,1693776787.116076,groupby,G1_1e7_1e2_0_0,10000000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,1,0.178427,1.183,TRUE,299.988;799.894;4999.767,0.0,,FALSE
+pcmacs,,1693776787.3031716,groupby,G1_1e7_1e2_0_0,10000000,mean v1:v3 by id4,100,4,pandas,2.1.0,,.groupby,2,0.177024,1.183,TRUE,299.988;799.894;4999.767,0.0,,FALSE
+pcmacs,,1693776787.632075,groupby,G1_1e7_1e2_0_0,10000000,sum v1:v3 by id6,100000,4,pandas,2.1.0,,.groupby,1,0.312527,1.185,TRUE,29998789;79989360;499976651.408,0.001,,FALSE
+pcmacs,,1693776787.9602306,groupby,G1_1e7_1e2_0_0,10000000,sum v1:v3 by id6,100000,4,pandas,2.1.0,,.groupby,2,0.317011,1.185,TRUE,29998789;79989360;499976651.408,0.0,,FALSE
+pcmacs,,1693776788.5856075,groupby,G1_1e7_1e2_0_0,10000000,median v3 sd v3 by id4 id5,10000,4,pandas,2.1.0,,.groupby,1,0.601384,1.183,TRUE,499920.14;288648.108,0.001,,FALSE
+pcmacs,,1693776789.2105188,groupby,G1_1e7_1e2_0_0,10000000,median v3 sd v3 by id4 id5,10000,4,pandas,2.1.0,,.groupby,2,0.626824,1.183,TRUE,499920.14;288648.108,0.001,,FALSE
+pcmacs,,1693776790.2279308,groupby,G1_1e7_1e2_0_0,10000000,max v1 - min v2 by id3,100000,2,pandas,2.1.0,,.groupby,1,0.99389,1.183,TRUE,399882,0.0,,FALSE
+pcmacs,,1693776791.2757854,groupby,G1_1e7_1e2_0_0,10000000,max v1 - min v2 by id3,100000,2,pandas,2.1.0,,.groupby,2,1.037084,1.185,TRUE,399882,0.0,,FALSE
+pcmacs,,1693776796.3216345,groupby,G1_1e7_1e2_0_0,10000000,sum v3 count by id1:id6,10000000,8,pandas,2.1.0,,.groupby,1,5.014366,1.779,TRUE,499976651.408;10000000,0.019,,FALSE
+pcmacs,,1693776801.3734512,groupby,G1_1e7_1e2_0_0,10000000,sum v3 count by id1:id6,10000000,8,pandas,2.1.0,,.groupby,2,4.9582,1.779,TRUE,499976651.408;10000000,0.025,,FALSE
+pcmacs,,1693776801.6004558,groupby,G1_1e4_1e2_10_0,10000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,1,0.010638,0.188,TRUE,27044.0,0.0,,FALSE
+pcmacs,,1693776801.6079855,groupby,G1_1e4_1e2_10_0,10000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,2,0.002137,0.188,TRUE,27044.0,0.0,,FALSE
+pcmacs,,1693776801.6163764,groupby,G1_1e4_1e2_10_0,10000,sum v1 by id1:id2,5276,3,pandas,2.1.0,,.groupby,1,0.002527,0.188,TRUE,27044.0,0.0,,FALSE
+pcmacs,,1693776801.6238878,groupby,G1_1e4_1e2_10_0,10000,sum v1 by id1:id2,5276,3,pandas,2.1.0,,.groupby,2,0.002456,0.188,TRUE,27044.0,0.0,,FALSE
+pcmacs,,1693776801.6426013,groupby,G1_1e4_1e2_10_0,10000,sum v1 mean v3 by id3,91,3,pandas,2.1.0,,.groupby,1,0.001618,0.188,TRUE,27044.0;4546.897,0.0,,FALSE
+pcmacs,,1693776801.655613,groupby,G1_1e4_1e2_10_0,10000,sum v1 mean v3 by id3,91,3,pandas,2.1.0,,.groupby,2,0.001535,0.188,TRUE,27044.0;4546.897,0.0,,FALSE
+pcmacs,,1693776801.6739655,groupby,G1_1e4_1e2_10_0,10000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,1,0.002153,0.188,TRUE,272.527;730.148;4555.48,0.0,,FALSE
+pcmacs,,1693776801.6870003,groupby,G1_1e4_1e2_10_0,10000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,2,0.001579,0.188,TRUE,272.527;730.148;4555.48,0.0,,FALSE
+pcmacs,,1693776801.7029657,groupby,G1_1e4_1e2_10_0,10000,sum v1:v3 by id6,91,4,pandas,2.1.0,,.groupby,1,0.001443,0.188,TRUE,27044.0;72373.0;449477.652,0.0,,FALSE
+pcmacs,,1693776801.7029657,groupby,G1_1e4_1e2_10_0,10000,sum v1:v3 by id6,91,4,pandas,2.1.0,,.groupby,2,0.001396,0.188,TRUE,27044.0;72373.0;449477.652,0.0,,FALSE
+pcmacs,,1693776801.7342446,groupby,G1_1e4_1e2_10_0,10000,median v3 sd v3 by id4 id5,5347,4,pandas,2.1.0,,.groupby,1,0.002504,0.188,TRUE,253393.367;50979.493,0.001,,FALSE
+pcmacs,,1693776801.7342446,groupby,G1_1e4_1e2_10_0,10000,median v3 sd v3 by id4 id5,5347,4,pandas,2.1.0,,.groupby,2,0.002448,0.188,TRUE,253393.367;50979.493,0.001,,FALSE
+pcmacs,,1693776801.765668,groupby,G1_1e4_1e2_10_0,10000,max v1 - min v2 by id3,91,2,pandas,2.1.0,,.groupby,1,0.002108,0.188,TRUE,363.0,0.0,,FALSE
+pcmacs,,1693776801.765668,groupby,G1_1e4_1e2_10_0,10000,max v1 - min v2 by id3,91,2,pandas,2.1.0,,.groupby,2,0.001962,0.188,TRUE,363.0,0.0,,FALSE
+pcmacs,,1693776801.7971165,groupby,G1_1e4_1e2_10_0,10000,sum v3 count by id1:id6,10000,8,pandas,2.1.0,,.groupby,1,0.00493,0.187,TRUE,449477.652;10000,0.0,,FALSE
+pcmacs,,1693776801.813264,groupby,G1_1e4_1e2_10_0,10000,sum v3 count by id1:id6,10000,8,pandas,2.1.0,,.groupby,2,0.005065,0.187,TRUE,449477.652;10000,0.0,,FALSE
+pcmacs,,1693776801.891757,groupby,G1_1e5_1e2_10_0,100000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,1,0.005566,0.19,TRUE,270421.0,0.0,,FALSE
+pcmacs,,1693776801.891757,groupby,G1_1e5_1e2_10_0,100000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,2,0.005351,0.192,TRUE,270421.0,0.0,,FALSE
+pcmacs,,1693776801.9232898,groupby,G1_1e5_1e2_10_0,100000,sum v1 by id1:id2,8280,3,pandas,2.1.0,,.groupby,1,0.011828,0.191,TRUE,270421.0,0.0,,FALSE
+pcmacs,,1693776801.9389303,groupby,G1_1e5_1e2_10_0,100000,sum v1 by id1:id2,8280,3,pandas,2.1.0,,.groupby,2,0.011974,0.191,TRUE,270421.0,0.0,,FALSE
+pcmacs,,1693776801.9731858,groupby,G1_1e5_1e2_10_0,100000,sum v1 mean v3 by id3,901,3,pandas,2.1.0,,.groupby,1,0.006719,0.19,TRUE,270421.0;45102.875,0.0,,FALSE
+pcmacs,,1693776801.986721,groupby,G1_1e5_1e2_10_0,100000,sum v1 mean v3 by id3,901,3,pandas,2.1.0,,.groupby,2,0.006785,0.192,TRUE,270421.0;45102.875,0.0,,FALSE
+pcmacs,,1693776802.0023844,groupby,G1_1e5_1e2_10_0,100000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,1,0.003964,0.192,TRUE,273.553;728.905;4557.974,0.0,,FALSE
+pcmacs,,1693776802.0199318,groupby,G1_1e5_1e2_10_0,100000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,2,0.003395,0.192,TRUE,273.553;728.905;4557.974,0.0,,FALSE
+pcmacs,,1693776802.0337443,groupby,G1_1e5_1e2_10_0,100000,sum v1:v3 by id6,901,4,pandas,2.1.0,,.groupby,1,0.004663,0.192,TRUE,270421.0;720829.0;4508009.682,0.0,,FALSE
+pcmacs,,1693776802.0516016,groupby,G1_1e5_1e2_10_0,100000,sum v1:v3 by id6,901,4,pandas,2.1.0,,.groupby,2,0.003807,0.192,TRUE,270421.0;720829.0;4508009.682,0.0,,FALSE
+pcmacs,,1693776802.065154,groupby,G1_1e5_1e2_10_0,100000,median v3 sd v3 by id4 id5,8280,4,pandas,2.1.0,,.groupby,1,0.010345,0.191,TRUE,413542.728;233670.694,0.001,,FALSE
+pcmacs,,1693776802.0986822,groupby,G1_1e5_1e2_10_0,100000,median v3 sd v3 by id4 id5,8280,4,pandas,2.1.0,,.groupby,2,0.009518,0.191,TRUE,413542.728;233670.694,0.001,,FALSE
+pcmacs,,1693776802.1128712,groupby,G1_1e5_1e2_10_0,100000,max v1 - min v2 by id3,901,2,pandas,2.1.0,,.groupby,1,0.007629,0.192,TRUE,3604.0,0.0,,FALSE
+pcmacs,,1693776802.1283915,groupby,G1_1e5_1e2_10_0,100000,max v1 - min v2 by id3,901,2,pandas,2.1.0,,.groupby,2,0.00754,0.192,TRUE,3604.0,0.0,,FALSE
+pcmacs,,1693776802.1914473,groupby,G1_1e5_1e2_10_0,100000,sum v3 count by id1:id6,100000,8,pandas,2.1.0,,.groupby,1,0.042008,0.197,TRUE,4508009.682;100000,0.0,,FALSE
+pcmacs,,1693776802.2427845,groupby,G1_1e5_1e2_10_0,100000,sum v3 count by id1:id6,100000,8,pandas,2.1.0,,.groupby,2,0.043029,0.196,TRUE,4508009.682;100000,0.0,,FALSE
+pcmacs,,1693776802.8027022,groupby,G1_1e6_1e2_10_0,1000000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,1,0.053073,0.251,TRUE,2700684.0,0.0,,FALSE
+pcmacs,,1693776802.8674252,groupby,G1_1e6_1e2_10_0,1000000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,2,0.046708,0.249,TRUE,2700684.0,0.0,,FALSE
+pcmacs,,1693776802.9906163,groupby,G1_1e6_1e2_10_0,1000000,sum v1 by id1:id2,8281,3,pandas,2.1.0,,.groupby,1,0.111524,0.251,TRUE,2700684.0,0.0,,FALSE
+pcmacs,,1693776803.1181388,groupby,G1_1e6_1e2_10_0,1000000,sum v1 by id1:id2,8281,3,pandas,2.1.0,,.groupby,2,0.110334,0.251,TRUE,2700684.0,0.0,,FALSE
+pcmacs,,1693776803.2280126,groupby,G1_1e6_1e2_10_0,1000000,sum v1 mean v3 by id3,9001,3,pandas,2.1.0,,.groupby,1,0.101592,0.251,TRUE,2700684.0;450405.971,0.0,,FALSE
+pcmacs,,1693776803.3241804,groupby,G1_1e6_1e2_10_0,1000000,sum v1 mean v3 by id3,9001,3,pandas,2.1.0,,.groupby,2,0.096668,0.25,TRUE,2700684.0;450405.971,0.0,,FALSE
+pcmacs,,1693776803.3713145,groupby,G1_1e6_1e2_10_0,1000000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,1,0.032498,0.25,TRUE,273.094;727.793;4554.073,0.0,,FALSE
+pcmacs,,1693776803.4188426,groupby,G1_1e6_1e2_10_0,1000000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,2,0.023428,0.25,TRUE,273.094;727.793;4554.073,0.0,,FALSE
+pcmacs,,1693776803.472996,groupby,G1_1e6_1e2_10_0,1000000,sum v1:v3 by id6,9001,4,pandas,2.1.0,,.groupby,1,0.039406,0.25,TRUE,2700684.0;7198551.0;45036571.338,0.0,,FALSE
+pcmacs,,1693776803.5159802,groupby,G1_1e6_1e2_10_0,1000000,sum v1:v3 by id6,9001,4,pandas,2.1.0,,.groupby,2,0.040059,0.25,TRUE,2700684.0;7198551.0;45036571.338,0.0,,FALSE
+pcmacs,,1693776803.5951686,groupby,G1_1e6_1e2_10_0,1000000,median v3 sd v3 by id4 id5,8281,4,pandas,2.1.0,,.groupby,1,0.067921,0.25,TRUE,414357.141;238737.826,0.001,,FALSE
+pcmacs,,1693776803.6750271,groupby,G1_1e6_1e2_10_0,1000000,median v3 sd v3 by id4 id5,8281,4,pandas,2.1.0,,.groupby,2,0.068152,0.251,TRUE,414357.141;238737.826,0.001,,FALSE
+pcmacs,,1693776803.785656,groupby,G1_1e6_1e2_10_0,1000000,max v1 - min v2 by id3,9001,2,pandas,2.1.0,,.groupby,1,0.098447,0.251,TRUE,35981.0,0.0,,FALSE
+pcmacs,,1693776803.896635,groupby,G1_1e6_1e2_10_0,1000000,max v1 - min v2 by id3,9001,2,pandas,2.1.0,,.groupby,2,0.098369,0.25,TRUE,35981.0,0.0,,FALSE
+pcmacs,,1693776804.3809896,groupby,G1_1e6_1e2_10_0,1000000,sum v3 count by id1:id6,999997,8,pandas,2.1.0,,.groupby,1,0.474369,0.309,TRUE,45036571.338;1000000,0.002,,FALSE
+pcmacs,,1693776804.8675961,groupby,G1_1e6_1e2_10_0,1000000,sum v3 count by id1:id6,999997,8,pandas,2.1.0,,.groupby,2,0.460116,0.309,TRUE,45036571.338;1000000,0.002,,FALSE
+pcmacs,,1693776810.708746,groupby,G1_1e7_1e2_10_0,10000000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,1,0.461152,1.138,TRUE,26998588.0,0.0,,FALSE
+pcmacs,,1693776811.1679256,groupby,G1_1e7_1e2_10_0,10000000,sum v1 by id1,91,2,pandas,2.1.0,,.groupby,2,0.455345,1.138,TRUE,26998588.0,0.0,,FALSE
+pcmacs,,1693776812.229489,groupby,G1_1e7_1e2_10_0,10000000,sum v1 by id1:id2,8281,3,pandas,2.1.0,,.groupby,1,1.046456,1.139,TRUE,26998588.0,0.0,,FALSE
+pcmacs,,1693776813.277925,groupby,G1_1e7_1e2_10_0,10000000,sum v1 by id1:id2,8281,3,pandas,2.1.0,,.groupby,2,1.04252,1.139,TRUE,26998588.0,0.0,,FALSE
+pcmacs,,1693776815.1000352,groupby,G1_1e7_1e2_10_0,10000000,sum v1 mean v3 by id3,90001,3,pandas,2.1.0,,.groupby,1,1.803376,1.14,TRUE,26998588.0;4498637.521,0.001,,FALSE
+pcmacs,,1693776816.840407,groupby,G1_1e7_1e2_10_0,10000000,sum v1 mean v3 by id3,90001,3,pandas,2.1.0,,.groupby,2,1.723193,1.14,TRUE,26998588.0;4498637.521,0.001,,FALSE
+pcmacs,,1693776817.045158,groupby,G1_1e7_1e2_10_0,10000000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,1,0.198545,1.139,TRUE,272.974;727.938;4549.184,0.0,,FALSE
+pcmacs,,1693776817.248245,groupby,G1_1e7_1e2_10_0,10000000,mean v1:v3 by id4,91,4,pandas,2.1.0,,.groupby,2,0.19226,1.139,TRUE,272.974;727.938;4549.184,0.0,,FALSE
+pcmacs,,1693776817.7189386,groupby,G1_1e7_1e2_10_0,10000000,sum v1:v3 by id6,90001,4,pandas,2.1.0,,.groupby,1,0.454648,1.141,TRUE,26998588.0;71993788.0;449932870.447,0.001,,FALSE
+pcmacs,,1693776818.222546,groupby,G1_1e7_1e2_10_0,10000000,sum v1:v3 by id6,90001,4,pandas,2.1.0,,.groupby,2,0.488851,1.141,TRUE,26998588.0;71993788.0;449932870.447,0.001,,FALSE
+pcmacs,,1693776818.9006286,groupby,G1_1e7_1e2_10_0,10000000,median v3 sd v3 by id4 id5,8281,4,pandas,2.1.0,,.groupby,1,0.668783,1.14,TRUE,413825.523;239012.471,0.001,,FALSE
+pcmacs,,1693776819.582537,groupby,G1_1e7_1e2_10_0,10000000,median v3 sd v3 by id4 id5,8281,4,pandas,2.1.0,,.groupby,2,0.670451,1.14,TRUE,413825.523;239012.471,0.001,,FALSE
+pcmacs,,1693776821.2570062,groupby,G1_1e7_1e2_10_0,10000000,max v1 - min v2 by id3,90001,2,pandas,2.1.0,,.groupby,1,1.652558,1.142,TRUE,359814.0,0.0,,FALSE
+pcmacs,,1693776822.9841855,groupby,G1_1e7_1e2_10_0,10000000,max v1 - min v2 by id3,90001,2,pandas,2.1.0,,.groupby,2,1.714652,1.142,TRUE,359814.0,0.0,,FALSE
+pcmacs,,1693776828.9844158,groupby,G1_1e7_1e2_10_0,10000000,sum v3 count by id1:id6,9999458,8,pandas,2.1.0,,.groupby,1,5.966431,1.735,TRUE,449932870.447;10000000,0.022,,FALSE
+pcmacs,,1693776834.9507594,groupby,G1_1e7_1e2_10_0,10000000,sum v3 count by id1:id6,9999458,8,pandas,2.1.0,,.groupby,2,5.884926,1.735,TRUE,449932870.447;10000000,0.02,,FALSE
+pcmacs,,1693776896.6597455,group_by,G1_1e4_1e2_0_0,10000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,1,0.00994,0.037,TRUE,30027,0.002,,FALSE
+pcmacs,,1693776896.6735222,group_by,G1_1e4_1e2_0_0,10000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,2,0.000691,0.037,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776896.6839945,group_by,G1_1e4_1e2_0_0,10000,sum v1 by id1:id2,6272,3,polars,0.19.1,,.group_by,1,0.001867,0.04,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776896.6839945,group_by,G1_1e4_1e2_0_0,10000,sum v1 by id1:id2,6272,3,polars,0.19.1,,.group_by,2,0.000901,0.041,TRUE,30027,0.0,,FALSE
+pcmacs,,1693776896.7709086,group_by,G1_1e4_1e2_0_0,10000,sum v1 mean v3 by id3,100,3,polars,0.19.1,,.group_by,1,0.002077,0.041,TRUE,30027.0;4999.383,0.075,,FALSE
+pcmacs,,1693776896.7709086,group_by,G1_1e4_1e2_0_0,10000,sum v1 mean v3 by id3,100,3,polars,0.19.1,,.group_by,2,0.000691,0.053,TRUE,30027.0;4999.383,0.0,,FALSE
+pcmacs,,1693776896.7848933,group_by,G1_1e4_1e2_0_0,10000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,1,0.001721,0.053,TRUE,300.146;803.821;5008.908,0.0,,FALSE
+pcmacs,,1693776896.7848933,group_by,G1_1e4_1e2_0_0,10000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,2,0.000704,0.054,TRUE,300.146;803.821;5008.908,0.0,,FALSE
+pcmacs,,1693776896.794999,group_by,G1_1e4_1e2_0_0,10000,sum v1:v3 by id6,100,4,polars,0.19.1,,.group_by,1,0.001239,0.054,TRUE,30027.0;80396.0;500378.167,0.0,,FALSE
+pcmacs,,1693776896.8006048,group_by,G1_1e4_1e2_0_0,10000,sum v1:v3 by id6,100,4,polars,0.19.1,,.group_by,2,0.000466,0.055,TRUE,30027.0;80396.0;500378.167,0.0,,FALSE
+pcmacs,,1693776896.814853,group_by,G1_1e4_1e2_0_0,10000,median v3 sd v3 by id4 id5,6372,4,polars,0.19.1,,.group_by,1,0.002843,0.056,TRUE,319418.835;65338.945,0.0,,FALSE
+pcmacs,,1693776896.8171315,group_by,G1_1e4_1e2_0_0,10000,median v3 sd v3 by id4 id5,6372,4,polars,0.19.1,,.group_by,2,0.000969,0.056,TRUE,319418.835;65338.945,0.0,,FALSE
+pcmacs,,1693776896.831035,group_by,G1_1e4_1e2_0_0,10000,max v1 - min v2 by id3,100,2,polars,0.19.1,,.group_by,1,0.001539,0.057,TRUE,399,0.0,,FALSE
+pcmacs,,1693776896.8320408,group_by,G1_1e4_1e2_0_0,10000,max v1 - min v2 by id3,100,2,polars,0.19.1,,.group_by,2,0.000494,0.057,TRUE,399,0.0,,FALSE
+pcmacs,,1693776896.8444731,group_by,G1_1e4_1e2_0_0,10000,sum v3 count by id1:id6,10000,8,polars,0.19.1,,.group_by,1,0.001202,0.058,TRUE,500378.167;10000.0,0.0,,FALSE
+pcmacs,,1693776896.847979,group_by,G1_1e4_1e2_0_0,10000,sum v3 count by id1:id6,10000,8,polars,0.19.1,,.group_by,2,0.00083,0.06,TRUE,500378.167;10000.0,0.0,,FALSE
+pcmacs,,1693776896.8651283,group_by,G1_1e5_1e2_0_0,100000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,1,0.001357,0.076,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776896.8718596,group_by,G1_1e5_1e2_0_0,100000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,2,0.001889,0.077,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776896.8796148,group_by,G1_1e5_1e2_0_0,100000,sum v1 by id1:id2,9999,3,polars,0.19.1,,.group_by,1,0.001739,0.078,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776896.8862863,group_by,G1_1e5_1e2_0_0,100000,sum v1 by id1:id2,9999,3,polars,0.19.1,,.group_by,2,0.001753,0.079,TRUE,300292,0.0,,FALSE
+pcmacs,,1693776896.8947513,group_by,G1_1e5_1e2_0_0,100000,sum v1 mean v3 by id3,1000,3,polars,0.19.1,,.group_by,1,0.001637,0.081,TRUE,300292.0;50095.228,0.0,,FALSE
+pcmacs,,1693776896.8959627,group_by,G1_1e5_1e2_0_0,100000,sum v1 mean v3 by id3,1000,3,polars,0.19.1,,.group_by,2,0.001325,0.081,TRUE,300292.0;50095.228,0.0,,FALSE
+pcmacs,,1693776896.9037285,group_by,G1_1e5_1e2_0_0,100000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,1,0.000829,0.082,TRUE,300.3;800.863;5009.038,0.0,,FALSE
+pcmacs,,1693776896.9112744,group_by,G1_1e5_1e2_0_0,100000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,2,0.000711,0.082,TRUE,300.3;800.863;5009.038,0.0,,FALSE
+pcmacs,,1693776896.917973,group_by,G1_1e5_1e2_0_0,100000,sum v1:v3 by id6,1000,4,polars,0.19.1,,.group_by,1,0.001018,0.082,TRUE,300292.0;800809.0;5009219.287,0.0,,FALSE
+pcmacs,,1693776896.92747,group_by,G1_1e5_1e2_0_0,100000,sum v1:v3 by id6,1000,4,polars,0.19.1,,.group_by,2,0.000988,0.082,TRUE,300292.0;800809.0;5009219.287,0.0,,FALSE
+pcmacs,,1693776896.9387336,group_by,G1_1e5_1e2_0_0,100000,median v3 sd v3 by id4 id5,9999,4,polars,0.19.1,,.group_by,1,0.003066,0.08,TRUE,500133.239;283471.551,0.0,,FALSE
+pcmacs,,1693776896.942243,group_by,G1_1e5_1e2_0_0,100000,median v3 sd v3 by id4 id5,9999,4,polars,0.19.1,,.group_by,2,0.001697,0.081,TRUE,500133.239;283471.551,0.0,,FALSE
+pcmacs,,1693776896.95437,group_by,G1_1e5_1e2_0_0,100000,max v1 - min v2 by id3,1000,2,polars,0.19.1,,.group_by,1,0.001928,0.082,TRUE,4000,0.0,,FALSE
+pcmacs,,1693776896.9582613,group_by,G1_1e5_1e2_0_0,100000,max v1 - min v2 by id3,1000,2,polars,0.19.1,,.group_by,2,0.001264,0.083,TRUE,4000,0.0,,FALSE
+pcmacs,,1693776896.9752192,group_by,G1_1e5_1e2_0_0,100000,sum v3 count by id1:id6,100000,8,polars,0.19.1,,.group_by,1,0.006525,0.1,TRUE,5009219.287;100000.0,0.001,,FALSE
+pcmacs,,1693776896.9856489,group_by,G1_1e5_1e2_0_0,100000,sum v3 count by id1:id6,100000,8,polars,0.19.1,,.group_by,2,0.004791,0.109,TRUE,5009219.287;100000.0,0.001,,FALSE
+pcmacs,,1693776897.0959435,group_by,G1_1e6_1e2_0_0,1000000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,1,0.041777,0.238,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776897.1165276,group_by,G1_1e6_1e2_0_0,1000000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,2,0.027322,0.239,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776897.1351748,group_by,G1_1e6_1e2_0_0,1000000,sum v1 by id1:id2,10000,3,polars,0.19.1,,.group_by,1,0.013029,0.246,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776897.1583354,group_by,G1_1e6_1e2_0_0,1000000,sum v1 by id1:id2,10000,3,polars,0.19.1,,.group_by,2,0.011071,0.226,TRUE,3000297,0.0,,FALSE
+pcmacs,,1693776897.1723666,group_by,G1_1e6_1e2_0_0,1000000,sum v1 mean v3 by id3,10000,3,polars,0.19.1,,.group_by,1,0.008827,0.238,TRUE,3000297.0;500393.462,0.0,,FALSE
+pcmacs,,1693776897.1972868,group_by,G1_1e6_1e2_0_0,1000000,sum v1 mean v3 by id3,10000,3,polars,0.19.1,,.group_by,2,0.011228,0.243,TRUE,3000297.0;500393.462,0.0,,FALSE
+pcmacs,,1693776897.2441554,group_by,G1_1e6_1e2_0_0,1000000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,1,0.040705,0.164,TRUE,300.03;799.811;5003.666,0.0,,FALSE
+pcmacs,,1693776897.2761073,group_by,G1_1e6_1e2_0_0,1000000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,2,0.029549,0.163,TRUE,300.03;799.811;5003.666,0.0,,FALSE
+pcmacs,,1693776897.2913623,group_by,G1_1e6_1e2_0_0,1000000,sum v1:v3 by id6,10000,4,polars,0.19.1,,.group_by,1,0.006894,0.16,TRUE,3000297.0;7998131.0;50037098.685,0.0,,FALSE
+pcmacs,,1693776897.3021953,group_by,G1_1e6_1e2_0_0,1000000,sum v1:v3 by id6,10000,4,polars,0.19.1,,.group_by,2,0.005152,0.162,TRUE,3000297.0;7998131.0;50037098.685,0.0,,FALSE
+pcmacs,,1693776897.317525,group_by,G1_1e6_1e2_0_0,1000000,median v3 sd v3 by id4 id5,10000,4,polars,0.19.1,,.group_by,1,0.007482,0.163,TRUE,500419.393;288429.897,0.0,,FALSE
+pcmacs,,1693776897.3320744,group_by,G1_1e6_1e2_0_0,1000000,median v3 sd v3 by id4 id5,10000,4,polars,0.19.1,,.group_by,2,0.00687,0.166,TRUE,500419.393;288429.897,0.0,,FALSE
+pcmacs,,1693776897.3528447,group_by,G1_1e6_1e2_0_0,1000000,max v1 - min v2 by id3,10000,2,polars,0.19.1,,.group_by,1,0.010012,0.169,TRUE,39992,0.0,,FALSE
+pcmacs,,1693776897.3670225,group_by,G1_1e6_1e2_0_0,1000000,max v1 - min v2 by id3,10000,2,polars,0.19.1,,.group_by,2,0.007522,0.179,TRUE,39992,0.0,,FALSE
+pcmacs,,1693776897.4538522,group_by,G1_1e6_1e2_0_0,1000000,sum v3 count by id1:id6,1000000,8,polars,0.19.1,,.group_by,1,0.068699,0.345,TRUE,50037098.685;1000000.0,0.009,,FALSE
+pcmacs,,1693776897.5409007,group_by,G1_1e6_1e2_0_0,1000000,sum v3 count by id1:id6,1000000,8,polars,0.19.1,,.group_by,2,0.073166,0.358,TRUE,50037098.685;1000000.0,0.008,,FALSE
+pcmacs,,1693776898.2387156,group_by,G1_1e7_1e2_0_0,10000000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,1,0.081791,1.418,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776898.3174868,group_by,G1_1e7_1e2_0_0,10000000,sum v1 by id1,100,2,polars,0.19.1,,.group_by,2,0.083304,1.398,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776898.434294,group_by,G1_1e7_1e2_0_0,10000000,sum v1 by id1:id2,10000,3,polars,0.19.1,,.group_by,1,0.107764,1.385,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776898.56953,group_by,G1_1e7_1e2_0_0,10000000,sum v1 by id1:id2,10000,3,polars,0.19.1,,.group_by,2,0.123876,1.376,TRUE,29998789,0.0,,FALSE
+pcmacs,,1693776898.782878,group_by,G1_1e7_1e2_0_0,10000000,sum v1 mean v3 by id3,100000,3,polars,0.19.1,,.group_by,1,0.200073,1.442,TRUE,29998789.0;4999719.622,0.006,,FALSE
+pcmacs,,1693776898.9609275,group_by,G1_1e7_1e2_0_0,10000000,sum v1 mean v3 by id3,100000,3,polars,0.19.1,,.group_by,2,0.157212,1.578,TRUE,29998789.0;4999719.622,0.016,,FALSE
+pcmacs,,1693776899.0290222,group_by,G1_1e7_1e2_0_0,10000000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,1,0.059587,1.203,TRUE,299.988;799.894;4999.767,0.0,,FALSE
+pcmacs,,1693776899.0881019,group_by,G1_1e7_1e2_0_0,10000000,mean v1:v3 by id4,100,4,polars,0.19.1,,.group_by,2,0.052785,1.223,TRUE,299.988;799.894;4999.767,0.0,,FALSE
+pcmacs,,1693776899.1917183,group_by,G1_1e7_1e2_0_0,10000000,sum v1:v3 by id6,100000,4,polars,0.19.1,,.group_by,1,0.09524,1.248,TRUE,29998789.0;79989360.0;499976651.408,0.002,,FALSE
+pcmacs,,1693776899.3054361,group_by,G1_1e7_1e2_0_0,10000000,sum v1:v3 by id6,100000,4,polars,0.19.1,,.group_by,2,0.103969,0.841,TRUE,29998789.0;79989360.0;499976651.408,0.002,,FALSE
+pcmacs,,1693776899.3892329,group_by,G1_1e7_1e2_0_0,10000000,median v3 sd v3 by id4 id5,10000,4,polars,0.19.1,,.group_by,1,0.090044,0.884,TRUE,499920.14;288648.108,0.0,,FALSE
+pcmacs,,1693776899.4947317,group_by,G1_1e7_1e2_0_0,10000000,median v3 sd v3 by id4 id5,10000,4,polars,0.19.1,,.group_by,2,0.087227,0.886,TRUE,499920.14;288648.108,0.001,,FALSE
+pcmacs,,1693776899.70191,group_by,G1_1e7_1e2_0_0,10000000,max v1 - min v2 by id3,100000,2,polars,0.19.1,,.group_by,1,0.20071,0.882,TRUE,399882,0.0,,FALSE
+pcmacs,,1693776899.9011438,group_by,G1_1e7_1e2_0_0,10000000,max v1 - min v2 by id3,100000,2,polars,0.19.1,,.group_by,2,0.192017,0.837,TRUE,399882,0.0,,FALSE
+pcmacs,,1693776900.7867649,group_by,G1_1e7_1e2_0_0,10000000,sum v3 count by id1:id6,10000000,8,polars,0.19.1,,.group_by,1,0.849606,2.092,TRUE,499976651.408;10000000.0,0.044,,FALSE
+pcmacs,,1693776901.6791377,group_by,G1_1e7_1e2_0_0,10000000,sum v3 count by id1:id6,10000000,8,polars,0.19.1,,.group_by,2,0.800551,2.018,TRUE,499976651.408;10000000.0,0.055,,FALSE
+pcmacs,,1693776901.7399383,group_by,G1_1e4_1e2_10_0,10000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,1,0.012962,1.985,TRUE,27044,0.0,,FALSE
+pcmacs,,1693776901.744665,group_by,G1_1e4_1e2_10_0,10000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,2,0.001467,1.975,TRUE,27044,0.0,,FALSE
+pcmacs,,1693776901.7493517,group_by,G1_1e4_1e2_10_0,10000,sum v1 by id1:id2,5276,3,polars,0.19.1,,.group_by,1,0.000858,1.976,TRUE,27044,0.0,,FALSE
+pcmacs,,1693776901.7580307,group_by,G1_1e4_1e2_10_0,10000,sum v1 by id1:id2,5276,3,polars,0.19.1,,.group_by,2,0.000867,1.977,TRUE,27044,0.0,,FALSE
+pcmacs,,1693776901.7674172,group_by,G1_1e4_1e2_10_0,10000,sum v1 mean v3 by id3,91,3,polars,0.19.1,,.group_by,1,0.001664,1.965,TRUE,27044.0;4546.897,0.0,,FALSE
+pcmacs,,1693776901.7729216,group_by,G1_1e4_1e2_10_0,10000,sum v1 mean v3 by id3,91,3,polars,0.19.1,,.group_by,2,0.002146,1.948,TRUE,27044.0;4546.897,0.0,,FALSE
+pcmacs,,1693776901.7772424,group_by,G1_1e4_1e2_10_0,10000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,1,0.000667,1.948,TRUE,272.527;730.148;4555.48,0.0,,FALSE
+pcmacs,,1693776901.7821789,group_by,G1_1e4_1e2_10_0,10000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,2,0.000409,1.948,TRUE,272.527;730.148;4555.48,0.0,,FALSE
+pcmacs,,1693776901.7931979,group_by,G1_1e4_1e2_10_0,10000,sum v1:v3 by id6,91,4,polars,0.19.1,,.group_by,1,0.001418,1.941,TRUE,27044.0;72373.0;449477.652,0.0,,FALSE
+pcmacs,,1693776901.7952924,group_by,G1_1e4_1e2_10_0,10000,sum v1:v3 by id6,91,4,polars,0.19.1,,.group_by,2,0.000527,1.941,TRUE,27044.0;72373.0;449477.652,0.0,,FALSE
+pcmacs,,1693776901.8123188,group_by,G1_1e4_1e2_10_0,10000,median v3 sd v3 by id4 id5,5347,4,polars,0.19.1,,.group_by,1,0.002701,1.93,TRUE,253393.367;50979.493,0.0,,FALSE
+pcmacs,,1693776901.8135238,group_by,G1_1e4_1e2_10_0,10000,median v3 sd v3 by id4 id5,5347,4,polars,0.19.1,,.group_by,2,0.00101,1.93,TRUE,253393.367;50979.493,0.0,,FALSE
+pcmacs,,1693776901.8256564,group_by,G1_1e4_1e2_10_0,10000,max v1 - min v2 by id3,91,2,polars,0.19.1,,.group_by,1,0.001264,1.92,TRUE,363,0.0,,FALSE
+pcmacs,,1693776901.8256564,group_by,G1_1e4_1e2_10_0,10000,max v1 - min v2 by id3,91,2,polars,0.19.1,,.group_by,2,0.000464,1.92,TRUE,363,0.0,,FALSE
+pcmacs,,1693776901.8377724,group_by,G1_1e4_1e2_10_0,10000,sum v3 count by id1:id6,10000,8,polars,0.19.1,,.group_by,1,0.001068,1.921,TRUE,449477.652;10000.0,0.0,,FALSE
+pcmacs,,1693776901.8411548,group_by,G1_1e4_1e2_10_0,10000,sum v3 count by id1:id6,10000,8,polars,0.19.1,,.group_by,2,0.00198,1.911,TRUE,449477.652;10000.0,0.0,,FALSE
+pcmacs,,1693776901.87549,group_by,G1_1e5_1e2_10_0,100000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,1,0.001787,1.818,TRUE,270421,0.0,,FALSE
+pcmacs,,1693776901.8816292,group_by,G1_1e5_1e2_10_0,100000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,2,0.001204,1.818,TRUE,270421,0.0,,FALSE
+pcmacs,,1693776901.8898256,group_by,G1_1e5_1e2_10_0,100000,sum v1 by id1:id2,8280,3,polars,0.19.1,,.group_by,1,0.002846,1.819,TRUE,270421,0.0,,FALSE
+pcmacs,,1693776901.8961084,group_by,G1_1e5_1e2_10_0,100000,sum v1 by id1:id2,8280,3,polars,0.19.1,,.group_by,2,0.001954,1.82,TRUE,270421,0.0,,FALSE
+pcmacs,,1693776901.9041371,group_by,G1_1e5_1e2_10_0,100000,sum v1 mean v3 by id3,901,3,polars,0.19.1,,.group_by,1,0.001844,1.82,TRUE,270421.0;45102.875,0.0,,FALSE
+pcmacs,,1693776901.912,group_by,G1_1e5_1e2_10_0,100000,sum v1 mean v3 by id3,901,3,polars,0.19.1,,.group_by,2,0.001295,1.821,TRUE,270421.0;45102.875,0.0,,FALSE
+pcmacs,,1693776901.9199622,group_by,G1_1e5_1e2_10_0,100000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,1,0.00139,1.82,TRUE,273.553;728.905;4557.974,0.0,,FALSE
+pcmacs,,1693776901.9225888,group_by,G1_1e5_1e2_10_0,100000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,2,0.00135,1.82,TRUE,273.553;728.905;4557.974,0.0,,FALSE
+pcmacs,,1693776901.931961,group_by,G1_1e5_1e2_10_0,100000,sum v1:v3 by id6,901,4,polars,0.19.1,,.group_by,1,0.001628,1.819,TRUE,270421.0;720829.0;4508009.682,0.0,,FALSE
+pcmacs,,1693776901.939889,group_by,G1_1e5_1e2_10_0,100000,sum v1:v3 by id6,901,4,polars,0.19.1,,.group_by,2,0.001405,1.82,TRUE,270421.0;720829.0;4508009.682,0.0,,FALSE
+pcmacs,,1693776901.9505968,group_by,G1_1e5_1e2_10_0,100000,median v3 sd v3 by id4 id5,8280,4,polars,0.19.1,,.group_by,1,0.002866,1.818,TRUE,413542.728;233670.694,0.0,,FALSE
+pcmacs,,1693776901.9610116,group_by,G1_1e5_1e2_10_0,100000,median v3 sd v3 by id4 id5,8280,4,polars,0.19.1,,.group_by,2,0.003355,1.809,TRUE,413542.728;233670.694,0.0,,FALSE
+pcmacs,,1693776901.964562,group_by,G1_1e5_1e2_10_0,100000,max v1 - min v2 by id3,901,2,polars,0.19.1,,.group_by,1,0.001488,1.81,TRUE,3604,0.0,,FALSE
+pcmacs,,1693776901.9712646,group_by,G1_1e5_1e2_10_0,100000,max v1 - min v2 by id3,901,2,polars,0.19.1,,.group_by,2,0.001242,1.81,TRUE,3604,0.0,,FALSE
+pcmacs,,1693776901.990215,group_by,G1_1e5_1e2_10_0,100000,sum v3 count by id1:id6,100000,8,polars,0.19.1,,.group_by,1,0.006735,1.825,TRUE,4508009.682;100000.0,0.001,,FALSE
+pcmacs,,1693776902.0014906,group_by,G1_1e5_1e2_10_0,100000,sum v3 count by id1:id6,100000,8,polars,0.19.1,,.group_by,2,0.005587,1.638,TRUE,4508009.682;100000.0,0.001,,FALSE
+pcmacs,,1693776902.136649,group_by,G1_1e6_1e2_10_0,1000000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,1,0.033643,0.575,TRUE,2700684,0.0,,FALSE
+pcmacs,,1693776902.1680207,group_by,G1_1e6_1e2_10_0,1000000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,2,0.029946,0.569,TRUE,2700684,0.0,,FALSE
+pcmacs,,1693776902.1837308,group_by,G1_1e6_1e2_10_0,1000000,sum v1 by id1:id2,8281,3,polars,0.19.1,,.group_by,1,0.016272,0.537,TRUE,2700684,0.0,,FALSE
+pcmacs,,1693776902.2057261,group_by,G1_1e6_1e2_10_0,1000000,sum v1 by id1:id2,8281,3,polars,0.19.1,,.group_by,2,0.012578,0.535,TRUE,2700684,0.0,,FALSE
+pcmacs,,1693776902.2304811,group_by,G1_1e6_1e2_10_0,1000000,sum v1 mean v3 by id3,9001,3,polars,0.19.1,,.group_by,1,0.010812,0.547,TRUE,2700684.0;450405.971,0.0,,FALSE
+pcmacs,,1693776902.2489135,group_by,G1_1e6_1e2_10_0,1000000,sum v1 mean v3 by id3,9001,3,polars,0.19.1,,.group_by,2,0.010587,0.554,TRUE,2700684.0;450405.971,0.001,,FALSE
+pcmacs,,1693776902.2991304,group_by,G1_1e6_1e2_10_0,1000000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,1,0.045015,0.513,TRUE,273.094;727.793;4554.073,0.0,,FALSE
+pcmacs,,1693776902.325536,group_by,G1_1e6_1e2_10_0,1000000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,2,0.028154,0.51,TRUE,273.094;727.793;4554.073,0.0,,FALSE
+pcmacs,,1693776902.3508682,group_by,G1_1e6_1e2_10_0,1000000,sum v1:v3 by id6,9001,4,polars,0.19.1,,.group_by,1,0.011974,0.509,TRUE,2700684.0;7198551.0;45036571.338,0.0,,FALSE
+pcmacs,,1693776902.3719003,group_by,G1_1e6_1e2_10_0,1000000,sum v1:v3 by id6,9001,4,polars,0.19.1,,.group_by,2,0.011157,0.503,TRUE,2700684.0;7198551.0;45036571.338,0.0,,FALSE
+pcmacs,,1693776902.3871436,group_by,G1_1e6_1e2_10_0,1000000,median v3 sd v3 by id4 id5,8281,4,polars,0.19.1,,.group_by,1,0.011773,0.508,TRUE,414357.141;238737.826,0.0,,FALSE
+pcmacs,,1693776902.4029005,group_by,G1_1e6_1e2_10_0,1000000,median v3 sd v3 by id4 id5,8281,4,polars,0.19.1,,.group_by,2,0.012261,0.506,TRUE,414357.141;238737.826,0.0,,FALSE
+pcmacs,,1693776902.4254825,group_by,G1_1e6_1e2_10_0,1000000,max v1 - min v2 by id3,9001,2,polars,0.19.1,,.group_by,1,0.013744,0.521,TRUE,35981,0.0,,FALSE
+pcmacs,,1693776902.4376237,group_by,G1_1e6_1e2_10_0,1000000,max v1 - min v2 by id3,9001,2,polars,0.19.1,,.group_by,2,0.010695,0.53,TRUE,35981,0.0,,FALSE
+pcmacs,,1693776902.534216,group_by,G1_1e6_1e2_10_0,1000000,sum v3 count by id1:id6,999997,8,polars,0.19.1,,.group_by,1,0.078465,0.691,TRUE,45036571.338;1000000.0,0.006,,FALSE
+pcmacs,,1693776902.6505911,group_by,G1_1e6_1e2_10_0,1000000,sum v3 count by id1:id6,999997,8,polars,0.19.1,,.group_by,2,0.104836,0.336,TRUE,45036571.338;1000000.0,0.006,,FALSE
+pcmacs,,1693776903.3489175,group_by,G1_1e7_1e2_10_0,10000000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,1,0.106587,1.314,TRUE,26998588,0.0,,FALSE
+pcmacs,,1693776903.4406474,group_by,G1_1e7_1e2_10_0,10000000,sum v1 by id1,91,2,polars,0.19.1,,.group_by,2,0.089048,1.363,TRUE,26998588,0.0,,FALSE
+pcmacs,,1693776903.5672119,group_by,G1_1e7_1e2_10_0,10000000,sum v1 by id1:id2,8281,3,polars,0.19.1,,.group_by,1,0.117769,1.351,TRUE,26998588,0.0,,FALSE
+pcmacs,,1693776903.7314885,group_by,G1_1e7_1e2_10_0,10000000,sum v1 by id1:id2,8281,3,polars,0.19.1,,.group_by,2,0.152123,1.171,TRUE,26998588,0.0,,FALSE
+pcmacs,,1693776903.9664834,group_by,G1_1e7_1e2_10_0,10000000,sum v1 mean v3 by id3,90001,3,polars,0.19.1,,.group_by,1,0.228145,0.82,TRUE,26998588.0;4498637.521,0.0,,FALSE
+pcmacs,,1693776904.182883,group_by,G1_1e7_1e2_10_0,10000000,sum v1 mean v3 by id3,90001,3,polars,0.19.1,,.group_by,2,0.208884,0.834,TRUE,26998588.0;4498637.521,0.001,,FALSE
+pcmacs,,1693776904.2757657,group_by,G1_1e7_1e2_10_0,10000000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,1,0.08616,0.8,TRUE,272.974;727.938;4549.184,0.0,,FALSE
+pcmacs,,1693776904.3615026,group_by,G1_1e7_1e2_10_0,10000000,mean v1:v3 by id4,91,4,polars,0.19.1,,.group_by,2,0.08093,0.823,TRUE,272.974;727.938;4549.184,0.0,,FALSE
+pcmacs,,1693776904.516584,group_by,G1_1e7_1e2_10_0,10000000,sum v1:v3 by id6,90001,4,polars,0.19.1,,.group_by,1,0.160854,0.825,TRUE,26998588.0;71993788.0;449932870.447,0.001,,FALSE
+pcmacs,,1693776904.6890657,group_by,G1_1e7_1e2_10_0,10000000,sum v1:v3 by id6,90001,4,polars,0.19.1,,.group_by,2,0.153163,0.824,TRUE,26998588.0;71993788.0;449932870.447,0.001,,FALSE
+pcmacs,,1693776904.8457143,group_by,G1_1e7_1e2_10_0,10000000,median v3 sd v3 by id4 id5,8281,4,polars,0.19.1,,.group_by,1,0.158537,0.837,TRUE,413825.523;239012.471,0.001,,FALSE
+pcmacs,,1693776904.9877536,group_by,G1_1e7_1e2_10_0,10000000,median v3 sd v3 by id4 id5,8281,4,polars,0.19.1,,.group_by,2,0.141569,0.852,TRUE,413825.523;239012.471,0.0,,FALSE
+pcmacs,,1693776905.192017,group_by,G1_1e7_1e2_10_0,10000000,max v1 - min v2 by id3,90001,2,polars,0.19.1,,.group_by,1,0.189173,0.836,TRUE,359814,0.0,,FALSE
+pcmacs,,1693776905.397137,group_by,G1_1e7_1e2_10_0,10000000,max v1 - min v2 by id3,90001,2,polars,0.19.1,,.group_by,2,0.197422,0.819,TRUE,359814,0.0,,FALSE
+pcmacs,,1693776906.3416798,group_by,G1_1e7_1e2_10_0,10000000,sum v3 count by id1:id6,9999458,8,polars,0.19.1,,.group_by,1,0.883699,1.952,TRUE,449932870.447;10000000.0,0.063,,FALSE
+pcmacs,,1693776907.3308902,group_by,G1_1e7_1e2_10_0,10000000,sum v3 count by id1:id6,9999458,8,polars,0.19.1,,.group_by,2,0.88654,2.06,TRUE,449932870.447;10000000.0,0.066,,FALSE
