@@ -452,6 +452,8 @@ MAIN_LOOP:
 				PreludioFunc_GroupBy("group", vm)
 			case "ungroup":
 				PreludioFunc_Ungroup("ungroup", vm)
+			case "agg":
+				PreludioFunc_Aggregate("agg", vm)
 			case "join":
 				PreludioFunc_Join("join", vm)
 			case "sort":

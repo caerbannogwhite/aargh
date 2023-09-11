@@ -499,6 +499,28 @@ func PreludioFunc_Ungroup(funcName string, vm *ByteEater) {
 	vm.setCurrentDataFrame()
 }
 
+// Aggregate a Dataframe
+func PreludioFunc_Aggregate(funcName string, vm *ByteEater) {
+	vm.printDebug(5, "STARTING", funcName, "")
+
+	var err error
+	var df gandalff.DataFrame
+
+	positional, _, err := vm.GetFunctionParams(funcName, nil, false, false)
+	if err != nil {
+		vm.setPanicMode(fmt.Sprintf("%s: %s", funcName, err))
+		return
+	}
+
+	if df, err = positional[0].getDataframe(); err != nil {
+		vm.setPanicMode(fmt.Sprintf("%s: %s", funcName, err))
+		return
+	}
+
+	vm.stackPush(vm.newPInternTerm(df))
+	vm.setCurrentDataFrame()
+}
+
 // Join two Dataframes
 func PreludioFunc_Join(funcName string, vm *ByteEater) {
 	vm.printDebug(5, "STARTING", funcName, "")
