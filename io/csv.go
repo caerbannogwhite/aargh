@@ -19,6 +19,7 @@ type CsvReader struct {
 	delimiter        rune
 	guessDataTypeLen int
 	path             string
+	strict           bool
 	nullValues       bool
 	reader           io.Reader
 	schema           *meta.Schema
@@ -32,6 +33,7 @@ func NewCsvReader(ctx *aargh.Context) *CsvReader {
 		delimiter:        aargh.CSV_READER_DEFAULT_DELIMITER,
 		guessDataTypeLen: aargh.CSV_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
 		path:             "",
+		strict:           true,
 		nullValues:       false,
 		reader:           nil,
 		schema:           nil,
@@ -39,51 +41,71 @@ func NewCsvReader(ctx *aargh.Context) *CsvReader {
 	}
 }
 
+// SetHeader sets if the first row is the header.
+// Default is true.
 func (r *CsvReader) SetHeader(header bool) *CsvReader {
 	r.header = header
 	return r
 }
 
+// SetDelimiter sets the delimiter for the CSV file.
+// Default is ','.
 func (r *CsvReader) SetDelimiter(delimiter rune) *CsvReader {
 	r.delimiter = delimiter
 	return r
 }
 
+// SetGuessDataTypeLen sets the length for the type guessing.
+// Default is 1000.
 func (r *CsvReader) SetGuessDataTypeLen(guessDataTypeLen int) *CsvReader {
 	r.guessDataTypeLen = guessDataTypeLen
 	return r
 }
 
+// SetRows sets the number of rows to read.
 func (r *CsvReader) SetRows(rows int) *CsvReader {
 	r.rows = rows
 	return r
 }
 
+// SetPath sets the path to the CSV file.
 func (r *CsvReader) SetPath(path string) *CsvReader {
 	r.path = path
 	return r
 }
 
+// SetStrict sets if the strict type guessing is enabled.
+// Default is true.
+func (r *CsvReader) SetStrict(strict bool) *CsvReader {
+	r.strict = strict
+	return r
+}
+
+// SetNullValues sets if the null values are present.
 func (r *CsvReader) SetNullValues(nullValues bool) *CsvReader {
 	r.nullValues = nullValues
 	return r
 }
 
+// SetReader sets the reader for the CSV file.
 func (r *CsvReader) SetReader(reader io.Reader) *CsvReader {
 	r.reader = reader
 	return r
 }
 
+// SetSchema sets the schema for the CSV file.
 func (r *CsvReader) SetSchema(schema *meta.Schema) *CsvReader {
 	r.schema = schema
 	return r
 }
 
+// SetContext sets the context for the CSV file.
 func (r *CsvReader) SetContext(ctx *aargh.Context) *CsvReader {
 	r.ctx = ctx
 	return r
 }
 
+// Read reads the CSV file and returns a IoData object.
 func (r *CsvReader) Read() *IoData {
 	if r.path != "" {
 		file, err := os.OpenFile(r.path, os.O_RDONLY, 0666)
@@ -157,7 +179,7 @@ func (r *CsvReader) readCsv() *IoData {
 		}
 	}
 
-	series, err := readRowData(csvReader, r.nullValues, r.guessDataTypeLen, r.rows, r.schema, r.ctx)
+	series, err := readRowData(csvReader, r.nullValues, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
 	if err != nil {
 		return &IoData{Error: err}
 	}

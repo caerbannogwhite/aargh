@@ -21,11 +21,13 @@ type typeBucket struct {
 	stringCount   int
 	dateCount     int
 	datetimeCount int
+	totalCount    int
 }
 
 // Get the most common type in the bucket and whether it is the only type
 func (tb *typeBucket) getMostCommonType() (meta.BaseType, bool) {
 	timeCount := tb.dateCount + tb.datetimeCount
+
 	if tb.boolCount > tb.intCount && tb.boolCount > tb.floatCount && tb.boolCount > tb.stringCount && tb.boolCount > timeCount {
 		return meta.BoolType, tb.nullCount+tb.intCount+tb.floatCount+tb.stringCount+timeCount == 0
 	} else if tb.intCount > tb.floatCount && tb.intCount > tb.stringCount && tb.intCount > timeCount {
@@ -36,6 +38,22 @@ func (tb *typeBucket) getMostCommonType() (meta.BaseType, bool) {
 		return meta.TimeType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+tb.stringCount == 0
 	}
 	return meta.StringType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+timeCount == 0
+}
+
+func (tb *typeBucket) getStrictType() meta.BaseType {
+	timeCount := tb.dateCount + tb.datetimeCount
+
+	if (tb.boolCount + tb.nullCount) == tb.totalCount {
+		return meta.BoolType
+	} else if (tb.intCount + tb.nullCount) == tb.totalCount {
+		return meta.Int64Type
+	} else if (tb.floatCount + tb.nullCount) == tb.totalCount {
+		return meta.Float64Type
+	} else if (timeCount + tb.nullCount) == tb.totalCount {
+		return meta.TimeType
+	}
+
+	return meta.StringType
 }
 
 type typeGuesser struct {
@@ -105,6 +123,8 @@ func (tg *typeGuesser) guessTypes(records []string) {
 		} else {
 			tg.typeBuckets[i].stringCount++
 		}
+
+		tg.typeBuckets[i].totalCount++
 	}
 }
 
@@ -125,21 +145,31 @@ func (tg *typeGuesser) guessTypesNulls(records []string) {
 		} else {
 			tg.typeBuckets[i].stringCount++
 		}
+
+		tg.typeBuckets[i].totalCount++
 	}
 }
 
-func (tg typeGuesser) getTypes() []meta.BaseType {
+func (tg typeGuesser) getTypes(strict bool) []meta.BaseType {
 	types := make([]meta.BaseType, len(tg.typeBuckets))
 	if tg.nullValues {
 		for i, v := range tg.typeBuckets {
-			types[i], _ = v.getMostCommonType()
+			if strict {
+				types[i] = v.getStrictType()
+			} else {
+				types[i], _ = v.getMostCommonType()
+			}
 		}
 	} else {
 		var onlyType bool
 		for i, v := range tg.typeBuckets {
-			types[i], onlyType = v.getMostCommonType()
-			if !onlyType {
-				types[i] = meta.StringType
+			if strict {
+				types[i] = v.getStrictType()
+			} else {
+				types[i], onlyType = v.getMostCommonType()
+				if !onlyType {
+					types[i] = meta.StringType
+				}
 			}
 		}
 	}
@@ -198,7 +228,7 @@ type RowDataProvider interface {
 	Read() ([]string, error)
 }
 
-func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, maxLen int, schema *meta.Schema, ctx *aargh.Context) ([]series.Series, error) {
+func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, strict bool, maxLen int, schema *meta.Schema, ctx *aargh.Context) ([]series.Series, error) {
 	var dataTypes []meta.BaseType
 	var recordsForGuessing [][]string
 
@@ -259,7 +289,7 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 				tg.guessTypes(record)
 			}
 		}
-		dataTypes = tg.getTypes()
+		dataTypes = tg.getTypes(strict)
 	} else
 
 	// Use schema

@@ -19,6 +19,7 @@ type XlsxReader struct {
 	header           int
 	rows             int
 	guessDataTypeLen int
+	strict           bool
 	nullValues       bool
 	schema           *meta.Schema
 	ctx              *aargh.Context
@@ -31,53 +32,71 @@ func NewXlsxReader(ctx *aargh.Context) *XlsxReader {
 		header:           0,
 		rows:             -1,
 		guessDataTypeLen: aargh.XLSX_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
+		strict:           true,
 		nullValues:       false,
 		schema:           nil,
 		ctx:              ctx,
 	}
 }
 
+// SetPath sets the path to the XLSX file.
 func (r *XlsxReader) SetPath(path string) *XlsxReader {
 	r.path = path
 	return r
 }
 
+// SetSheet sets the sheet to read from the XLSX file.
 func (r *XlsxReader) SetSheet(sheet string) *XlsxReader {
 	r.sheet = sheet
 	return r
 }
 
+// SetHeader sets the header row to read from the XLSX file.
 func (r *XlsxReader) SetHeader(header int) *XlsxReader {
 	r.header = header
 	return r
 }
 
+// SetRows sets the number of rows to read from the XLSX file.
 func (r *XlsxReader) SetRows(rows int) *XlsxReader {
 	r.rows = rows
 	return r
 }
 
+// SetGuessDataTypeLen sets the number of rows to read from the XLSX file for type guessing.
+// Default is 1000.
 func (r *XlsxReader) SetGuessDataTypeLen(guessDataTypeLen int) *XlsxReader {
 	r.guessDataTypeLen = guessDataTypeLen
 	return r
 }
 
+// SetStrict sets if the strict type guessing is enabled.
+// Default is true.
+func (r *XlsxReader) SetStrict(strict bool) *XlsxReader {
+	r.strict = strict
+	return r
+}
+
+// SetNullValues sets if the null values are present.
+// Default is false.
 func (r *XlsxReader) SetNullValues(nullValues bool) *XlsxReader {
 	r.nullValues = nullValues
 	return r
 }
 
+// SetSchema sets the schema for the XLSX file.
 func (r *XlsxReader) SetSchema(schema *meta.Schema) *XlsxReader {
 	r.schema = schema
 	return r
 }
 
+// Read reads the XLSX file and returns a IoData object.
 func (r *XlsxReader) Read() *IoData {
 	if r.ctx == nil {
 		return &IoData{Error: fmt.Errorf("XlsxReader: no context specified")}
 	}
 
-	names, series, err := readXlsx(r.path, r.sheet, r.header, r.rows, r.nullValues, r.guessDataTypeLen, r.schema, r.ctx)
+	names, series, err := r.readXlsx()
 
 	if err != nil {
 		return &IoData{Error: err}
@@ -128,37 +147,34 @@ func (r *xlsxRowReader) Read() ([]string, error) {
 	return values, nil
 }
 
-func readXlsx(
-	path string, sheet string, header, rows int, nullValues bool,
-	guessDataTypeLen int, schema *meta.Schema, ctx *aargh.Context,
-) ([]string, []series.Series, error) {
-	wb, err := xlsx.OpenFile(path)
+func (r *XlsxReader) readXlsx() ([]string, []series.Series, error) {
+	wb, err := xlsx.OpenFile(r.path)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sh, ok := wb.Sheet[sheet]
+	sh, ok := wb.Sheet[r.sheet]
 	if !ok {
-		return nil, nil, fmt.Errorf("Sheet %s not found", sheet)
+		return nil, nil, fmt.Errorf("Sheet %s not found", r.sheet)
 	}
 
-	if rows < 0 {
-		rows = sh.MaxRow
+	if r.rows < 0 {
+		r.rows = sh.MaxRow
 	}
 
-	names := make([]string, len(sh.Row(header).Cells))
-	for i, cell := range sh.Row(header).Cells {
+	names := make([]string, len(sh.Row(r.header).Cells))
+	for i, cell := range sh.Row(r.header).Cells {
 		names[i] = cell.String()
 	}
 
 	xlsxRowReader := &xlsxRowReader{
 		sh:    sh,
-		row:   header + 1,
+		row:   r.header + 1,
 		cols:  len(names),
 		cells: nil,
 	}
 
-	series, err := readRowData(xlsxRowReader, nullValues, guessDataTypeLen, sh.MaxRow, schema, ctx)
+	series, err := readRowData(xlsxRowReader, r.nullValues, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
 	if err != nil {
 		return nil, nil, err
 	}
