@@ -13,6 +13,11 @@ import (
 	"github.com/caerbannogwhite/aargh/series"
 )
 
+type typeNullable struct {
+	meta.BaseType
+	nullable bool
+}
+
 type typeBucket struct {
 	nullCount     int
 	boolCount     int
@@ -24,40 +29,27 @@ type typeBucket struct {
 	totalCount    int
 }
 
-// Get the most common type in the bucket and whether it is the only type
-func (tb *typeBucket) getMostCommonType() (meta.BaseType, bool) {
+// Get the most common type in the bucket, and:
+// - the number of nulls
+// - the number of remaining values
+// - the percentage of the main type plus nulls
+func (tb *typeBucket) getMostCommonType() (meta.BaseType, int, int, float64) {
 	timeCount := tb.dateCount + tb.datetimeCount
 
-	if tb.boolCount > tb.intCount && tb.boolCount > tb.floatCount && tb.boolCount > tb.stringCount && tb.boolCount > timeCount {
-		return meta.BoolType, tb.nullCount+tb.intCount+tb.floatCount+tb.stringCount+timeCount == 0
-	} else if tb.intCount > tb.floatCount && tb.intCount > tb.stringCount && tb.intCount > timeCount {
-		return meta.Int64Type, tb.nullCount+tb.boolCount+tb.floatCount+tb.stringCount+timeCount == 0
-	} else if tb.floatCount > tb.stringCount && tb.floatCount > timeCount {
-		return meta.Float64Type, tb.nullCount+tb.boolCount+tb.intCount+tb.stringCount+timeCount == 0
-	} else if timeCount > tb.stringCount {
-		return meta.TimeType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+tb.stringCount == 0
+	if tb.boolCount+tb.nullCount > tb.intCount+tb.floatCount+tb.stringCount+timeCount {
+		return meta.BoolType, tb.nullCount, tb.intCount + tb.floatCount + tb.stringCount + timeCount, float64(tb.boolCount+tb.nullCount) / float64(tb.totalCount)
+	} else if tb.intCount+tb.nullCount > tb.boolCount+tb.floatCount+tb.stringCount+timeCount {
+		return meta.Int64Type, tb.nullCount, tb.boolCount + tb.floatCount + tb.stringCount + timeCount, float64(tb.intCount+tb.nullCount) / float64(tb.totalCount)
+	} else if tb.floatCount+tb.nullCount > tb.boolCount+tb.intCount+tb.stringCount+timeCount {
+		return meta.Float64Type, tb.nullCount, tb.boolCount + tb.intCount + tb.stringCount + timeCount, float64(tb.floatCount+tb.nullCount) / float64(tb.totalCount)
+	} else if timeCount+tb.nullCount > tb.boolCount+tb.intCount+tb.floatCount+tb.stringCount {
+		return meta.TimeType, tb.nullCount, tb.boolCount + tb.intCount + tb.floatCount + tb.stringCount, float64(timeCount+tb.nullCount) / float64(tb.totalCount)
 	}
-	return meta.StringType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+timeCount == 0
-}
-
-func (tb *typeBucket) getStrictType() meta.BaseType {
-	timeCount := tb.dateCount + tb.datetimeCount
-
-	if (tb.boolCount + tb.nullCount) == tb.totalCount {
-		return meta.BoolType
-	} else if (tb.intCount + tb.nullCount) == tb.totalCount {
-		return meta.Int64Type
-	} else if (tb.floatCount + tb.nullCount) == tb.totalCount {
-		return meta.Float64Type
-	} else if (timeCount + tb.nullCount) == tb.totalCount {
-		return meta.TimeType
-	}
-
-	return meta.StringType
+	return meta.StringType, tb.nullCount, tb.boolCount + tb.intCount + tb.floatCount + timeCount, float64(tb.stringCount+tb.nullCount) / float64(tb.totalCount)
 }
 
 type typeGuesser struct {
-	nullValues     bool
+	strict         bool
 	nullRegex      *regexp.Regexp
 	boolRegex      *regexp.Regexp
 	boolTrueRegex  *regexp.Regexp
@@ -120,26 +112,6 @@ func (tg *typeGuesser) guessTypes(records []string) {
 			tg.typeBuckets[i].datetimeCount++
 		} else if tg.dateRegex.MatchString(v) {
 			tg.typeBuckets[i].dateCount++
-		} else {
-			tg.typeBuckets[i].stringCount++
-		}
-
-		tg.typeBuckets[i].totalCount++
-	}
-}
-
-func (tg *typeGuesser) guessTypesNulls(records []string) {
-	for i, v := range records {
-		if tg.boolRegex.MatchString(v) {
-			tg.typeBuckets[i].boolCount++
-		} else if tg.intRegex.MatchString(v) {
-			tg.typeBuckets[i].intCount++
-		} else if tg.floatRegex.MatchString(v) {
-			tg.typeBuckets[i].floatCount++
-		} else if tg.datetimeRegex.MatchString(v) {
-			tg.typeBuckets[i].datetimeCount++
-		} else if tg.dateRegex.MatchString(v) {
-			tg.typeBuckets[i].dateCount++
 		} else if tg.nullRegex.MatchString(v) {
 			tg.typeBuckets[i].nullCount++
 		} else {
@@ -150,30 +122,38 @@ func (tg *typeGuesser) guessTypesNulls(records []string) {
 	}
 }
 
-func (tg typeGuesser) getTypes(strict bool) []meta.BaseType {
-	types := make([]meta.BaseType, len(tg.typeBuckets))
-	if tg.nullValues {
-		for i, v := range tg.typeBuckets {
-			if strict {
-				types[i] = v.getStrictType()
+func (tg typeGuesser) getSchema() *meta.Schema {
+	schema := meta.InitSchema()
+
+	for _, bucket := range tg.typeBuckets {
+		baseType, nullsCount, remainingCount, percentage := bucket.getMostCommonType()
+
+		primitive := meta.Primitive{
+			Base:     baseType,
+			Nullable: false,
+			Name:     "",
+			Size:     0,
+			Schema:   meta.InitSchema(),
+		}
+
+		if tg.strict {
+			if remainingCount > 0 {
+				primitive.Base = meta.StringType
+			} else if nullsCount > 0 {
+				primitive.Nullable = true
+			}
+		} else {
+			if percentage > aargh.TYPE_GUESSER_TYPE_ACCEPTANCE_THRESHOLD {
+				primitive.Nullable = true
 			} else {
-				types[i], _ = v.getMostCommonType()
+				primitive.Base = meta.StringType
 			}
 		}
-	} else {
-		var onlyType bool
-		for i, v := range tg.typeBuckets {
-			if strict {
-				types[i] = v.getStrictType()
-			} else {
-				types[i], onlyType = v.getMostCommonType()
-				if !onlyType {
-					types[i] = meta.StringType
-				}
-			}
-		}
+
+		schema.AddPrimitive(primitive)
 	}
-	return types
+
+	return &schema
 }
 
 func (tg typeGuesser) atoBool(s string) (bool, error) {
@@ -228,12 +208,12 @@ type RowDataProvider interface {
 	Read() ([]string, error)
 }
 
-func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, strict bool, maxLen int, schema *meta.Schema, ctx *aargh.Context) ([]series.Series, error) {
-	var dataTypes []meta.BaseType
+func readRowData(reader RowDataProvider, guessDataTypeLen int, strict bool, maxLen int, schema *meta.Schema, ctx *aargh.Context) ([]series.Series, error) {
+	var noProvidedSchema = schema == nil
 	var recordsForGuessing [][]string
 
 	// Initialize TypeGuesser
-	tg := newTypeGuesser(nullValues)
+	typeGuesser := newTypeGuesser(strict)
 
 	if maxLen < 0 {
 		maxLen = math.MaxInt32
@@ -244,7 +224,7 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 	counter := 0
 
 	// Guess data types
-	if schema == nil {
+	if noProvidedSchema {
 		recordsForGuessing = make([][]string, guessDataTypeLen)
 
 		// Read first record to get length
@@ -256,57 +236,35 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 		}
 		recordsForGuessing[0] = record
 
-		tg.setLength(len(record))
+		typeGuesser.setLength(len(record))
 
-		if nullValues {
-			tg.guessTypesNulls(record)
-			for i := 1; i < guessDataTypeLen; i++ {
-				record, err := reader.Read()
-				counter++
+		typeGuesser.guessTypes(record)
+		for i := 1; i < guessDataTypeLen; i++ {
+			record, err := reader.Read()
+			counter++
 
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					return nil, err
+			if err != nil {
+				if err == io.EOF {
+					break
 				}
-				recordsForGuessing[i] = record
-				tg.guessTypesNulls(record)
+				return nil, err
 			}
-		} else {
-			tg.guessTypes(record)
-			for i := 1; i < guessDataTypeLen; i++ {
-				record, err := reader.Read()
-				counter++
 
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					return nil, err
-				}
-				recordsForGuessing[i] = record
-				tg.guessTypes(record)
-			}
+			recordsForGuessing[i] = record
+			typeGuesser.guessTypes(record)
 		}
-		dataTypes = tg.getTypes(strict)
-	} else
 
-	// Use schema
-	{
-		dataTypes = schema.GetDataTypes()
+		schema = typeGuesser.getSchema()
 	}
 
-	nullMasks := make([][]bool, len(dataTypes))
-	if nullValues {
-		for i := range nullMasks {
-			nullMasks[i] = make([]bool, 0)
-		}
+	nullMasks := make([][]bool, schema.Len())
+	for i := range nullMasks {
+		nullMasks[i] = make([]bool, 0)
 	}
 
-	values := make([]interface{}, len(dataTypes))
+	values := make([]interface{}, schema.Len())
 	for i := range values {
-		switch dataTypes[i] {
+		switch schema.Primitives[i].Base {
 		case meta.BoolType:
 			values[i] = make([]bool, 0)
 		case meta.IntType:
@@ -323,129 +281,12 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 	}
 
 	// If no schema: add records for guessing to values
-	if schema == nil {
-		if nullValues {
-			for _, record := range recordsForGuessing {
-				for i, v := range record {
-					switch dataTypes[i] {
-					case meta.BoolType:
-						if b, err := tg.atoBool(v); err != nil {
-							nullMasks[i] = append(nullMasks[i], true)
-							values[i] = append(values[i].([]bool), false)
-						} else {
-							nullMasks[i] = append(nullMasks[i], false)
-							values[i] = append(values[i].([]bool), b)
-						}
-
-					case meta.IntType:
-						if d, err := strconv.Atoi(v); err != nil {
-							nullMasks[i] = append(nullMasks[i], true)
-							values[i] = append(values[i].([]int), 0)
-						} else {
-							nullMasks[i] = append(nullMasks[i], false)
-							values[i] = append(values[i].([]int), int(d))
-						}
-
-					case meta.Int64Type:
-						if d, err := strconv.ParseInt(v, 10, 64); err != nil {
-							nullMasks[i] = append(nullMasks[i], true)
-							values[i] = append(values[i].([]int64), 0)
-						} else {
-							nullMasks[i] = append(nullMasks[i], false)
-							values[i] = append(values[i].([]int64), d)
-						}
-
-					case meta.Float64Type:
-						if f, err := strconv.ParseFloat(v, 64); err != nil {
-							nullMasks[i] = append(nullMasks[i], true)
-							values[i] = append(values[i].([]float64), math.NaN())
-						} else {
-							nullMasks[i] = append(nullMasks[i], false)
-							values[i] = append(values[i].([]float64), f)
-						}
-
-					case meta.StringType:
-						nullMasks[i] = append(nullMasks[i], false)
-						values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
-
-					case meta.TimeType:
-						if t, err := tg.atoTime(v); err != nil {
-							nullMasks[i] = append(nullMasks[i], true)
-							values[i] = append(values[i].([]time.Time), time.Time{})
-						} else {
-							nullMasks[i] = append(nullMasks[i], false)
-							values[i] = append(values[i].([]time.Time), t)
-						}
-					}
-				}
-			}
-		} else {
-			for _, record := range recordsForGuessing {
-				for i, v := range record {
-					switch dataTypes[i] {
-					case meta.BoolType:
-						b, err := tg.atoBool(v)
-						if err != nil {
-							return nil, err
-						}
-						values[i] = append(values[i].([]bool), b)
-
-					case meta.IntType:
-						d, err := strconv.Atoi(v)
-						if err != nil {
-							return nil, err
-						}
-						values[i] = append(values[i].([]int), int(d))
-
-					case meta.Int64Type:
-						d, err := strconv.ParseInt(v, 10, 64)
-						if err != nil {
-							return nil, err
-						}
-						values[i] = append(values[i].([]int64), d)
-
-					case meta.Float64Type:
-						f, err := strconv.ParseFloat(v, 64)
-						if err != nil {
-							return nil, err
-						}
-						values[i] = append(values[i].([]float64), f)
-
-					case meta.StringType:
-						values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
-
-					case meta.TimeType:
-						t, err := tg.atoTime(v)
-						if err != nil {
-							return nil, err
-						}
-						values[i] = append(values[i].([]time.Time), t)
-					}
-				}
-			}
-		}
-	}
-
-	if nullValues {
-		for {
-			if counter >= maxLen {
-				break
-			}
-
-			record, err := reader.Read()
-			counter++
-
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				return nil, err
-			}
-
+	if noProvidedSchema {
+		for _, record := range recordsForGuessing {
 			for i, v := range record {
-				switch dataTypes[i] {
+				switch schema.Primitives[i].Base {
 				case meta.BoolType:
-					if b, err := tg.atoBool(v); err != nil {
+					if b, err := typeGuesser.atoBool(v); err != nil {
 						nullMasks[i] = append(nullMasks[i], true)
 						values[i] = append(values[i].([]bool), false)
 					} else {
@@ -485,7 +326,7 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 					values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
 
 				case meta.TimeType:
-					if t, err := tg.atoTime(v); err != nil {
+					if t, err := typeGuesser.atoTime(v); err != nil {
 						nullMasks[i] = append(nullMasks[i], true)
 						values[i] = append(values[i].([]time.Time), time.Time{})
 					} else {
@@ -495,60 +336,71 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 				}
 			}
 		}
-	} else {
-		for {
-			if counter >= maxLen {
+	}
+
+	for {
+		if counter >= maxLen {
+			break
+		}
+
+		record, err := reader.Read()
+		counter++
+
+		if err != nil {
+			if err == io.EOF {
 				break
 			}
+			return nil, err
+		}
 
-			record, err := reader.Read()
-			counter++
-
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				return nil, err
-			}
-
-			for i, v := range record {
-				switch dataTypes[i] {
-				case meta.BoolType:
-					b, err := tg.atoBool(v)
-					if err != nil {
-						return nil, err
-					}
+		for i, v := range record {
+			switch schema.Primitives[i].Base {
+			case meta.BoolType:
+				if b, err := typeGuesser.atoBool(v); err != nil {
+					nullMasks[i] = append(nullMasks[i], true)
+					values[i] = append(values[i].([]bool), false)
+				} else {
+					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]bool), b)
+				}
 
-				case meta.IntType:
-					d, err := strconv.Atoi(v)
-					if err != nil {
-						return nil, err
-					}
+			case meta.IntType:
+				if d, err := strconv.Atoi(v); err != nil {
+					nullMasks[i] = append(nullMasks[i], true)
+					values[i] = append(values[i].([]int), 0)
+				} else {
+					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]int), int(d))
+				}
 
-				case meta.Int64Type:
-					d, err := strconv.ParseInt(v, 10, 64)
-					if err != nil {
-						return nil, err
-					}
+			case meta.Int64Type:
+				if d, err := strconv.ParseInt(v, 10, 64); err != nil {
+					nullMasks[i] = append(nullMasks[i], true)
+					values[i] = append(values[i].([]int64), 0)
+				} else {
+					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]int64), d)
+				}
 
-				case meta.Float64Type:
-					f, err := strconv.ParseFloat(v, 64)
-					if err != nil {
-						return nil, err
-					}
+			case meta.Float64Type:
+				if f, err := strconv.ParseFloat(v, 64); err != nil {
+					nullMasks[i] = append(nullMasks[i], true)
+					values[i] = append(values[i].([]float64), math.NaN())
+				} else {
+					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]float64), f)
+				}
 
-				case meta.StringType:
-					values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
+			case meta.StringType:
+				nullMasks[i] = append(nullMasks[i], false)
+				values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
 
-				case meta.TimeType:
-					t, err := tg.atoTime(v)
-					if err != nil {
-						return nil, err
-					}
+			case meta.TimeType:
+				if t, err := typeGuesser.atoTime(v); err != nil {
+					nullMasks[i] = append(nullMasks[i], true)
+					values[i] = append(values[i].([]time.Time), time.Time{})
+				} else {
+					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]time.Time), t)
 				}
 			}
@@ -556,9 +408,9 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 	}
 
 	// Create series
-	_series := make([]series.Series, len(dataTypes))
-	for i := range dataTypes {
-		switch dataTypes[i] {
+	_series := make([]series.Series, schema.Len())
+	for i := range schema.Primitives {
+		switch schema.Primitives[i].Base {
 		case meta.BoolType:
 			_series[i] = series.NewSeriesBool(values[i].([]bool), nullMasks[i], false, ctx)
 

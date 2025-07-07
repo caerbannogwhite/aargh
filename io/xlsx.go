@@ -20,7 +20,6 @@ type XlsxReader struct {
 	rows             int
 	guessDataTypeLen int
 	strict           bool
-	nullValues       bool
 	schema           *meta.Schema
 	ctx              *aargh.Context
 }
@@ -33,7 +32,6 @@ func NewXlsxReader(ctx *aargh.Context) *XlsxReader {
 		rows:             -1,
 		guessDataTypeLen: aargh.XLSX_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
 		strict:           true,
-		nullValues:       false,
 		schema:           nil,
 		ctx:              ctx,
 	}
@@ -74,13 +72,6 @@ func (r *XlsxReader) SetGuessDataTypeLen(guessDataTypeLen int) *XlsxReader {
 // Default is true.
 func (r *XlsxReader) SetStrict(strict bool) *XlsxReader {
 	r.strict = strict
-	return r
-}
-
-// SetNullValues sets if the null values are present.
-// Default is false.
-func (r *XlsxReader) SetNullValues(nullValues bool) *XlsxReader {
-	r.nullValues = nullValues
 	return r
 }
 
@@ -174,7 +165,7 @@ func (r *XlsxReader) readXlsx() ([]string, []series.Series, error) {
 		cells: nil,
 	}
 
-	series, err := readRowData(xlsxRowReader, r.nullValues, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
+	series, err := readRowData(xlsxRowReader, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
 	if err != nil {
 		return nil, nil, err
 	}

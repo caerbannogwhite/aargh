@@ -1,14 +1,14 @@
 package io
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
 
-func Test_TypeGuesser(t *testing.T) {
+func TestTypeGuesser(t *testing.T) {
 	// Create a new type guesser.
 	tg := newTypeGuesser(false)
 
@@ -117,7 +117,7 @@ func Test_TypeGuesser(t *testing.T) {
 	}
 }
 
-func Test_TypeGuesserWithNa(t *testing.T) {
+func TestTypeGuesserWithNa(t *testing.T) {
 	// Create a new type guesser.
 	tg := newTypeGuesser(true)
 
@@ -244,59 +244,71 @@ func TestTypeGuesserWithNulls(t *testing.T) {
 
 func TestTypeBucketGetMostCommonType(t *testing.T) {
 	testCases := []struct {
-		bucket   typeBucket
-		expected meta.BaseType
-		onlyType bool
+		bucket          typeBucket
+		expected        meta.BaseType
+		nullsCount      int
+		remainingsCount int
 	}{
 		{
-			typeBucket{boolCount: 5, intCount: 2, stringCount: 1},
+			typeBucket{boolCount: 5, intCount: 2, stringCount: 1, totalCount: 8},
 			meta.BoolType,
-			false,
+			0,
+			3,
 		},
 		{
-			typeBucket{boolCount: 10, intCount: 0, floatCount: 0, stringCount: 0, dateCount: 0, datetimeCount: 0},
+			typeBucket{boolCount: 10, intCount: 0, floatCount: 0, stringCount: 0, dateCount: 0, datetimeCount: 0, totalCount: 10},
 			meta.BoolType,
-			true,
+			0,
+			0,
 		},
 		{
-			typeBucket{intCount: 8, floatCount: 3, stringCount: 1},
+			typeBucket{intCount: 8, floatCount: 3, stringCount: 1, totalCount: 12},
 			meta.Int64Type,
-			false,
+			0,
+			4,
 		},
 		{
-			typeBucket{floatCount: 6, stringCount: 2},
+			typeBucket{floatCount: 6, stringCount: 2, totalCount: 8},
 			meta.Float64Type,
-			false,
+			0,
+			2,
 		},
 		{
-			typeBucket{dateCount: 7, stringCount: 3, datetimeCount: 1},
+			typeBucket{dateCount: 7, stringCount: 3, datetimeCount: 1, totalCount: 11},
 			meta.TimeType,
-			false,
+			0,
+			3,
 		},
 		{
-			typeBucket{datetimeCount: 9, stringCount: 2},
+			typeBucket{datetimeCount: 9, stringCount: 2, totalCount: 11},
 			meta.TimeType,
-			false,
+			0,
+			2,
 		},
 		{
-			typeBucket{stringCount: 10, boolCount: 1, intCount: 1},
+			typeBucket{stringCount: 10, boolCount: 1, intCount: 1, totalCount: 12},
 			meta.StringType,
-			false,
+			0,
+			2,
 		},
 		{
-			typeBucket{stringCount: 5},
+			typeBucket{stringCount: 5, totalCount: 5},
 			meta.StringType,
-			true,
+			0,
+			0,
 		},
 	}
 
 	for i, tc := range testCases {
-		result, onlyType := tc.bucket.getMostCommonType()
+		result, nullsCount, remainingsCount, _ := tc.bucket.getMostCommonType()
 		if result != tc.expected {
 			t.Errorf("Test case %d: getMostCommonType() = %v, expected %v", i, result, tc.expected)
 		}
-		if onlyType != tc.onlyType {
-			t.Errorf("Test case %d: onlyType = %v, expected %v", i, onlyType, tc.onlyType)
+		if nullsCount != tc.nullsCount {
+			t.Errorf("Test case %d: nullsCount = %v, expected %v", i, nullsCount, tc.nullsCount)
+		}
+		if remainingsCount != tc.remainingsCount {
+			t.Errorf("Test case %d: remainingsCount = %v, expected %v", i, remainingsCount, tc.remainingsCount)
 		}
 	}
 }
@@ -315,7 +327,7 @@ func TestTypeGuesserGuessTypes(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	expected := []meta.BaseType{meta.BoolType, meta.Int64Type, meta.TimeType}
 
 	if len(types) != len(expected) {
@@ -341,10 +353,10 @@ func TestTypeGuesserGuessTypesNulls(t *testing.T) {
 	}
 
 	for _, record := range records {
-		tg.guessTypesNulls(record)
+		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	expected := []meta.BaseType{meta.BoolType, meta.Int64Type, meta.TimeType}
 
 	if len(types) != len(expected) {
@@ -448,7 +460,7 @@ func TestTypeGuesserMixedData(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	expected := []meta.BaseType{meta.BoolType, meta.Int64Type, meta.Float64Type, meta.TimeType}
 
 	if len(types) != len(expected) {
@@ -480,7 +492,7 @@ func TestTypeGuesserDatePriority(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	if len(types) != 1 {
 		t.Errorf("Expected 1 type, got %d", len(types))
 		return
@@ -508,7 +520,7 @@ func TestTypeGuesserDateOnly(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	if len(types) != 1 {
 		t.Errorf("Expected 1 type, got %d", len(types))
 		return
@@ -535,7 +547,7 @@ func TestTypeGuesserDatetimeOnly(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	if len(types) != 1 {
 		t.Errorf("Expected 1 type, got %d", len(types))
 		return
@@ -562,7 +574,7 @@ func TestTypeGuesserDateVsDatetime(t *testing.T) {
 		tg.guessTypes(record)
 	}
 
-	types := tg.getTypes()
+	types := tg.getSchema().GetDataTypes()
 	if len(types) != 1 {
 		t.Errorf("Expected 1 type, got %d", len(types))
 		return
@@ -590,8 +602,6 @@ func (m *mockRowDataProvider) Read() ([]string, error) {
 }
 
 func TestReadRowDataWithDates(t *testing.T) {
-	ctx := aargh.NewContext()
-
 	// Skip header row for type detection - only use actual data
 	mockData := [][]string{
 		{"Alice", "25", "1998-05-15", "2023-01-15 10:30:00"},
@@ -601,7 +611,7 @@ func TestReadRowDataWithDates(t *testing.T) {
 
 	provider := &mockRowDataProvider{data: mockData}
 
-	series, err := readRowData(provider, false, 3, 10, nil, ctx)
+	series, err := readRowData(provider, 3, false, 10, nil, ctx)
 	if err != nil {
 		t.Fatalf("readRowData failed: %v", err)
 	}
@@ -623,8 +633,6 @@ func TestReadRowDataWithDates(t *testing.T) {
 }
 
 func TestReadRowDataWithNullsAndDates(t *testing.T) {
-	ctx := aargh.NewContext()
-
 	// Skip header row for type detection - only use actual data
 	mockData := [][]string{
 		{"Alice", "25", "1998-05-15", "2023-01-15 10:30:00"},
@@ -634,7 +642,7 @@ func TestReadRowDataWithNullsAndDates(t *testing.T) {
 
 	provider := &mockRowDataProvider{data: mockData}
 
-	series, err := readRowData(provider, true, 3, 10, nil, ctx)
+	series, err := readRowData(provider, 3, false, 10, nil, ctx)
 	if err != nil {
 		t.Fatalf("readRowData failed: %v", err)
 	}
@@ -653,4 +661,34 @@ func TestReadRowDataWithNullsAndDates(t *testing.T) {
 			t.Errorf("Column %d: expected %v, got %v", i, expectedTypes[i], actualType)
 		}
 	}
+}
+
+func TestReadRowDataStrict(t *testing.T) {
+	mockData := [][]string{
+		{"t", "1", "0.1"},
+		{"f", "2", "0.2"},
+		{"t", "3", "0.3"},
+		{"f", "4", "0.4"},
+		{"t", "5", "0.5"},
+		{"f", "6", "0.6"},
+		{"t", "7", "0.7"},
+		{"f", "8", "0.8"},
+		{"a", "b", "c"},
+	}
+
+	provider := &mockRowDataProvider{data: mockData}
+
+	series, err := readRowData(provider, 100, false, -1, nil, ctx)
+	if err != nil {
+		t.Fatalf("readRowData failed: %v", err)
+	}
+
+	if len(series) != 3 {
+		t.Errorf("Expected 3 series, got %d", len(series))
+		return
+	}
+
+	fmt.Println(series[0].Type())
+	fmt.Println(series[1].Type())
+	fmt.Println(series[2].Type())
 }

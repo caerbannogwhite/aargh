@@ -20,7 +20,6 @@ type CsvReader struct {
 	guessDataTypeLen int
 	path             string
 	strict           bool
-	nullValues       bool
 	reader           io.Reader
 	schema           *meta.Schema
 	ctx              *aargh.Context
@@ -34,7 +33,6 @@ func NewCsvReader(ctx *aargh.Context) *CsvReader {
 		guessDataTypeLen: aargh.CSV_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
 		path:             "",
 		strict:           true,
-		nullValues:       false,
 		reader:           nil,
 		schema:           nil,
 		ctx:              ctx,
@@ -78,12 +76,6 @@ func (r *CsvReader) SetPath(path string) *CsvReader {
 // Default is true.
 func (r *CsvReader) SetStrict(strict bool) *CsvReader {
 	r.strict = strict
-	return r
-}
-
-// SetNullValues sets if the null values are present.
-func (r *CsvReader) SetNullValues(nullValues bool) *CsvReader {
-	r.nullValues = nullValues
 	return r
 }
 
@@ -179,7 +171,7 @@ func (r *CsvReader) readCsv() *IoData {
 		}
 	}
 
-	series, err := readRowData(csvReader, r.nullValues, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
+	series, err := readRowData(csvReader, r.guessDataTypeLen, r.strict, r.rows, r.schema, r.ctx)
 	if err != nil {
 		return &IoData{Error: err}
 	}
