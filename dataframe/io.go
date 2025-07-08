@@ -74,11 +74,6 @@ func (r *csvReaderWrapper) SetPath(path string) *csvReaderWrapper {
 	return r
 }
 
-func (r *csvReaderWrapper) SetNullValues(nullValues bool) *csvReaderWrapper {
-	r.reader = r.reader.SetNullValues(nullValues)
-	return r
-}
-
 func (r *csvReaderWrapper) SetReader(reader io.Reader) *csvReaderWrapper {
 	r.reader = r.reader.SetReader(reader)
 	return r
@@ -340,11 +335,6 @@ func (r *xlsxReaderWrapper) SetRows(rows int) *xlsxReaderWrapper {
 
 func (r *xlsxReaderWrapper) SetGuessDataTypeLen(guessDataTypeLen int) *xlsxReaderWrapper {
 	r.reader = r.reader.SetGuessDataTypeLen(guessDataTypeLen)
-	return r
-}
-
-func (r *xlsxReaderWrapper) SetNullValues(nullValues bool) *xlsxReaderWrapper {
-	r.reader = r.reader.SetNullValues(nullValues)
 	return r
 }
 
