@@ -204,7 +204,7 @@ func (p *Primitive) GetName() string {
 }
 
 func (p *Primitive) IsBaseType() bool {
-	return p.Schema.primitives == nil || len(p.Schema.primitives) == 0
+	return p.Schema.Primitives == nil || len(p.Schema.Primitives) == 0
 }
 
 func (op OPCODE) GetBinaryOpResultSize(lop, rop Primitive) int {
@@ -1261,21 +1261,21 @@ func (op OPCODE) GetBinaryOpResultType(lop, rop Primitive) Primitive {
 }
 
 type Schema struct {
-	primitives []Primitive
+	Primitives []Primitive
 }
 
 func (s *Schema) IsEqual(o Schema) bool {
-	if len(s.primitives) != len(o.primitives) {
+	if len(s.Primitives) != len(o.Primitives) {
 		return false
 	}
-	for i, p := range s.primitives {
-		if p.Name != o.primitives[i].Name {
+	for i, p := range s.Primitives {
+		if p.Name != o.Primitives[i].Name {
 			return false
 		}
-		if p.Base != o.primitives[i].Base {
+		if p.Base != o.Primitives[i].Base {
 			return false
 		}
-		if !p.Schema.IsEqual(o.primitives[i].Schema) {
+		if !p.Schema.IsEqual(o.Primitives[i].Schema) {
 			return false
 		}
 	}
@@ -1283,17 +1283,21 @@ func (s *Schema) IsEqual(o Schema) bool {
 }
 
 func InitSchema() Schema {
-	return Schema{primitives: make([]Primitive, 0)}
+	return Schema{Primitives: make([]Primitive, 0)}
 }
 
 func (s *Schema) AddPrimitive(p Primitive) {
-	s.primitives = append(s.primitives, p)
+	s.Primitives = append(s.Primitives, p)
 }
 
 func (s *Schema) GetDataTypes() []BaseType {
-	types := make([]BaseType, len(s.primitives))
-	for i, p := range s.primitives {
+	types := make([]BaseType, len(s.Primitives))
+	for i, p := range s.Primitives {
 		types[i] = p.Base
 	}
 	return types
+}
+
+func (s *Schema) Len() int {
+	return len(s.Primitives)
 }
