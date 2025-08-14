@@ -27,18 +27,19 @@ func (ab aggregatorBuilder) Run() DataFrame {
 		return df
 	}
 
-	// CHECK: aggregators must have unique names and names must be valid
-	aggNames := make(map[string]bool)
+	// CHECK: aggregators must have unique output names and input series must exist
+	aggNewNames := make(map[string]bool)
 	for _, agg := range ab.aggregators {
 
-		// CASE: aggregator count has a default name
-		if agg.type_ != AGGREGATE_COUNT {
-			if aggNames[agg.name] {
-				df.err = fmt.Errorf("BaseDataFrame.Agg: aggregator names must be unique")
-				return df
-			}
-			aggNames[agg.name] = true
+		// Check if output names are unique
+		if aggNewNames[agg.newName] {
+			df.err = fmt.Errorf("BaseDataFrame.Agg: aggregator output names must be unique")
+			return df
+		}
+		aggNewNames[agg.newName] = true
 
+		// CASE: aggregator count doesn't need an input series
+		if agg.type_ != AGGREGATE_COUNT {
 			if df.__series(agg.name) == nil {
 				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" not found", agg.name)
 				return df
