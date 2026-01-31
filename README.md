@@ -112,16 +112,16 @@ The data types not checked are not yet supported, but might be in the future.
 - [x] Agg
 - [x] Filter
 - [x] GroupBy
-- [ ] Join
+- [x] Join
 
   - [x] Inner
   - [x] Left
   - [x] Right
   - [x] Outer
-  - [ ] Inner with nulls
-  - [ ] Left with nulls
-  - [ ] Right with nulls
-  - [ ] Outer with nulls
+  - [x] Inner with nulls
+  - [x] Left with nulls
+  - [x] Right with nulls
+  - [x] Outer with nulls
 
 - [ ] Map
 - [x] OrderBy

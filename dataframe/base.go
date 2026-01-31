@@ -639,8 +639,9 @@ func (df BaseDataFrame) Join(how DataFrameJoinType, other DataFrame, on ...strin
 
 		// Series B
 		found = false
+		otherNames := other.Names()
 		for idx, series := range other.(BaseDataFrame).series {
-			if df.names[idx] == name {
+			if idx < len(otherNames) && otherNames[idx] == name {
 				found = true
 
 				// CHECK: the types must match
