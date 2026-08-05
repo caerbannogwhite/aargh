@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
@@ -17,7 +18,17 @@ type Durations struct {
 	NullMask_   []uint8
 	Partition_  *SeriesDurationPartition
 	Ctx_        *aargh.Context
+	arr_        arrow.Array
 }
+
+func (s Durations) ArrowArray() arrow.Array {
+	if s.arr_ != nil {
+		return s.arr_
+	}
+	return buildArrowDuration(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
+}
+
+func (s *Durations) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Durations) GetAsString(i int) string {

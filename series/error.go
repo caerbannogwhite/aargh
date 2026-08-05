@@ -1,6 +1,7 @@
 package series
 
 import (
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
@@ -256,4 +257,8 @@ func (s Errors) Lt(other any) Series {
 
 func (s Errors) Le(other any) Series {
 	return s
+}
+
+func (s Errors) ArrowArray() arrow.Array {
+	return nil
 }

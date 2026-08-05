@@ -1,6 +1,7 @@
 package series
 
 import (
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
@@ -122,6 +123,10 @@ type Series interface {
 	Ge(other any) Series
 	Lt(other any) Series
 	Le(other any) Series
+
+	// Arrow interop.
+	// Return the underlying Arrow array. May build it lazily from Go slices.
+	ArrowArray() arrow.Array
 }
 
 type SeriesNumeric interface {

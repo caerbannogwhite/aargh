@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
 
 // Bools represents a series of bools.
-// The Data_ is stored as a byte array, with each bit representing a bool.
 type Bools struct {
 	IsNullable_ bool
 	Sorted_     aargh.SeriesSortOrder
@@ -17,7 +17,17 @@ type Bools struct {
 	NullMask_   []uint8
 	Partition_  *SeriesBoolPartition
 	Ctx_        *aargh.Context
+	arr_        arrow.Array
 }
+
+func (s Bools) ArrowArray() arrow.Array {
+	if s.arr_ != nil {
+		return s.arr_
+	}
+	return buildArrowBoolean(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
+}
+
+func (s *Bools) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Bools) GetAsString(i int) string {

@@ -9,6 +9,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 	"github.com/caerbannogwhite/aargh/utils"
@@ -22,7 +23,17 @@ type Strings struct {
 	NullMask_   []uint8
 	Partition_  *SeriesStringPartition
 	Ctx_        *aargh.Context
+	arr_        arrow.Array
 }
+
+func (s Strings) ArrowArray() arrow.Array {
+	if s.arr_ != nil {
+		return s.arr_
+	}
+	return buildArrowString(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
+}
+
+func (s *Strings) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Strings) GetAsString(i int) string {

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 )
@@ -18,7 +19,17 @@ type Times struct {
 	Partition_  *SeriesTimePartition
 	Ctx_        *aargh.Context
 	timeFormat  string
+	arr_        arrow.Array
 }
+
+func (s Times) ArrowArray() arrow.Array {
+	if s.arr_ != nil {
+		return s.arr_
+	}
+	return buildArrowTimestamp(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
+}
+
+func (s *Times) invalidateArrow() { s.arr_ = nil }
 
 // Get the time format of the series.
 func (s Times) GetTimeFormat() string {

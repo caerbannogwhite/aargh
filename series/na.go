@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 	"github.com/caerbannogwhite/aargh/utils"
@@ -601,4 +604,12 @@ func (s NAs) Sort() Series {
 
 func (s NAs) SortRev() Series {
 	return s
+}
+
+// ArrowArray returns an all-null Arrow array of the NAs size.
+func (s NAs) ArrowArray() arrow.Array {
+	builder := array.NewNullBuilder(memory.DefaultAllocator)
+	defer builder.Release()
+	builder.AppendNulls(s.size)
+	return builder.NewNullArray()
 }
