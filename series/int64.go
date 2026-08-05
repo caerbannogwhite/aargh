@@ -18,17 +18,14 @@ type Int64s struct {
 	NullMask_   []uint8
 	Partition_  *SeriesInt64Partition
 	Ctx_        *aargh.Context
-	arr_        arrow.Array
 }
 
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see aargh.Context.Allocator).
 func (s Int64s) ArrowArray() arrow.Array {
-	if s.arr_ != nil {
-		return s.arr_
-	}
 	return buildArrowInt64(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
-
-func (s *Int64s) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Int64s) GetAsString(i int) string {

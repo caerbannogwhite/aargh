@@ -8,9 +8,10 @@ import (
 	"github.com/caerbannogwhite/aargh"
 )
 
-// ArrowArrayToSeries wraps an Arrow array into the corresponding aargh Series type.
-// The Arrow array's data is materialized into Go slices. The arr_ field is also
-// populated for caching.
+// ArrowArrayToSeries converts an Arrow array into the corresponding aargh Series
+// type. The array's data is materialized (copied) into Go slices; no reference to
+// the input array is retained, so the caller keeps ownership and may Release it
+// as soon as this function returns.
 func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 	if arr == nil {
 		return Errors{"ArrowArrayToSeries: nil array"}
@@ -47,7 +48,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 		}
 
 	case *array.Int64:
@@ -62,7 +62,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 		}
 
 	case *array.Int32:
@@ -189,7 +188,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 		}
 
 	case *array.String:
@@ -206,7 +204,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 		}
 
 	case *array.LargeString:
@@ -238,7 +235,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 			timeFormat:  ctx.GetDateTimeFormat(),
 		}
 
@@ -255,7 +251,6 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 			Data_:       data,
 			NullMask_:   nullMask,
 			Ctx_:        ctx,
-			arr_:        arr,
 		}
 
 	case *array.Date32:

@@ -19,20 +19,13 @@ type Float64s struct {
 	NullMask_   []uint8
 	Partition_  *SeriesFloat64Partition
 	Ctx_        *aargh.Context
-	arr_        arrow.Array // Arrow array (lazily built from Data_/NullMask_)
 }
 
-// ArrowArray returns the underlying Arrow array, building it if necessary.
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see aargh.Context.Allocator).
 func (s Float64s) ArrowArray() arrow.Array {
-	if s.arr_ != nil {
-		return s.arr_
-	}
 	return buildArrowFloat64(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
-}
-
-// invalidateArrow clears the cached Arrow array (call after mutating Data_/NullMask_).
-func (s *Float64s) invalidateArrow() {
-	s.arr_ = nil
 }
 
 // Get the element at index i as a string.

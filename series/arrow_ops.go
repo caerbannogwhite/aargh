@@ -20,6 +20,8 @@ func arrowBinaryArith(opName string, left, right Series, ctx *aargh.Context) Ser
 	if lArr == nil || rArr == nil {
 		return Errors{fmt.Sprintf("arrowBinaryArith(%s): nil Arrow array", opName)}
 	}
+	defer lArr.Release()
+	defer rArr.Release()
 
 	var lDatum, rDatum compute.Datum
 	if left.Len() == 1 {
@@ -67,6 +69,8 @@ func arrowBinaryCompare(opName string, left, right Series, ctx *aargh.Context) S
 	if lArr == nil || rArr == nil {
 		return Errors{fmt.Sprintf("arrowBinaryCompare(%s): nil Arrow array", opName)}
 	}
+	defer lArr.Release()
+	defer rArr.Release()
 
 	var lDatum, rDatum compute.Datum
 	if left.Len() == 1 {
@@ -95,6 +99,8 @@ func arrowBooleanOp(opName string, left, right Series, ctx *aargh.Context) Serie
 	if lArr == nil || rArr == nil {
 		return Errors{fmt.Sprintf("arrowBooleanOp(%s): nil Arrow array", opName)}
 	}
+	defer lArr.Release()
+	defer rArr.Release()
 
 	lDatum := &compute.ArrayDatum{Value: lArr.Data()}
 	rDatum := &compute.ArrayDatum{Value: rArr.Data()}
@@ -116,11 +122,14 @@ func scalarDatum(arr arrow.Array) compute.Datum {
 	return compute.NewDatum(sc)
 }
 
-// datumToSeries converts a compute.Datum result back to a Series.
+// datumToSeries converts a compute.Datum result back to a Series, releasing
+// the datum and the intermediate Arrow arrays it materializes from.
 func datumToSeries(d compute.Datum, ctx *aargh.Context) Series {
+	defer d.Release()
 	switch dt := d.(type) {
 	case *compute.ArrayDatum:
 		arr := dt.MakeArray()
+		defer arr.Release()
 		return ArrowArrayToSeries(arr, ctx)
 	case *compute.ScalarDatum:
 		// Wrap scalar into a single-element array
@@ -128,6 +137,7 @@ func datumToSeries(d compute.Datum, ctx *aargh.Context) Series {
 		if err != nil {
 			return Errors{fmt.Sprintf("datumToSeries: %v", err)}
 		}
+		defer arr.Release()
 		return ArrowArrayToSeries(arr, ctx)
 	default:
 		return Errors{fmt.Sprintf("datumToSeries: unsupported datum kind %v", d.Kind())}

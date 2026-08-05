@@ -23,17 +23,14 @@ type Strings struct {
 	NullMask_   []uint8
 	Partition_  *SeriesStringPartition
 	Ctx_        *aargh.Context
-	arr_        arrow.Array
 }
 
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see aargh.Context.Allocator).
 func (s Strings) ArrowArray() arrow.Array {
-	if s.arr_ != nil {
-		return s.arr_
-	}
 	return buildArrowString(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
-
-func (s *Strings) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Strings) GetAsString(i int) string {

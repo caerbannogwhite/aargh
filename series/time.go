@@ -19,17 +19,14 @@ type Times struct {
 	Partition_  *SeriesTimePartition
 	Ctx_        *aargh.Context
 	timeFormat  string
-	arr_        arrow.Array
 }
 
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see aargh.Context.Allocator).
 func (s Times) ArrowArray() arrow.Array {
-	if s.arr_ != nil {
-		return s.arr_
-	}
 	return buildArrowTimestamp(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
-
-func (s *Times) invalidateArrow() { s.arr_ = nil }
 
 // Get the time format of the series.
 func (s Times) GetTimeFormat() string {

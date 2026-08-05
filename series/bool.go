@@ -17,17 +17,14 @@ type Bools struct {
 	NullMask_   []uint8
 	Partition_  *SeriesBoolPartition
 	Ctx_        *aargh.Context
-	arr_        arrow.Array
 }
 
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see aargh.Context.Allocator).
 func (s Bools) ArrowArray() arrow.Array {
-	if s.arr_ != nil {
-		return s.arr_
-	}
 	return buildArrowBoolean(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
-
-func (s *Bools) invalidateArrow() { s.arr_ = nil }
 
 // Get the element at index i as a string.
 func (s Bools) GetAsString(i int) string {

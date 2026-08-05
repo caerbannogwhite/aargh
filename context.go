@@ -15,6 +15,10 @@ type Context struct {
 
 	// Allocator is the Arrow memory allocator used for building Arrow arrays.
 	// Defaults to memory.DefaultAllocator (backed by Go GC, no manual Retain/Release needed).
+	// Custom allocators must also be GC-backed (e.g. a CheckedAllocator wrapping a
+	// GoAllocator): the library releases its internal Arrow references
+	// deterministically, but Release on values returned to callers
+	// (Series.ArrowArray, DataFrame.ToArrowRecord) is optional.
 	Allocator memory.Allocator
 
 	threadsNumber  int
