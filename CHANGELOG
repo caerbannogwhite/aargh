@@ -1,6 +1,11 @@
 v0.2.0
- - [Feature] Reading SAS7BDAT
+ - [Feature] Apache Arrow interop: Series.ArrowArray(), DataFrame.ArrowSchema() / ToArrowRecord(), NewBaseDataFrameFromArrowRecord()
+ - [Feature] Parquet reader and writer: DataFrame.FromParquet() / ToParquet()
+ - [Feature] Arrow IPC (Feather) reader and writer: DataFrame.FromArrowIPC() / ToArrowIPC()
+ - [Improved] Aggregators improved, dataframe integration tests added
+ - [BugFix] Join: fixed right-dataframe column lookup
  - [Improved] Added examples
+ - [WIP] SAS7BDAT reader: header and page parsing only; data reading deferred to a future release
 
 v0.1.1: morning
  - [BugFix] Corrected issue where IoData was not set in DataFrame IOs

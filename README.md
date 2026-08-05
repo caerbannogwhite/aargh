@@ -8,6 +8,9 @@ Aargh is a library for data wrangling in Go.
 The goal is to provide a simple and efficient API for data manipulation in Go,
 similar to Pandas or Polars in Python, and Dplyr in R.
 It supports nullable types: null data is optimized for memory usage.
+Series and DataFrames interoperate with [Apache Arrow](https://arrow.apache.org/)
+(`Series.ArrowArray()`, `DataFrame.ToArrowRecord()`), which also powers the
+Parquet and Arrow IPC readers and writers.
 
 Aargh is a work in progress, and the API is not stable yet.
 The DataFrame package is still being developed.
@@ -17,8 +20,11 @@ However, it already supports the following formats:
 - CSV
 - XPT (SAS)
 - XLSX
+- JSON
 - HTML
 - Markdown
+- Parquet
+- Arrow IPC (Feather)
 
 ### Examples
 
@@ -146,6 +152,7 @@ The data types not checked are not yet supported, but might be in the future.
 
 Built with:
 
+- [arrow-go](https://github.com/apache/arrow-go)
 - [xslx](https://github.com/tealeg/xlsx/tree/master)
 - [lipgloss](https://github.com/charmbracelet/lipgloss)
 
@@ -164,6 +171,5 @@ Built with:
 - [ ] Add format option to each writer.
 - [ ] JSON reader by records.
 - [ ] Implement chunked series.
-- [ ] Implement Parquet reader and writer.
 - [ ] Implement SPSS reader and writer.
 - [ ] Implement SAS7BDAT reader and writer (https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)
