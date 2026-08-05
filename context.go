@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+
+	"github.com/apache/arrow-go/v18/arrow/memory"
 )
 
 type Context struct {
 	// StringPool is a pool of strings that are used by the series.
 	// This is used to reduce the number of allocations and to allow for fast comparisons.
 	StringPool *StringPool
+
+	// Allocator is the Arrow memory allocator used for building Arrow arrays.
+	// Defaults to memory.DefaultAllocator (backed by Go GC, no manual Retain/Release needed).
+	Allocator memory.Allocator
 
 	threadsNumber  int
 	naText         string
@@ -26,6 +32,7 @@ func NewContext() *Context {
 
 	return &Context{
 		StringPool:     NewStringPool().SetNaText(NA_TEXT),
+		Allocator:      memory.DefaultAllocator,
 		threadsNumber:  THREADS_NUMBER,
 		naText:         NA_TEXT,
 		eol:            eol,
