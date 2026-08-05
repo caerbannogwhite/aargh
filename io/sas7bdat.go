@@ -277,19 +277,15 @@ func (r *Sas7bdatReader) parseHeader() error {
 
 	// Get OS type
 	if headerBytes[39] == 0x01 {
-		fmt.Println("UNIX")
+		r.iod.FileMeta.SasOs = "UNIX"
 	} else if headerBytes[39] == 0x02 {
-		fmt.Println("WINDOWS")
-	} else {
-		fmt.Printf("UNKNOWN OS TYPE: %x\n", headerBytes[39])
+		r.iod.FileMeta.SasOs = "WINDOWS"
 	}
 
-	// Get encoding
-	encoding, err := r.readInteger(headerBytes[70:72], 2)
-	if err != nil {
+	// Get encoding (validated but not stored yet)
+	if _, err := r.readInteger(headerBytes[70:72], 2); err != nil {
 		return fmt.Errorf("failed to read encoding: %w", err)
 	}
-	fmt.Println("ENCODING", encoding)
 
 	// Get SAS file
 	if strings.TrimSpace(string(headerBytes[84:92])) != "SAS FILE" {
@@ -299,9 +295,6 @@ func (r *Sas7bdatReader) parseHeader() error {
 	// Get dataset name
 	datasetName := string(headerBytes[92:156])
 	r.iod.FileMeta.SasDsName = strings.TrimSpace(datasetName)
-
-	// Get dataset type
-	fmt.Println("DATASET TYPE", string(headerBytes[156:164]))
 
 	// Get Date Created
 	bits := r.byteOrder.Uint64(headerBytes[164+r.header.a1 : 172+r.header.a1])

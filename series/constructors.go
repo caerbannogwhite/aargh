@@ -2,6 +2,7 @@ package series
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/caerbannogwhite/aargh"
@@ -181,7 +182,7 @@ func NewSeriesError(err string) Errors {
 // Build an NA Series
 func NewSeriesNA(size int, ctx *aargh.Context) NAs {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesNA: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesNA: context is nil")
 	}
 
 	if size < 0 {
@@ -194,7 +195,7 @@ func NewSeriesNA(size int, ctx *aargh.Context) NAs {
 // Build a Bool Series, if nullMask is nil then the series is not nullable
 func NewSeriesBool(data []bool, nullMask []bool, makeCopy bool, ctx *aargh.Context) Bools {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesBool: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesBool: context is nil")
 	}
 
 	var isNullable bool
@@ -229,7 +230,7 @@ func NewSeriesBool(data []bool, nullMask []bool, makeCopy bool, ctx *aargh.Conte
 // Build a Int Series, if nullMask is nil then the series is not nullable
 func NewSeriesInt(data []int, nullMask []bool, makeCopy bool, ctx *aargh.Context) Ints {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesInt: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesInt: context is nil")
 	}
 
 	var isNullable bool
@@ -264,7 +265,7 @@ func NewSeriesInt(data []int, nullMask []bool, makeCopy bool, ctx *aargh.Context
 // Build a Int64 Series, if nullMask is nil then the series is not nullable
 func NewSeriesInt64(data []int64, nullMask []bool, makeCopy bool, ctx *aargh.Context) Int64s {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesInt64: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesInt64: context is nil")
 	}
 
 	var isNullable bool
@@ -299,7 +300,7 @@ func NewSeriesInt64(data []int64, nullMask []bool, makeCopy bool, ctx *aargh.Con
 // Build a Float64 Series, if nullMask is nil then the series is not nullable
 func NewSeriesFloat64(data []float64, nullMask []bool, makeCopy bool, ctx *aargh.Context) Float64s {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesFloat64: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesFloat64: context is nil")
 	}
 
 	var isNullable bool
@@ -334,7 +335,7 @@ func NewSeriesFloat64(data []float64, nullMask []bool, makeCopy bool, ctx *aargh
 // Build a String Series, if nullMask is nil then the series is not nullable
 func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *aargh.Context) Strings {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesString: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesString: context is nil")
 	}
 
 	var isNullable bool
@@ -378,7 +379,7 @@ func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *aargh.C
 // Build a String Series from a slice of pointers to strings, if nullMask is nil then the series is not nullable
 func NewSeriesStringFromPtrs(data []*string, nullMask []bool, makeCopy bool, ctx *aargh.Context) Strings {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesStringFromPtrs: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesStringFromPtrs: context is nil")
 	}
 
 	var isNullable bool
@@ -407,7 +408,7 @@ func NewSeriesStringFromPtrs(data []*string, nullMask []bool, makeCopy bool, ctx
 // Build a Time Series, if nullMask is nil then the series is not nullable
 func NewSeriesTime(data []time.Time, nullMask []bool, makeCopy bool, ctx *aargh.Context) Times {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesTime: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesTime: context is nil")
 	}
 
 	var isNullable bool
@@ -443,7 +444,7 @@ func NewSeriesTime(data []time.Time, nullMask []bool, makeCopy bool, ctx *aargh.
 // Build a Duration Series, if nullMask is nil then the series is not nullable
 func NewSeriesDuration(data []time.Duration, nullMask []bool, makeCopy bool, ctx *aargh.Context) Durations {
 	if ctx == nil {
-		fmt.Println("WARNING: NewSeriesDuration: context is nil")
+		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesDuration: context is nil")
 	}
 
 	var isNullable bool
