@@ -480,3 +480,89 @@ func (w *markDownWriterWrapper) SetWriter(writer io.Writer) *markDownWriterWrapp
 func (w *markDownWriterWrapper) Write() error {
 	return w.writer.Write()
 }
+
+////////////////////////			PARQUET READER
+
+type parquetReaderWrapper struct {
+	reader *aarghio.ParquetReader
+}
+
+func (df BaseDataFrame) FromParquet() *parquetReaderWrapper {
+	return &parquetReaderWrapper{
+		reader: aarghio.NewParquetReader(df.ctx),
+	}
+}
+
+func (r *parquetReaderWrapper) SetPath(path string) *parquetReaderWrapper {
+	r.reader = r.reader.SetPath(path)
+	return r
+}
+
+func (r *parquetReaderWrapper) Read() DataFrame {
+	iod := r.reader.Read()
+	return FromIoData(iod)
+}
+
+////////////////////////			PARQUET WRITER
+
+type parquetWriterWrapper struct {
+	writer *aarghio.ParquetWriter
+}
+
+func (df BaseDataFrame) ToParquet() *parquetWriterWrapper {
+	return &parquetWriterWrapper{
+		writer: aarghio.NewParquetWriter().SetIoData(df.ToIoData()),
+	}
+}
+
+func (w *parquetWriterWrapper) SetPath(path string) *parquetWriterWrapper {
+	w.writer = w.writer.SetPath(path)
+	return w
+}
+
+func (w *parquetWriterWrapper) Write() error {
+	return w.writer.Write()
+}
+
+////////////////////////			ARROW IPC READER
+
+type arrowIPCReaderWrapper struct {
+	reader *aarghio.ArrowIPCReader
+}
+
+func (df BaseDataFrame) FromArrowIPC() *arrowIPCReaderWrapper {
+	return &arrowIPCReaderWrapper{
+		reader: aarghio.NewArrowIPCReader(df.ctx),
+	}
+}
+
+func (r *arrowIPCReaderWrapper) SetPath(path string) *arrowIPCReaderWrapper {
+	r.reader = r.reader.SetPath(path)
+	return r
+}
+
+func (r *arrowIPCReaderWrapper) Read() DataFrame {
+	iod := r.reader.Read()
+	return FromIoData(iod)
+}
+
+////////////////////////			ARROW IPC WRITER
+
+type arrowIPCWriterWrapper struct {
+	writer *aarghio.ArrowIPCWriter
+}
+
+func (df BaseDataFrame) ToArrowIPC() *arrowIPCWriterWrapper {
+	return &arrowIPCWriterWrapper{
+		writer: aarghio.NewArrowIPCWriter().SetIoData(df.ToIoData()),
+	}
+}
+
+func (w *arrowIPCWriterWrapper) SetPath(path string) *arrowIPCWriterWrapper {
+	w.writer = w.writer.SetPath(path)
+	return w
+}
+
+func (w *arrowIPCWriterWrapper) Write() error {
+	return w.writer.Write()
+}

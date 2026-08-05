@@ -3,6 +3,7 @@ package dataframe
 import (
 	"time"
 
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"
 	"github.com/caerbannogwhite/aargh/meta"
 	"github.com/caerbannogwhite/aargh/series"
@@ -118,4 +119,14 @@ type DataFrame interface {
 
 	ToHtml() *htmlWriterWrapper
 	ToMarkDown() *markDownWriterWrapper
+
+	FromParquet() *parquetReaderWrapper
+	ToParquet() *parquetWriterWrapper
+
+	FromArrowIPC() *arrowIPCReaderWrapper
+	ToArrowIPC() *arrowIPCWriterWrapper
+
+	// Arrow interop.
+	ArrowSchema() *arrow.Schema
+	ToArrowRecord() arrow.Record
 }
