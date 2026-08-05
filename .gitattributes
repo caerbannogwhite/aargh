@@ -1,0 +1,12 @@
+* text=auto
+
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
+
+*.xpt -text
+*.XPT -text
+*.sas7bdat -text
+*.xlsx -text
+*.parquet -text
+*.arrow -text
