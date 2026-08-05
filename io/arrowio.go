@@ -82,7 +82,9 @@ func (r *ArrowIPCReader) Read() *IoData {
 					iod.Error = fmt.Errorf("ArrowIPCReader.Read: column %q record %d: %s", schema.Field(j).Name, i, chunk.GetError())
 					return iod
 				}
-				allSeries[j] = allSeries[j].Append(chunk.Data())
+				// Append the series (not its raw data) so the chunk's null
+				// mask is merged instead of dropped.
+				allSeries[j] = allSeries[j].Append(chunk)
 			}
 		}
 	}
@@ -161,6 +163,11 @@ func (w *ArrowIPCWriter) Write() error {
 	schema := arrow.NewSchema(fields, nil)
 	rec := makeRecord(schema, cols, nrows)
 	defer rec.Release()
+	// makeRecord retains the columns; drop our references so rec.Release()
+	// frees everything.
+	for _, c := range cols {
+		c.Release()
+	}
 
 	// Write to file
 	f, err := os.Create(w.path)

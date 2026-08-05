@@ -29,15 +29,21 @@ func (df BaseDataFrame) ArrowSchema() *arrow.Schema {
 }
 
 // ToArrowRecord converts this DataFrame to an Arrow Record (columnar batch).
-// The caller should call Release() on the returned record when done.
+// The column arrays are freshly built copies owned by the record: the caller
+// should Release() the returned record when done (optional but recommended
+// under GC-backed allocators, see aargh.Context.Allocator).
 func (df BaseDataFrame) ToArrowRecord() arrow.Record {
+	alloc := memory.DefaultAllocator
+	if df.ctx != nil {
+		alloc = df.ctx.Allocator
+	}
 	schema := df.ArrowSchema()
 	cols := make([]arrow.Array, len(df.series))
 	for i, s := range df.series {
 		arr := s.ArrowArray()
 		if arr == nil {
 			// Build a null array for unsupported types
-			builder := array.NewNullBuilder(memory.DefaultAllocator)
+			builder := array.NewNullBuilder(alloc)
 			for j := 0; j < s.Len(); j++ {
 				builder.AppendNull()
 			}
@@ -47,11 +53,19 @@ func (df BaseDataFrame) ToArrowRecord() arrow.Record {
 			cols[i] = arr
 		}
 	}
-	return array.NewRecord(schema, cols, int64(df.NRows()))
+	rec := array.NewRecord(schema, cols, int64(df.NRows()))
+	// NewRecord retains the columns; drop our references so the record is the
+	// sole owner and rec.Release() frees everything.
+	for _, c := range cols {
+		c.Release()
+	}
+	return rec
 }
 
 // NewBaseDataFrameFromArrowRecord creates a BaseDataFrame from an Arrow Record.
-// Each column in the record becomes a Series in the DataFrame.
+// Each column in the record becomes a Series in the DataFrame. Column data is
+// materialized into Go slices, so this function does not take ownership of the
+// record: the caller may Release it as soon as this function returns.
 func NewBaseDataFrameFromArrowRecord(record arrow.Record, ctx *aargh.Context) DataFrame {
 	if ctx == nil {
 		return BaseDataFrame{err: fmt.Errorf("NewBaseDataFrameFromArrowRecord: context is nil")}

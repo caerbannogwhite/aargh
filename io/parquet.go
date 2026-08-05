@@ -107,7 +107,9 @@ func multiChunkToSeries(chunks []arrow.Array, ctx *aargh.Context) series.Series 
 		if chunk.IsError() {
 			return chunk
 		}
-		result = result.Append(chunk.Data())
+		// Append the series (not its raw data) so the chunk's null mask is
+		// merged instead of dropped.
+		result = result.Append(chunk)
 	}
 	return result
 }
@@ -172,6 +174,11 @@ func (w *ParquetWriter) Write() error {
 	schema := arrow.NewSchema(fields, nil)
 	rec := makeRecord(schema, cols, nrows)
 	defer rec.Release()
+	// makeRecord retains the columns; drop our references so rec.Release()
+	// frees everything.
+	for _, c := range cols {
+		c.Release()
+	}
 
 	// Write to file
 	f, err := os.Create(w.path)
