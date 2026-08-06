@@ -1,7 +1,7 @@
+// Package arrowutil provides conversion utilities between enchanter's null
+// mask convention (bit-set=null) and Arrow's validity bitmap convention
+// (bit-set=valid).
 package arrowutil
-
-// Package arrowutil provides conversion utilities between enchanter's null mask
-// convention (bit-set=null) and Arrow's validity bitmap convention (bit-set=valid).
 
 // NullMaskToValidityBitmap converts an enchanter null mask (bit-set=null) to an
 // Arrow validity bitmap (bit-set=valid). The result is a byte slice suitable
