@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "dev-*"]
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: gofmt
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -l .)"
+
+      - name: Generated code is up to date
+        if: runner.os == 'Linux'
+        run: |
+          go generate ./series/
+          git diff --exit-code
+
+      - name: Build examples
+        if: runner.os == 'Linux'
+        run: go -C examples build ./...
+
+      # -short skips loading the large local-only benchmark fixtures.
+      - name: Test
+        run: go test -short -count=1 ./...
+
+  race:
+    name: race detector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test with race detector
+        run: go test -race -short -count=1 ./...

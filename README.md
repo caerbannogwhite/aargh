@@ -1,6 +1,7 @@
 ## Aargh 🧙‍♂️
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/caerbannogwhite/aargh.svg)](https://pkg.go.dev/github.com/caerbannogwhite/aargh)
+[![CI](https://github.com/caerbannogwhite/aargh/actions/workflows/ci.yml/badge.svg)](https://github.com/caerbannogwhite/aargh/actions/workflows/ci.yml)
 
 ### What is it?
 
