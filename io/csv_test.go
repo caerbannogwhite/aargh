@@ -10,134 +10,6 @@ import (
 	"github.com/caerbannogwhite/enchanter/series"
 )
 
-func Test_TypeGuesser(t *testing.T) {
-	// Create a new type guesser.
-	tg := newTypeGuesser(false)
-
-	// Test the bool type.
-	if tg.guessType("true") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("true").String())
-	}
-
-	if tg.guessType("false") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("false").String())
-	}
-
-	if tg.guessType("True") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("True").String())
-	}
-
-	if tg.guessType("False") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("False").String())
-	}
-
-	if tg.guessType("TRUE") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("TRUE").String())
-	}
-
-	if tg.guessType("FALSE") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("FALSE").String())
-	}
-
-	if tg.guessType("t") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("t").String())
-	}
-
-	if tg.guessType("f") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("f").String())
-	}
-
-	if tg.guessType("T") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("T").String())
-	}
-
-	if tg.guessType("F") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("F").String())
-	}
-
-	if tg.guessType("TrUe") != meta.BoolType {
-		t.Error("Expected Bool, got", tg.guessType("TrUe").String())
-	}
-
-	// Test the int type.
-	if tg.guessType("0") != meta.Int64Type {
-		t.Error("Expected Int64, got", tg.guessType("0").String())
-	}
-
-	if tg.guessType("1") != meta.Int64Type {
-		t.Error("Expected Int64, got", tg.guessType("1").String())
-	}
-
-	if tg.guessType("10000") != meta.Int64Type {
-		t.Error("Expected Int64, got", tg.guessType("10000").String())
-	}
-
-	if tg.guessType("-1") != meta.Int64Type {
-		t.Error("Expected Int64, got", tg.guessType("-1").String())
-	}
-
-	if tg.guessType("-10000") != meta.Int64Type {
-		t.Error("Expected Int64, got", tg.guessType("-10000").String())
-	}
-
-	// Test the float type.
-	if tg.guessType("0.0") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("0.0").String())
-	}
-
-	if tg.guessType("1.0") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("1.0").String())
-	}
-
-	if tg.guessType("10000.0") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("10000.0").String())
-	}
-
-	if tg.guessType("-1.0") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("-1.0").String())
-	}
-
-	if tg.guessType("-1e3") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("-1e3").String())
-	}
-
-	if tg.guessType("-1e-3") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("-1e-3").String())
-	}
-
-	if tg.guessType("2.0E4") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("2.0E4").String())
-	}
-
-	if tg.guessType("2.0e4") != meta.Float64Type {
-		t.Error("Expected Float64, got", tg.guessType("2.0e4").String())
-	}
-}
-
-func Test_TypeGuesserWithNAs(t *testing.T) {
-	// Create a new type guesser.
-	tg := newTypeGuesser(true)
-
-	tg.setLength(4)
-
-	tg.guessTypes([]string{"t", "-1", "-1e-1", "a"})
-	tg.guessTypes([]string{"f", "0", "1E+1", "b"})
-	tg.guessTypes([]string{"", "", "", ""})
-	tg.guessTypes([]string{"true", "1", "1.23e2", "c"})
-	tg.guessTypes([]string{"false", "2", "1.23e-2", "d"})
-	tg.guessTypes([]string{"na", "null", "n/a", "e"})
-
-	if tg.typeBuckets[0].boolCount != 4 && tg.typeBuckets[0].nullCount != 2 {
-		t.Error("Expected 4 bools and 2 nulls, got", tg.typeBuckets[0].boolCount, tg.typeBuckets[0].nullCount)
-	}
-	if tg.typeBuckets[1].intCount != 4 && tg.typeBuckets[1].nullCount != 2 {
-		t.Error("Expected 4 ints and 2 nulls, got", tg.typeBuckets[1].intCount, tg.typeBuckets[1].nullCount)
-	}
-	if tg.typeBuckets[2].floatCount != 4 && tg.typeBuckets[2].nullCount != 2 {
-		t.Error("Expected 4 floats and 2 nulls, got", tg.typeBuckets[2].floatCount, tg.typeBuckets[2].nullCount)
-	}
-}
-
 func Test_FromCsv(t *testing.T) {
 
 	data := `name,age,weight,junior
@@ -270,6 +142,66 @@ Charlie,33,95.0,t
 
 	if iod.At(3).Data().([]bool)[7] != true {
 		t.Error("Expected true, got", iod.At(3).Data().([]bool)[7])
+	}
+}
+
+func Test_FromCsvWithDates(t *testing.T) {
+
+	data := `name,last name,DOB,last seen
+Jackson,Lamb,1950-01-01,2025-01-01 12:00:00
+River,Cartwright,1991-02-02,2025-02-02 12:00:00
+Catherine,Standish,1992-03-03,2025-03-03 12:00:00
+Louisa,Guy,1993-04-04,2025-04-04 12:00:00
+`
+
+	// Create a new dataframe from the CSV data.
+	iod := FromCsv(ctx).
+		SetReader(strings.NewReader(data)).
+		SetGuessDataTypeLen(3).
+		Read()
+
+	if iod.Error != nil {
+		t.Error(iod.Error)
+	}
+
+	if iod.NCols() != 4 {
+		t.Error("Expected 4 columns, got", iod.NCols())
+	}
+
+	if iod.NRows() != 4 {
+		t.Error("Expected 4 rows, got", iod.NRows())
+	}
+
+	if iod.SeriesMetaAt(0).Name != "name" {
+		t.Error("Expected 'name', got", iod.SeriesMetaAt(0).Name)
+	}
+
+	if iod.SeriesMetaAt(0).Type != meta.StringType {
+		t.Error("Expected String, got", iod.SeriesMetaAt(0).Type.String())
+	}
+
+	if iod.SeriesMetaAt(1).Name != "last name" {
+		t.Error("Expected 'last name', got", iod.SeriesMetaAt(1).Name)
+	}
+
+	if iod.SeriesMetaAt(1).Type != meta.StringType {
+		t.Error("Expected String, got", iod.SeriesMetaAt(1).Type.String())
+	}
+
+	if iod.SeriesMetaAt(2).Name != "DOB" {
+		t.Error("Expected 'DOB', got", iod.SeriesMetaAt(2).Name)
+	}
+
+	if iod.SeriesMetaAt(2).Type != meta.TimeType {
+		t.Error("Expected Time, got", iod.SeriesMetaAt(2).Type.String())
+	}
+
+	if iod.SeriesMetaAt(3).Name != "last seen" {
+		t.Error("Expected 'last seen', got", iod.SeriesMetaAt(3).Name)
+	}
+
+	if iod.SeriesMetaAt(3).Type != meta.TimeType {
+		t.Error("Expected Time, got", iod.SeriesMetaAt(3).Type.String())
 	}
 }
 

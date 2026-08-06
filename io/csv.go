@@ -108,7 +108,6 @@ func (r *CsvReader) Read() *IoData {
 // readCsv reads a CSV file and returns a IoData.
 func (r *CsvReader) readCsv() *IoData {
 
-	// TODO: Add support for Time and Duration types (defined in a schema)
 	// TODO: Optimize null masks (use bit vectors)?
 	// TODO: Try to optimize this function by using goroutines: read the rows (like 1000)
 	//		and guess the data types in parallel
@@ -123,7 +122,7 @@ func (r *CsvReader) readCsv() *IoData {
 	if r.path != "" {
 		fileInfo, err := os.Stat(r.path)
 		if err != nil {
-			return &IoData{Error: fmt.Errorf("readXptV89: %w", err)}
+			return &IoData{Error: fmt.Errorf("readCsv: %w", err)}
 		}
 
 		fileMeta.FileSize = fileInfo.Size()
@@ -154,7 +153,6 @@ func (r *CsvReader) readCsv() *IoData {
 		for _, name := range names {
 			seriesMeta = append(seriesMeta, SeriesMeta{
 				Name: name,
-				Type: meta.StringType,
 			})
 		}
 	}
@@ -169,9 +167,12 @@ func (r *CsvReader) readCsv() *IoData {
 		for i := 0; i < len(series); i++ {
 			seriesMeta = append(seriesMeta, SeriesMeta{
 				Name: fmt.Sprintf("Column %d", i+1),
-				Type: meta.StringType,
 			})
 		}
+	}
+
+	for i, s := range series {
+		seriesMeta[i].Type = s.Type()
 	}
 
 	return &IoData{

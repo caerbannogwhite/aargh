@@ -13,6 +13,11 @@ v0.2.0
  - [Improved] Added examples
  - [WIP] SAS7BDAT reader: header and page parsing only; data reading deferred to a future release
 
+v0.1.2: second-fish
+ - [Enanchment] Added support for time in the type guesser
+ - [BugFix] Type guesser boolean regex fixed
+ - [BugFix] Getting the correct series type in CSV reader
+
 v0.1.1: morning
  - [BugFix] Corrected issue where IoData was not set in DataFrame IOs
  - [BugFix] Fixed reading of XPT V8 and V9 labels

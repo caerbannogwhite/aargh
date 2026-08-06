@@ -6,6 +6,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/caerbannogwhite/enchanter"
 	"github.com/caerbannogwhite/enchanter/meta"
@@ -13,23 +14,28 @@ import (
 )
 
 type typeBucket struct {
-	nullCount   int
-	boolCount   int
-	intCount    int
-	floatCount  int
-	stringCount int
+	nullCount     int
+	boolCount     int
+	intCount      int
+	floatCount    int
+	stringCount   int
+	dateCount     int
+	datetimeCount int
 }
 
 // Get the most common type in the bucket and whether it is the only type
 func (tb *typeBucket) getMostCommonType() (meta.BaseType, bool) {
-	if tb.boolCount > tb.intCount && tb.boolCount > tb.floatCount && tb.boolCount > tb.stringCount {
-		return meta.BoolType, tb.nullCount+tb.intCount+tb.floatCount+tb.stringCount == 0
-	} else if tb.intCount > tb.floatCount && tb.intCount > tb.stringCount {
-		return meta.Int64Type, tb.nullCount+tb.boolCount+tb.floatCount+tb.stringCount == 0
-	} else if tb.floatCount > tb.stringCount {
-		return meta.Float64Type, tb.nullCount+tb.boolCount+tb.intCount+tb.stringCount == 0
+	timeCount := tb.dateCount + tb.datetimeCount
+	if tb.boolCount > tb.intCount && tb.boolCount > tb.floatCount && tb.boolCount > tb.stringCount && tb.boolCount > timeCount {
+		return meta.BoolType, tb.nullCount+tb.intCount+tb.floatCount+tb.stringCount+timeCount == 0
+	} else if tb.intCount > tb.floatCount && tb.intCount > tb.stringCount && tb.intCount > timeCount {
+		return meta.Int64Type, tb.nullCount+tb.boolCount+tb.floatCount+tb.stringCount+timeCount == 0
+	} else if tb.floatCount > tb.stringCount && tb.floatCount > timeCount {
+		return meta.Float64Type, tb.nullCount+tb.boolCount+tb.intCount+tb.stringCount+timeCount == 0
+	} else if timeCount > tb.stringCount {
+		return meta.TimeType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+tb.stringCount == 0
 	}
-	return meta.StringType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount == 0
+	return meta.StringType, tb.nullCount+tb.boolCount+tb.intCount+tb.floatCount+timeCount == 0
 }
 
 type typeGuesser struct {
@@ -40,6 +46,8 @@ type typeGuesser struct {
 	boolFalseRegex *regexp.Regexp
 	intRegex       *regexp.Regexp
 	floatRegex     *regexp.Regexp
+	dateRegex      *regexp.Regexp
+	datetimeRegex  *regexp.Regexp
 
 	// For each column, count the number of values that match each type
 	typeBuckets []typeBucket
@@ -50,11 +58,15 @@ func newTypeGuesser(nullValues bool) typeGuesser {
 	return typeGuesser{
 		nullValues,
 		regexp.MustCompile(`^([Nn][Uu][Ll][Ll])$|^([Nn][Aa][Nn]?)$|^([Nn]/[Aa])$|^$`),
-		regexp.MustCompile(`^([Tt]([Rr][Uu][Ee])?)|([Ff]([Aa][Ll][Ss][Ee])?)$`),
+		regexp.MustCompile(`^[Tt]([Rr][Uu][Ee])?$|^[Ff]([Aa][Ll][Ss][Ee])?$`),
 		regexp.MustCompile(`^[Tt]([Rr][Uu][Ee])?$`),
 		regexp.MustCompile(`^[Ff]([Aa][Ll][Ss][Ee])?$`),
 		regexp.MustCompile(`^[-+]?[0-9]+$`),
 		regexp.MustCompile(`^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$`),
+		// Date patterns: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, MM/DD/YY, DD/MM/YY
+		regexp.MustCompile(`^(19|20)\d{2}[-/](0[1-9]|1[0-2])[-/](0[1-9]|[12]\d|3[01])$|^(0[1-9]|1[0-2])[-/](0[1-9]|[12]\d|3[01])[-/]((19|20)\d{2}|\d{2})$|^(0[1-9]|[12]\d|3[01])[-/](0[1-9]|1[0-2])[-/]((19|20)\d{2}|\d{2})$`),
+		// Datetime patterns: YYYY-MM-DD HH:MM:SS, MM/DD/YYYY HH:MM:SS, MM/DD/YY HH:MM:SS, etc.
+		regexp.MustCompile(`^(19|20)\d{2}[-/](0[1-9]|1[0-2])[-/](0[1-9]|[12]\d|3[01])\s+(0[0-9]|1[0-9]|2[0-3]):([0-5]\d)(:([0-5]\d))?(\s*[AP]M)?$|^(0[1-9]|1[0-2])[-/](0[1-9]|[12]\d|3[01])[-/]((19|20)\d{2}|\d{2})\s+(0[0-9]|1[0-9]|2[0-3]):([0-5]\d)(:([0-5]\d))?(\s*[AP]M)?$|^(0[1-9]|[12]\d|3[01])[-/](0[1-9]|1[0-2])[-/]((19|20)\d{2}|\d{2})\s+(0[0-9]|1[0-9]|2[0-3]):([0-5]\d)(:([0-5]\d))?(\s*[AP]M)?$`),
 		nil,
 	}
 }
@@ -70,6 +82,10 @@ func (tg *typeGuesser) guessType(record string) meta.BaseType {
 		return meta.Int64Type
 	} else if tg.floatRegex.MatchString(record) {
 		return meta.Float64Type
+	} else if tg.datetimeRegex.MatchString(record) {
+		return meta.TimeType
+	} else if tg.dateRegex.MatchString(record) {
+		return meta.TimeType
 	}
 	return meta.StringType
 }
@@ -82,6 +98,10 @@ func (tg *typeGuesser) guessTypes(records []string) {
 			tg.typeBuckets[i].intCount++
 		} else if tg.floatRegex.MatchString(v) {
 			tg.typeBuckets[i].floatCount++
+		} else if tg.datetimeRegex.MatchString(v) {
+			tg.typeBuckets[i].datetimeCount++
+		} else if tg.dateRegex.MatchString(v) {
+			tg.typeBuckets[i].dateCount++
 		} else {
 			tg.typeBuckets[i].stringCount++
 		}
@@ -96,6 +116,10 @@ func (tg *typeGuesser) guessTypesNulls(records []string) {
 			tg.typeBuckets[i].intCount++
 		} else if tg.floatRegex.MatchString(v) {
 			tg.typeBuckets[i].floatCount++
+		} else if tg.datetimeRegex.MatchString(v) {
+			tg.typeBuckets[i].datetimeCount++
+		} else if tg.dateRegex.MatchString(v) {
+			tg.typeBuckets[i].dateCount++
 		} else if tg.nullRegex.MatchString(v) {
 			tg.typeBuckets[i].nullCount++
 		} else {
@@ -129,6 +153,45 @@ func (tg typeGuesser) atoBool(s string) (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("cannot convert \"%s\" to bool", s)
+}
+
+func (tg typeGuesser) atoTime(s string) (time.Time, error) {
+	// Try various date and datetime formats
+	formats := []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+		"2006-01-02",
+		"01/02/2006 15:04:05",
+		"01/02/2006 15:04",
+		"01/02/2006",
+		"02/01/2006 15:04:05",
+		"02/01/2006 15:04",
+		"02/01/2006",
+		"01-02-2006 15:04:05",
+		"01-02-2006 15:04",
+		"01-02-2006",
+		"02-01-2006 15:04:05",
+		"02-01-2006 15:04",
+		"02-01-2006",
+		"2006/01/02 15:04:05",
+		"2006/01/02 15:04",
+		"2006/01/02",
+		// Handle AM/PM formats
+		"2006-01-02 03:04:05 PM",
+		"2006-01-02 03:04 PM",
+		"01/02/2006 03:04:05 PM",
+		"01/02/2006 03:04 PM",
+		"02/01/2006 03:04:05 PM",
+		"02/01/2006 03:04 PM",
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, s); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("cannot convert \"%s\" to time", s)
 }
 
 type RowDataProvider interface {
@@ -224,6 +287,8 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 			values[i] = make([]float64, 0)
 		case meta.StringType:
 			values[i] = make([]*string, 0)
+		case meta.TimeType:
+			values[i] = make([]time.Time, 0)
 		}
 	}
 
@@ -272,6 +337,15 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 					case meta.StringType:
 						nullMasks[i] = append(nullMasks[i], false)
 						values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
+
+					case meta.TimeType:
+						if t, err := tg.atoTime(v); err != nil {
+							nullMasks[i] = append(nullMasks[i], true)
+							values[i] = append(values[i].([]time.Time), time.Time{})
+						} else {
+							nullMasks[i] = append(nullMasks[i], false)
+							values[i] = append(values[i].([]time.Time), t)
+						}
 					}
 				}
 			}
@@ -309,6 +383,13 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 
 					case meta.StringType:
 						values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
+
+					case meta.TimeType:
+						t, err := tg.atoTime(v)
+						if err != nil {
+							return nil, err
+						}
+						values[i] = append(values[i].([]time.Time), t)
 					}
 				}
 			}
@@ -372,6 +453,15 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 				case meta.StringType:
 					nullMasks[i] = append(nullMasks[i], false)
 					values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
+
+				case meta.TimeType:
+					if t, err := tg.atoTime(v); err != nil {
+						nullMasks[i] = append(nullMasks[i], true)
+						values[i] = append(values[i].([]time.Time), time.Time{})
+					} else {
+						nullMasks[i] = append(nullMasks[i], false)
+						values[i] = append(values[i].([]time.Time), t)
+					}
 				}
 			}
 		}
@@ -423,6 +513,13 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 
 				case meta.StringType:
 					values[i] = append(values[i].([]*string), ctx.StringPool.Put(v))
+
+				case meta.TimeType:
+					t, err := tg.atoTime(v)
+					if err != nil {
+						return nil, err
+					}
+					values[i] = append(values[i].([]time.Time), t)
 				}
 			}
 		}
@@ -446,6 +543,9 @@ func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, 
 
 		case meta.StringType:
 			_series[i] = series.NewSeriesStringFromPtrs(values[i].([]*string), nullMasks[i], false, ctx)
+
+		case meta.TimeType:
+			_series[i] = series.NewSeriesTime(values[i].([]time.Time), nullMasks[i], false, ctx)
 		}
 	}
 
