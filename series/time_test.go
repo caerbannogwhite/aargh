@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func Test_SeriesTime_Append(t *testing.T) {
@@ -76,9 +76,9 @@ func Test_SeriesTime_Append(t *testing.T) {
 		case 1:
 			s = s.Append([]time.Time{tm}).(Times)
 		case 2:
-			s = s.Append(aargh.NullableTime{Valid: true, Value: tm}).(Times)
+			s = s.Append(enchanter.NullableTime{Valid: true, Value: tm}).(Times)
 		case 3:
-			s = s.Append([]aargh.NullableTime{{Valid: false, Value: tm}}).(Times)
+			s = s.Append([]enchanter.NullableTime{{Valid: false, Value: tm}}).(Times)
 		}
 
 		if s.Get(i) != tm {
@@ -111,7 +111,7 @@ func Test_SeriesTime_Append(t *testing.T) {
 	s = NewSeriesTime([]time.Time{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append(aargh.NullableTime{Valid: false, Value: time.Now()}).(Times)
+		s = s.Append(enchanter.NullableTime{Valid: false, Value: time.Now()}).(Times)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -121,7 +121,7 @@ func Test_SeriesTime_Append(t *testing.T) {
 	s = NewSeriesTime([]time.Time{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append([]aargh.NullableTime{{Valid: false, Value: time.Now()}}).(Times)
+		s = s.Append([]enchanter.NullableTime{{Valid: false, Value: time.Now()}}).(Times)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}

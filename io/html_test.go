@@ -5,7 +5,7 @@ import (
 
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func Test_IoHtml_ValidWrite(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func Test_SeriesBool_Base(t *testing.T) {
@@ -207,9 +207,9 @@ func Test_SeriesBool_Append(t *testing.T) {
 			case 1:
 				s = s.Append([]bool{true}).(Bools)
 			case 2:
-				s = s.Append(aargh.NullableBool{Valid: true, Value: true}).(Bools)
+				s = s.Append(enchanter.NullableBool{Valid: true, Value: true}).(Bools)
 			case 3:
-				s = s.Append([]aargh.NullableBool{{Valid: true, Value: true}}).(Bools)
+				s = s.Append([]enchanter.NullableBool{{Valid: true, Value: true}}).(Bools)
 			}
 
 			if s.Get(i) != true {
@@ -222,9 +222,9 @@ func Test_SeriesBool_Append(t *testing.T) {
 			case 1:
 				s = s.Append([]bool{false}).(Bools)
 			case 2:
-				s = s.Append(aargh.NullableBool{Valid: true, Value: false}).(Bools)
+				s = s.Append(enchanter.NullableBool{Valid: true, Value: false}).(Bools)
 			case 3:
-				s = s.Append([]aargh.NullableBool{{Valid: true, Value: false}}).(Bools)
+				s = s.Append([]enchanter.NullableBool{{Valid: true, Value: false}}).(Bools)
 			}
 
 			if s.Get(i) != false {
@@ -258,7 +258,7 @@ func Test_SeriesBool_Append(t *testing.T) {
 	s = NewSeriesBool([]bool{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append(aargh.NullableBool{Valid: false, Value: false}).(Bools)
+		s = s.Append(enchanter.NullableBool{Valid: false, Value: false}).(Bools)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -268,7 +268,7 @@ func Test_SeriesBool_Append(t *testing.T) {
 	s = NewSeriesBool([]bool{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append([]aargh.NullableBool{{Valid: false, Value: false}}).(Bools)
+		s = s.Append([]enchanter.NullableBool{{Valid: false, Value: false}}).(Bools)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -348,8 +348,8 @@ func Test_SeriesBool_Cast(t *testing.T) {
 
 	// Check the data.
 	for i, v := range castString.Data().([]string) {
-		if mask[i] && v != aargh.NA_TEXT {
-			t.Errorf("Expected %s, got %s at index %d", aargh.NA_TEXT, v, i)
+		if mask[i] && v != enchanter.NA_TEXT {
+			t.Errorf("Expected %s, got %s at index %d", enchanter.NA_TEXT, v, i)
 		} else if !mask[i] && data[i] && v != "true" {
 			t.Errorf("Expected %s, got %s at index %d", "true", v, i)
 		} else if !mask[i] && !data[i] && v != "false" {

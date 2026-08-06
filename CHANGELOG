@@ -1,3 +1,18 @@
+v0.2.0: third-fish
+ - [Changed] Library renamed from aargh to enchanter: module is now github.com/caerbannogwhite/enchanter, root package is `enchanter`
+ - [Feature] Apache Arrow interop: Series.ArrowArray(), DataFrame.ArrowSchema() / ToArrowRecord(), NewBaseDataFrameFromArrowRecord()
+ - [Feature] Parquet reader and writer: DataFrame.FromParquet() / ToParquet()
+ - [Feature] Arrow IPC (Feather) reader and writer: DataFrame.FromArrowIPC() / ToArrowIPC()
+ - [Improved] Aggregators improved, dataframe integration tests added
+ - [Improved] Arrow memory: internal Arrow references are released deterministically (CheckedAllocator-clean)
+ - [BugFix] Join: fixed right-dataframe column lookup
+ - [BugFix] GroupBy: null group keys stay null in the result; grouping by Time/Duration keys no longer corrupts the frame; GroupBy on a grouped dataframe now regroups instead of being ignored
+ - [BugFix] Parquet / Arrow IPC readers: null masks are preserved across multiple row groups / record batches
+ - [BugFix] Series mutated after an Arrow conversion (Sort, Set) no longer serve stale Arrow data
+ - [BugFix] Library code no longer prints debug output to stdout (constructor warnings go to stderr)
+ - [Improved] Added examples
+ - [WIP] SAS7BDAT reader: header and page parsing only; data reading deferred to a future release
+
 v0.1.2: second-fish
  - [Enanchment] Added support for time in the type guesser
  - [BugFix] Type guesser boolean regex fixed

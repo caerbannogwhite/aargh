@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func Test_SeriesInt64_Base(t *testing.T) {
@@ -305,9 +305,9 @@ func Test_SeriesInt64_Append(t *testing.T) {
 		case 1:
 			s = s.Append([]int64{r}).(Int64s)
 		case 2:
-			s = s.Append(aargh.NullableInt64{Valid: true, Value: r}).(Int64s)
+			s = s.Append(enchanter.NullableInt64{Valid: true, Value: r}).(Int64s)
 		case 3:
-			s = s.Append([]aargh.NullableInt64{{Valid: false, Value: r}}).(Int64s)
+			s = s.Append([]enchanter.NullableInt64{{Valid: false, Value: r}}).(Int64s)
 		}
 
 		if s.Get(i) != r {
@@ -340,7 +340,7 @@ func Test_SeriesInt64_Append(t *testing.T) {
 	s = NewSeriesInt64([]int64{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append(aargh.NullableInt64{Valid: false, Value: 1}).(Int64s)
+		s = s.Append(enchanter.NullableInt64{Valid: false, Value: 1}).(Int64s)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -350,7 +350,7 @@ func Test_SeriesInt64_Append(t *testing.T) {
 	s = NewSeriesInt64([]int64{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append([]aargh.NullableInt64{{Valid: false, Value: 1}}).(Int64s)
+		s = s.Append([]enchanter.NullableInt64{{Valid: false, Value: 1}}).(Int64s)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -433,7 +433,7 @@ func Test_SeriesInt64_Cast(t *testing.T) {
 	result = s.Cast(meta.StringType)
 
 	// Check the data.
-	expectedString := []string{"0", "1", aargh.NA_TEXT, "3", "4", aargh.NA_TEXT, "6", "7", aargh.NA_TEXT, "9"}
+	expectedString := []string{"0", "1", enchanter.NA_TEXT, "3", "4", enchanter.NA_TEXT, "6", "7", enchanter.NA_TEXT, "9"}
 
 	for i, v := range result.Data().([]string) {
 		if v != expectedString[i] {

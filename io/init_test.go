@@ -3,16 +3,16 @@ package io
 import (
 	"path/filepath"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 const (
-	NA_TEXT = aargh.NA_TEXT
+	NA_TEXT = enchanter.NA_TEXT
 )
 
-var ctx *aargh.Context
+var ctx *enchanter.Context
 var testDataFolder = filepath.Join("..", "testdata")
 
 func init() {
-	ctx = aargh.NewContext()
+	ctx = enchanter.NewContext()
 }

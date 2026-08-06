@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 const (
@@ -736,7 +736,7 @@ func generateOperations() {
 		// fast.Decls = append(fast.Decls, &ast.GenDecl{
 		// 	Tok: token.IMPORT,
 		// 	Specs: []ast.Spec{
-		// 		&ast.ImportSpec{Path: &ast.BasicLit{Value: `"github.com/caerbannogwhite/aargh/utils"`}},
+		// 		&ast.ImportSpec{Path: &ast.BasicLit{Value: `"github.com/caerbannogwhite/enchanter/utils"`}},
 		// 	},
 		// })
 
@@ -897,7 +897,7 @@ func generateBase() {
 	}
 }
 
-const SERIES_FOLDER = "..\\series"
+var SERIES_FOLDER = filepath.Join("..", "series")
 
 func main() {
 	generateBase()

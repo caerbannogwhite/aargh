@@ -9,8 +9,8 @@ import (
 
 	"io"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 type CsvReader struct {
@@ -22,15 +22,15 @@ type CsvReader struct {
 	nullValues       bool
 	reader           io.Reader
 	schema           *meta.Schema
-	ctx              *aargh.Context
+	ctx              *enchanter.Context
 }
 
-func NewCsvReader(ctx *aargh.Context) *CsvReader {
+func NewCsvReader(ctx *enchanter.Context) *CsvReader {
 	return &CsvReader{
-		header:           aargh.CSV_READER_DEFAULT_HEADER,
+		header:           enchanter.CSV_READER_DEFAULT_HEADER,
 		rows:             -1,
-		delimiter:        aargh.CSV_READER_DEFAULT_DELIMITER,
-		guessDataTypeLen: aargh.CSV_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
+		delimiter:        enchanter.CSV_READER_DEFAULT_DELIMITER,
+		guessDataTypeLen: enchanter.CSV_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
 		path:             "",
 		nullValues:       false,
 		reader:           nil,
@@ -79,7 +79,7 @@ func (r *CsvReader) SetSchema(schema *meta.Schema) *CsvReader {
 	return r
 }
 
-func (r *CsvReader) SetContext(ctx *aargh.Context) *CsvReader {
+func (r *CsvReader) SetContext(ctx *enchanter.Context) *CsvReader {
 	r.ctx = ctx
 	return r
 }
@@ -212,18 +212,18 @@ type CsvWriter struct {
 
 func NewCsvWriter() *CsvWriter {
 	return &CsvWriter{
-		delimiter:              aargh.CSV_READER_DEFAULT_DELIMITER,
-		header:                 aargh.CSV_READER_DEFAULT_HEADER,
+		delimiter:              enchanter.CSV_READER_DEFAULT_DELIMITER,
+		header:                 enchanter.CSV_READER_DEFAULT_HEADER,
 		format:                 true,
 		useParamNaText:         false,
 		useParamDateTimeFormat: false,
 		useParamEol:            false,
 		useParamQuote:          false,
 		path:                   "",
-		naText:                 aargh.NA_TEXT,
-		dateTimeFormat:         aargh.DATE_TIME_FORMAT,
-		eol:                    aargh.EOL,
-		quote:                  aargh.QUOTE,
+		naText:                 enchanter.NA_TEXT,
+		dateTimeFormat:         enchanter.DATE_TIME_FORMAT,
+		eol:                    enchanter.EOL,
+		quote:                  enchanter.QUOTE,
 		quoting:                CsvQuotingNeeded,
 		writer:                 nil,
 		ioData:                 nil,

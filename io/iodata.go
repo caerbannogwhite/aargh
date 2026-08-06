@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 type FileFormat string
@@ -21,7 +21,7 @@ const (
 )
 
 type IoData struct {
-	ctx *aargh.Context
+	ctx *enchanter.Context
 
 	FileMeta   FileMeta
 	SeriesMeta []SeriesMeta
@@ -140,7 +140,7 @@ func (iod *IoData) Types() []meta.BaseType {
 	return types
 }
 
-func (iod *IoData) GetContext() *aargh.Context {
+func (iod *IoData) GetContext() *enchanter.Context {
 	return iod.ctx
 }
 
@@ -179,7 +179,7 @@ func (iod *IoData) ToXpt() *XptWriter {
 	return NewXptWriter().SetIoData(iod)
 }
 
-func NewIoData(ctx *aargh.Context) *IoData {
+func NewIoData(ctx *enchanter.Context) *IoData {
 	return &IoData{
 		ctx:        ctx,
 		Series:     make([]series.Series, 0),
@@ -188,18 +188,18 @@ func NewIoData(ctx *aargh.Context) *IoData {
 	}
 }
 
-func FromCsv(ctx *aargh.Context) *CsvReader {
+func FromCsv(ctx *enchanter.Context) *CsvReader {
 	return NewCsvReader(ctx)
 }
 
-func FromJson(ctx *aargh.Context) *JsonReader {
+func FromJson(ctx *enchanter.Context) *JsonReader {
 	return NewJsonReader(ctx)
 }
 
-func FromXlsx(ctx *aargh.Context) *XlsxReader {
+func FromXlsx(ctx *enchanter.Context) *XlsxReader {
 	return NewXlsxReader(ctx)
 }
 
-func FromXpt(ctx *aargh.Context) *XptReader {
+func FromXpt(ctx *enchanter.Context) *XptReader {
 	return NewXptReader(ctx)
 }

@@ -14,9 +14,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000464.shtml
@@ -40,10 +40,10 @@ type XptReader struct {
 	path               string
 	reader             io.Reader
 	content            []byte
-	ctx                *aargh.Context
+	ctx                *enchanter.Context
 }
 
-func NewXptReader(ctx *aargh.Context) *XptReader {
+func NewXptReader(ctx *enchanter.Context) *XptReader {
 	return &XptReader{
 		useSelectedVersion: false,
 		maxObservations:    -1,
@@ -211,7 +211,7 @@ const (
 )
 
 // This functions guesses the version of a SAS XPT file.
-func guessXptVersion(reader io.Reader, ctx *aargh.Context) (XptVersionType, []byte, error) {
+func guessXptVersion(reader io.Reader, ctx *enchanter.Context) (XptVersionType, []byte, error) {
 	if ctx == nil {
 		return 0, nil, fmt.Errorf("guessXptVersion: no context specified")
 	}

@@ -1,8 +1,9 @@
 package series
 
 import (
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 // Dummy series for error handling.
@@ -13,7 +14,7 @@ type Errors struct {
 func (s Errors) printInfo() {}
 
 // Return the context of the series.
-func (s Errors) GetContext() *aargh.Context {
+func (s Errors) GetContext() *enchanter.Context {
 	return nil
 }
 
@@ -32,8 +33,8 @@ func (s Errors) IsNullable() bool {
 	return false
 }
 
-func (s Errors) IsSorted() aargh.SeriesSortOrder {
-	return aargh.SORTED_NONE
+func (s Errors) IsSorted() enchanter.SeriesSortOrder {
+	return enchanter.SORTED_NONE
 }
 
 // Returns if the series is error.
@@ -154,11 +155,11 @@ func (s Errors) FilterIntSlice(mask []int, check bool) Series {
 	return s
 }
 
-func (s Errors) Map(f aargh.MapFunc) Series {
+func (s Errors) Map(f enchanter.MapFunc) Series {
 	return s
 }
 
-func (s Errors) MapNull(f aargh.MapFuncNull) Series {
+func (s Errors) MapNull(f enchanter.MapFuncNull) Series {
 	return s
 }
 
@@ -256,4 +257,8 @@ func (s Errors) Lt(other any) Series {
 
 func (s Errors) Le(other any) Series {
 	return s
+}
+
+func (s Errors) ArrowArray() arrow.Array {
+	return nil
 }

@@ -1,7 +1,20 @@
-## aargh Gen
+## Enchanter Gen
 
-aargh code generation facility.
+Code generator for the `series` package: it produces the `*_base.go` files
+from templates and rewrites the type-specific operation code in the
+`*_ops.go` files.
 
-### What is it?
+It is a standalone Go module. Run it from the repository root with:
 
-aargh Gen is a code generation facility that allows you to generate code from a template. It is a part of the aargh project.
+```sh
+go generate ./series/
+```
+
+or directly:
+
+```sh
+go -C generators run .
+```
+
+Generation is idempotent; CI fails if the checked-in generated files drift
+from the generator output.

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 func Test_TypeGuesser(t *testing.T) {
@@ -590,7 +590,7 @@ func (m *mockRowDataProvider) Read() ([]string, error) {
 }
 
 func TestReadRowDataWithDates(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	// Skip header row for type detection - only use actual data
 	mockData := [][]string{
@@ -623,7 +623,7 @@ func TestReadRowDataWithDates(t *testing.T) {
 }
 
 func TestReadRowDataWithNullsAndDates(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	// Skip header row for type detection - only use actual data
 	mockData := [][]string{

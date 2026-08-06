@@ -9,19 +9,27 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 // Strings represents a series of strings.
 type Strings struct {
 	IsNullable_ bool
-	Sorted_     aargh.SeriesSortOrder
+	Sorted_     enchanter.SeriesSortOrder
 	Data_       []*string
 	NullMask_   []uint8
 	Partition_  *SeriesStringPartition
-	Ctx_        *aargh.Context
+	Ctx_        *enchanter.Context
+}
+
+// ArrowArray builds and returns a fresh Arrow array from the series data.
+// The caller owns the returned array; releasing it is optional under
+// GC-backed allocators (see enchanter.Context.Allocator).
+func (s Strings) ArrowArray() arrow.Array {
+	return buildArrowString(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
 
 // Get the element at index i as a string.
@@ -38,18 +46,18 @@ func (s Strings) Set(i int, v any) Series {
 	switch v := v.(type) {
 	case nil:
 		s = s.MakeNullable().(Strings)
-		s.Data_[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+		s.Data_[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 		s.NullMask_[i>>3] |= 1 << uint(i%8)
 
 	case string:
 		s.Data_[i] = s.Ctx_.StringPool.Put(v)
 
-	case aargh.NullableString:
+	case enchanter.NullableString:
 		s = s.MakeNullable().(Strings)
 		if v.Valid {
 			s.Data_[i] = s.Ctx_.StringPool.Put(v.Value)
 		} else {
-			s.Data_[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+			s.Data_[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
@@ -57,7 +65,7 @@ func (s Strings) Set(i int, v any) Series {
 		return Errors{fmt.Sprintf("Strings.Set: invalid type %T", v)}
 	}
 
-	s.Sorted_ = aargh.SORTED_NONE
+	s.Sorted_ = enchanter.SORTED_NONE
 	return s
 }
 
@@ -69,7 +77,7 @@ func (s Strings) Strings() []string {
 	if s.IsNullable_ {
 		for i, v := range s.Data_ {
 			if s.IsNull(i) {
-				Data_[i] = aargh.NA_TEXT
+				Data_[i] = enchanter.NA_TEXT
 			} else {
 				Data_[i] = *v
 			}
@@ -84,9 +92,9 @@ func (s Strings) Strings() []string {
 
 // Return the underlying Data_ as a slice of NullableString.
 func (s Strings) DataAsNullable() any {
-	Data_ := make([]aargh.NullableString, len(s.Data_))
+	Data_ := make([]enchanter.NullableString, len(s.Data_))
 	for i, v := range s.Data_ {
-		Data_[i] = aargh.NullableString{Valid: !s.IsNull(i), Value: *v}
+		Data_[i] = enchanter.NullableString{Valid: !s.IsNull(i), Value: *v}
 	}
 	return Data_
 }
@@ -97,7 +105,7 @@ func (s Strings) DataAsString() []string {
 	if s.IsNullable_ {
 		for i, v := range s.Data_ {
 			if s.IsNull(i) {
-				Data_[i] = aargh.NA_TEXT
+				Data_[i] = enchanter.NA_TEXT
 			} else {
 				Data_[i] = *v
 			}
@@ -154,7 +162,7 @@ func (s Strings) Cast(t meta.BaseType) Series {
 
 		return Bools{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
@@ -192,7 +200,7 @@ func (s Strings) Cast(t meta.BaseType) Series {
 
 		return Ints{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
@@ -230,7 +238,7 @@ func (s Strings) Cast(t meta.BaseType) Series {
 
 		return Int64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
@@ -268,7 +276,7 @@ func (s Strings) Cast(t meta.BaseType) Series {
 
 		return Float64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
@@ -308,7 +316,7 @@ func (s Strings) ParseTime(layout string) Series {
 
 	return Times{
 		IsNullable_: true,
-		Sorted_:     aargh.SORTED_NONE,
+		Sorted_:     enchanter.SORTED_NONE,
 		Data_:       Data_,
 		NullMask_:   NullMask_,
 		Partition_:  nil,
@@ -323,7 +331,7 @@ func (s Strings) ParseTime(layout string) Series {
 // of the original series that are set to that value.
 type SeriesStringPartition struct {
 	Partition_ map[int64][]int
-	Ctx_       *aargh.Context
+	Ctx_       *enchanter.Context
 }
 
 func (gp *SeriesStringPartition) GetSize() int {
@@ -360,7 +368,7 @@ func (s Strings) Group() Series {
 
 	Partition_ := SeriesStringPartition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_1, len(s.Data_), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(s.Data_), s.HasNull(),
 			worker, workerNulls),
 		Ctx_: s.Ctx_,
 	}
@@ -387,7 +395,7 @@ func (s Strings) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				ptr = unsafe.Pointer(s.Data_[index])
-				newHash = *(*int64)(unsafe.Pointer(&ptr)) + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+				newHash = *(*int64)(unsafe.Pointer(&ptr)) + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				map_[newHash] = append(map_[newHash], index)
 			}
 		}
@@ -400,10 +408,10 @@ func (s Strings) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				if s.IsNull(index) {
-					newHash = aargh.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
 				} else {
 					ptr = unsafe.Pointer(s.Data_[index])
-					newHash = *(*int64)(unsafe.Pointer(&ptr)) + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+					newHash = *(*int64)(unsafe.Pointer(&ptr)) + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				}
 				map_[newHash] = append(map_[newHash], index)
 			}
@@ -412,7 +420,7 @@ func (s Strings) GroupBy(Partition_ SeriesPartition) Series {
 
 	newPartition := SeriesStringPartition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
 			worker, workerNulls),
 		Ctx_: s.Ctx_,
 	}
@@ -469,17 +477,17 @@ func (s Strings) Swap(i, j int) {
 }
 
 func (s Strings) Sort() Series {
-	if s.Sorted_ != aargh.SORTED_ASC {
+	if s.Sorted_ != enchanter.SORTED_ASC {
 		sort.Sort(s)
-		s.Sorted_ = aargh.SORTED_ASC
+		s.Sorted_ = enchanter.SORTED_ASC
 	}
 	return s
 }
 
 func (s Strings) SortRev() Series {
-	if s.Sorted_ != aargh.SORTED_DESC {
+	if s.Sorted_ != enchanter.SORTED_DESC {
 		sort.Sort(sort.Reverse(s))
-		s.Sorted_ = aargh.SORTED_DESC
+		s.Sorted_ = enchanter.SORTED_DESC
 	}
 	return s
 }

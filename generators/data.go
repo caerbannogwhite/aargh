@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 type MakeOperationType func(res, resIndex, op1, op1Index, op2, op2Index string) ast.Expr
@@ -39,7 +39,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "BoolType",
 		SeriesGoTypeStr:       "bool",
 		SeriesGoOuterTypeStr:  "bool",
-		SeriesNullableTypeStr: "aargh.NullableBool",
+		SeriesNullableTypeStr: "enchanter.NullableBool",
 		DefaultValue:          "false",
 	},
 
@@ -48,7 +48,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "IntType",
 		SeriesGoTypeStr:       "int",
 		SeriesGoOuterTypeStr:  "int",
-		SeriesNullableTypeStr: "aargh.NullableInt",
+		SeriesNullableTypeStr: "enchanter.NullableInt",
 		DefaultValue:          "0",
 	},
 
@@ -57,7 +57,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "Int64Type",
 		SeriesGoTypeStr:       "int64",
 		SeriesGoOuterTypeStr:  "int64",
-		SeriesNullableTypeStr: "aargh.NullableInt64",
+		SeriesNullableTypeStr: "enchanter.NullableInt64",
 		DefaultValue:          "0",
 	},
 
@@ -66,7 +66,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "Float64Type",
 		SeriesGoTypeStr:       "float64",
 		SeriesGoOuterTypeStr:  "float64",
-		SeriesNullableTypeStr: "aargh.NullableFloat64",
+		SeriesNullableTypeStr: "enchanter.NullableFloat64",
 		DefaultValue:          "0",
 	},
 
@@ -75,8 +75,8 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "StringType",
 		SeriesGoTypeStr:       "*string",
 		SeriesGoOuterTypeStr:  "string",
-		SeriesNullableTypeStr: "aargh.NullableString",
-		DefaultValue:          "s.Ctx_.StringPool.Put(aargh.NA_TEXT)",
+		SeriesNullableTypeStr: "enchanter.NullableString",
+		DefaultValue:          "s.Ctx_.StringPool.Put(enchanter.NA_TEXT)",
 		IsGoTypePtr:           true,
 	},
 
@@ -85,7 +85,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "TimeType",
 		SeriesGoTypeStr:       "time.Time",
 		SeriesGoOuterTypeStr:  "time.Time",
-		SeriesNullableTypeStr: "aargh.NullableTime",
+		SeriesNullableTypeStr: "enchanter.NullableTime",
 		DefaultValue:          "time.Time{}",
 		IsTimeType:            true,
 	},
@@ -95,7 +95,7 @@ var DATA_BASE_METHODS = map[string]SeriesFile{
 		SeriesTypeStr:         "DurationType",
 		SeriesGoTypeStr:       "time.Duration",
 		SeriesGoOuterTypeStr:  "time.Duration",
-		SeriesNullableTypeStr: "aargh.NullableDuration",
+		SeriesNullableTypeStr: "enchanter.NullableDuration",
 		DefaultValue:          "time.Duration(0)",
 	},
 }
@@ -2152,7 +2152,7 @@ func GenerateOperationsData() map[string]SeriesFile {
 					SeriesName: seriesName,
 					SeriesType: seriesTypes[j],
 					MakeOperation: func(res, resIndex, op1, op1Index, op2, op2Index string) ast.Expr {
-						return &ast.Ident{Name: fmt.Sprintf("%s[%s] = %s.Ctx_.StringPool.Put(aargh.NA_TEXT + *%s.Data_[%s])", res, resIndex, op1, op2, op2Index)}
+						return &ast.Ident{Name: fmt.Sprintf("%s[%s] = %s.Ctx_.StringPool.Put(enchanter.NA_TEXT + *%s.Data_[%s])", res, resIndex, op1, op2, op2Index)}
 					},
 				})
 			} else
@@ -2196,7 +2196,7 @@ func GenerateOperationsData() map[string]SeriesFile {
 						SeriesName: "NAs",
 						SeriesType: meta.NullType,
 						MakeOperation: func(res, resIndex, op1, op1Index, op2, op2Index string) ast.Expr {
-							return &ast.Ident{Name: fmt.Sprintf("%s[%s] = %s.Ctx_.StringPool.Put(*%s.Data_[%s] + aargh.NA_TEXT)", res, resIndex, op1, op1, op1Index)}
+							return &ast.Ident{Name: fmt.Sprintf("%s[%s] = %s.Ctx_.StringPool.Put(*%s.Data_[%s] + enchanter.NA_TEXT)", res, resIndex, op1, op1, op1Index)}
 						},
 					}),
 				}

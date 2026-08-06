@@ -1,5 +1,8 @@
 .vscode/
 
 /testdata/*.sas
+/testdata/*.sas7bdat
 /testdata/*.XPT
 /testdata/*.csv
+/testdata/*.parquet
+/testdata/*.arrow

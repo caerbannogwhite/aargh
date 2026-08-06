@@ -250,3 +250,17 @@ func sasDateToNumeric(t time.Time) int {
 	// Subtract the SAS epoch from the time
 	return int(t.Sub(sasEpoch).Hours() / 24)
 }
+
+func sasNumericToDateTime(sasSeconds float64) time.Time {
+	// SAS epoch: January 1, 1960
+	sasEpoch := time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)
+	// Add the SAS numeric value as seconds
+	return sasEpoch.Add(time.Duration(sasSeconds) * time.Second)
+}
+
+func sasDateTimetoNumeric(t time.Time) float64 {
+	// SAS epoch: January 1, 1960
+	sasEpoch := time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)
+	// Subtract the SAS epoch from the time
+	return float64(t.Sub(sasEpoch).Seconds())
+}

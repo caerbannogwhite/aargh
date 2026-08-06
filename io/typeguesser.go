@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 type typeBucket struct {
@@ -198,7 +198,7 @@ type RowDataProvider interface {
 	Read() ([]string, error)
 }
 
-func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, maxLen int, schema *meta.Schema, ctx *aargh.Context) ([]series.Series, error) {
+func readRowData(reader RowDataProvider, nullValues bool, guessDataTypeLen int, maxLen int, schema *meta.Schema, ctx *enchanter.Context) ([]series.Series, error) {
 	var dataTypes []meta.BaseType
 	var recordsForGuessing [][]string
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func (s Durations) And(other any) Series {

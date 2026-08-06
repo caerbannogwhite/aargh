@@ -6,8 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 var G1_1e4_1e2_0_0_df *DataFrame
@@ -20,7 +19,7 @@ var G1_1e6_1e2_10_0_df *DataFrame
 var G1_1e7_1e2_10_0_df *DataFrame
 
 func read_G1_1e4_1e2_0_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e4_1e2_0_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e4_1e2_0_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -38,7 +37,7 @@ func read_G1_1e4_1e2_0_0() {
 }
 
 func read_G1_1e5_1e2_0_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e5_1e2_0_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e5_1e2_0_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -56,7 +55,7 @@ func read_G1_1e5_1e2_0_0() {
 }
 
 func read_G1_1e6_1e2_0_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e6_1e2_0_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e6_1e2_0_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -74,7 +73,7 @@ func read_G1_1e6_1e2_0_0() {
 }
 
 func read_G1_1e7_1e2_0_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e7_1e2_0_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e7_1e2_0_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -92,7 +91,7 @@ func read_G1_1e7_1e2_0_0() {
 }
 
 func read_G1_1e4_1e2_10_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e4_1e2_10_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e4_1e2_10_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -110,7 +109,7 @@ func read_G1_1e4_1e2_10_0() {
 }
 
 func read_G1_1e5_1e2_10_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e5_1e2_10_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e5_1e2_10_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -128,7 +127,7 @@ func read_G1_1e5_1e2_10_0() {
 }
 
 func read_G1_1e6_1e2_10_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e6_1e2_10_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e6_1e2_10_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -146,7 +145,7 @@ func read_G1_1e6_1e2_10_0() {
 }
 
 func read_G1_1e7_1e2_10_0() {
-	f, err := os.OpenFile(filepath.Join("testdata", "G1_1e7_1e2_10_0.csv"), os.O_RDONLY, 0666)
+	f, err := os.OpenFile(filepath.Join(testDataDir, "G1_1e7_1e2_10_0.csv"), os.O_RDONLY, 0666)
 	if err == nil {
 		df := NewBaseDataFrame(ctx).
 			FromCsv().
@@ -161,19 +160,6 @@ func read_G1_1e7_1e2_10_0() {
 	} else {
 		G1_1e7_1e2_10_0_df = nil
 	}
-}
-
-func init() {
-	ctx = aargh.NewContext()
-
-	read_G1_1e4_1e2_0_0()
-	read_G1_1e5_1e2_0_0()
-	read_G1_1e6_1e2_0_0()
-	read_G1_1e7_1e2_0_0()
-	read_G1_1e4_1e2_10_0()
-	read_G1_1e5_1e2_10_0()
-	read_G1_1e6_1e2_10_0()
-	read_G1_1e7_1e2_10_0()
 }
 
 func Benchmark_Filter_Q1_1e5(b *testing.B) {

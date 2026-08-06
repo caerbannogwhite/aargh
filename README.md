@@ -1,26 +1,29 @@
-## Aargh 🧙‍♂️
+## Enchanter 🧙‍♂️
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/caerbannogwhite/aargh.svg)](https://pkg.go.dev/github.com/caerbannogwhite/aargh)
+[![Go Reference](https://pkg.go.dev/badge/github.com/caerbannogwhite/enchanter.svg)](https://pkg.go.dev/github.com/caerbannogwhite/enchanter)
+[![CI](https://github.com/caerbannogwhite/enchanter/actions/workflows/ci.yml/badge.svg)](https://github.com/caerbannogwhite/enchanter/actions/workflows/ci.yml)
 
-### What is it?
+> Formerly known as **aargh** — renamed in v0.2.0. The v0.1.x releases remain
+> available under the old module path.
 
-Aargh is a library for data wrangling in Go.
-The goal is to provide a simple and efficient API for data manipulation in Go,
-similar to Pandas or Polars in Python, and Dplyr in R.
-It supports nullable types: null data is optimized for memory usage.
+Enchanter is a data wrangling library in pure Go, in the spirit of Pandas and
+Polars in Python and dplyr in R: typed, nullable columns (series) composed
+into DataFrames with select / filter / group by / join / sort / aggregate
+pipelines. Series and DataFrames interoperate with
+[Apache Arrow](https://arrow.apache.org/), which also powers the Parquet and
+Arrow IPC readers and writers.
 
-Aargh is a work in progress, and the API is not stable yet.
-The DataFrame package is still being developed.
+Enchanter is a work in progress and the API is not stable yet.
 
-However, it already supports the following formats:
+### Install
 
-- CSV
-- XPT (SAS)
-- XLSX
-- HTML
-- Markdown
+```sh
+go get github.com/caerbannogwhite/enchanter
+```
 
-### Examples
+Requires Go 1.24+. Pure Go, no cgo.
+
+### Quick start
 
 ```go
 package main
@@ -28,8 +31,8 @@ package main
 import (
 	"strings"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/dataframe"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/dataframe"
 )
 
 func main() {
@@ -45,7 +48,7 @@ Ursula,27,65.0,f,Business,4
 Charlie,33,60.0,t,Business,2
 Megan,26,55.0,F,IT,3`
 
-	dataframe.NewBaseDataFrame(aargh.NewContext()).
+	dataframe.NewBaseDataFrame(enchanter.NewContext()).
 		FromCsv().
 		SetReader(strings.NewReader(data1)).
 		Read().
@@ -67,6 +70,62 @@ Megan,26,55.0,F,IT,3`
 // │ Business   │    27.00 │       65.00 │       0.5000 │ 2.000 │
 // ╰────────────┴──────────┴─────────────┴──────────────┴───────╯
 ```
+
+More runnable examples live in [examples](examples) and in the package
+documentation on [pkg.go.dev](https://pkg.go.dev/github.com/caerbannogwhite/enchanter).
+
+### Reading and writing files
+
+| Format              | Read | Write | Notes                                    |
+| ------------------- | :--: | :---: | ---------------------------------------- |
+| CSV                 |  ✅  |  ✅   | delimiter, header, type guessing         |
+| Parquet             |  ✅  |  ✅   | via Apache Arrow; types + nulls preserved |
+| Arrow IPC (Feather) |  ✅  |  ✅   |                                          |
+| XPT (SAS transport) |  ✅  |  ✅   | versions 5–9                             |
+| XLSX                |  ✅  |  ✅   |                                          |
+| JSON                |  ✅  |  ✅   | record-oriented                          |
+| HTML                |  ✅  |  ✅   | tables                                   |
+| Markdown            |  ✅  |  ✅   | tables                                   |
+| SAS7BDAT            |  🚧  |   —   | header parsing only; data reading planned |
+
+All readers and writers share the same builder style:
+
+```go
+// Parquet round trip: types and nulls survive, unlike CSV.
+err := df.ToParquet().SetPath("people.parquet").Write()
+
+df2 := dataframe.NewBaseDataFrame(ctx).
+	FromParquet().
+	SetPath("people.parquet").
+	Read()
+```
+
+See [examples/parquet](examples/parquet/main.go) for a runnable version.
+
+### Apache Arrow interop
+
+Every series can produce an Arrow array and every DataFrame an Arrow record
+batch, which makes Enchanter data exchangeable with anything that speaks
+Arrow (DuckDB, Polars, pandas, DataFusion, Spark, ...):
+
+```go
+rec := df.ToArrowRecord() // freshly built, owned by the record
+defer rec.Release()       // optional under the default GC-backed allocator
+
+df2 := dataframe.NewBaseDataFrameFromArrowRecord(rec, ctx)
+```
+
+Conversion notes:
+
+- Enchanter null masks map onto Arrow validity bitmaps in both directions.
+- `series.ArrowArrayToSeries` accepts more Arrow types than Enchanter has
+  series types (all integer widths, Float32, Date32/64, every timestamp
+  unit, LargeString, ...) and funnels them onto the native types: integers
+  normalize to int64, timestamps to nanoseconds.
+- Conversions are materialized copies — no reference to the source Arrow
+  memory is retained, so you may release inputs immediately.
+- Releasing values returned to you is optional under GC-backed allocators
+  (the default); see `Context.Allocator` for the exact ownership contract.
 
 ### Supported data types
 
@@ -112,16 +171,16 @@ The data types not checked are not yet supported, but might be in the future.
 - [x] Agg
 - [x] Filter
 - [x] GroupBy
-- [ ] Join
+- [x] Join
 
   - [x] Inner
   - [x] Left
   - [x] Right
   - [x] Outer
-  - [ ] Inner with nulls
-  - [ ] Left with nulls
-  - [ ] Right with nulls
-  - [ ] Outer with nulls
+  - [x] Inner with nulls
+  - [x] Left with nulls
+  - [x] Right with nulls
+  - [x] Outer with nulls
 
 - [ ] Map
 - [x] OrderBy
@@ -142,18 +201,33 @@ The data types not checked are not yet supported, but might be in the future.
 - [ ] Variance
 - [ ] Quantile
 
-### Dependencies
+### Development
 
-Built with:
+```sh
+go test -short ./...     # fast unit tests (skips large local benchmark fixtures)
+go test ./...            # full suite
+go test -bench . ./...   # benchmarks (need local fixtures in testdata/)
+go generate ./series/    # regenerate *_base.go / *_ops.go via the generators module
+```
 
-- [xslx](https://github.com/tealeg/xlsx/tree/master)
-- [lipgloss](https://github.com/charmbracelet/lipgloss)
+CI runs build, vet, gofmt, a generated-code freshness check, the test suite
+and the race detector on Linux and Windows.
 
-### TODO
+### Roadmap
 
+Next (0.3.0):
+
+- [ ] Route series operations through Arrow compute kernels (replacing the generated per-type loops).
+- [ ] Aggregations via Arrow compute (Sum, Min, Max, Mean).
+- [ ] Dictionary-encoded (factor) strings.
+- [ ] SAS7BDAT data reading ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)).
+
+Later:
+
+- [ ] Implement chunked series.
+- [ ] Implement SPSS reader and writer.
 - [ ] Improve filtering interface.
 - [ ] Improve dataframe PrettyPrint: add parameters, optimize data display, use lipgloss.
-- [ ] Implement string factors.
 - [ ] Times: set time format.
 - [ ] Implement `Set(i []int, v []any) Series`.
 - [ ] Add `Slice(i []int) Series` (using filter?).
@@ -163,7 +237,15 @@ Built with:
 - [ ] Add url resolver to each reader.
 - [ ] Add format option to each writer.
 - [ ] JSON reader by records.
-- [ ] Implement chunked series.
-- [ ] Implement Parquet reader and writer.
-- [ ] Implement SPSS reader and writer.
-- [ ] Implement SAS7BDAT reader and writer (https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)
+
+### Dependencies
+
+Built with:
+
+- [arrow-go](https://github.com/apache/arrow-go)
+- [xslx](https://github.com/tealeg/xlsx/tree/master)
+- [lipgloss](https://github.com/charmbracelet/lipgloss)
+
+### License
+
+See [LICENSE](LICENSE).

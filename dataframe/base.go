@@ -6,11 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/formatter"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/formatter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 type BaseDataFramePartitionEntry struct {
@@ -26,10 +26,10 @@ type BaseDataFrame struct {
 	series     []series.Series
 	partitions []BaseDataFramePartitionEntry
 	sortParams []SortParam
-	ctx        *aargh.Context
+	ctx        *enchanter.Context
 }
 
-func NewBaseDataFrame(ctx *aargh.Context) DataFrame {
+func NewBaseDataFrame(ctx *enchanter.Context) DataFrame {
 	if ctx == nil {
 		return BaseDataFrame{err: fmt.Errorf("NewBaseDataFrame: context is nil")}
 	}
@@ -43,7 +43,7 @@ func NewBaseDataFrame(ctx *aargh.Context) DataFrame {
 ////////////////////////			BASIC ACCESSORS
 
 // GetContext returns the context of the dataframe.
-func (df BaseDataFrame) GetContext() *aargh.Context {
+func (df BaseDataFrame) GetContext() *enchanter.Context {
 	return df.ctx
 }
 
@@ -403,10 +403,12 @@ func (df BaseDataFrame) GroupBy(by ...string) DataFrame {
 		return df
 	}
 
+	// Grouping an already grouped dataframe replaces the existing grouping.
 	if df.isGrouped {
-		// TODO: figure out what to do here
-		return df
-	} else {
+		df = df.Ungroup().(BaseDataFrame)
+	}
+
+	{
 
 		// Check that all the group by columns exist
 		for _, name := range by {
@@ -502,8 +504,17 @@ func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
 		seriesIndices[partition.index] = false
 		old := df.series[partition.index]
 
-		// TODO: null masks, null values are all mapped to the same group
 		result.names = append(result.names, partition.name)
+
+		// Each group is represented by its first row; nulls group together,
+		// so the key column keeps the null flag of that representative row.
+		var keyNulls []bool
+		if old.IsNullable() {
+			keyNulls = make([]bool, len(indeces))
+			for i, group := range indeces {
+				keyNulls[i] = old.IsNull(group[0])
+			}
+		}
 
 		switch _series := old.(type) {
 		case series.Bools:
@@ -511,65 +522,53 @@ func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
 			for i, group := range indeces {
 				values[i] = _series.Data_[group[0]]
 			}
-
-			result.series = append(result.series, series.Bools{
-				IsNullable_: _series.IsNullable(),
-				NullMask_:   utils.BinVecInit(len(indeces), false),
-				Data_:       values,
-				Ctx_:        _series.GetContext(),
-			})
+			result.series = append(result.series, series.NewSeriesBool(values, keyNulls, false, _series.GetContext()))
 
 		case series.Ints:
 			values := make([]int, len(indeces))
 			for i, group := range indeces {
 				values[i] = _series.Data_[group[0]]
 			}
-
-			result.series = append(result.series, series.Ints{
-				IsNullable_: _series.IsNullable(),
-				NullMask_:   utils.BinVecInit(len(indeces), false),
-				Data_:       values,
-				Ctx_:        _series.GetContext(),
-			})
+			result.series = append(result.series, series.NewSeriesInt(values, keyNulls, false, _series.GetContext()))
 
 		case series.Int64s:
 			values := make([]int64, len(indeces))
 			for i, group := range indeces {
 				values[i] = _series.Data_[group[0]]
 			}
-
-			result.series = append(result.series, series.Int64s{
-				IsNullable_: _series.IsNullable(),
-				NullMask_:   utils.BinVecInit(len(indeces), false),
-				Data_:       values,
-				Ctx_:        _series.GetContext(),
-			})
+			result.series = append(result.series, series.NewSeriesInt64(values, keyNulls, false, _series.GetContext()))
 
 		case series.Float64s:
 			values := make([]float64, len(indeces))
 			for i, group := range indeces {
 				values[i] = _series.Data_[group[0]]
 			}
-
-			result.series = append(result.series, series.Float64s{
-				IsNullable_: _series.IsNullable(),
-				NullMask_:   utils.BinVecInit(len(indeces), false),
-				Data_:       values,
-				Ctx_:        _series.GetContext(),
-			})
+			result.series = append(result.series, series.NewSeriesFloat64(values, keyNulls, false, _series.GetContext()))
 
 		case series.Strings:
 			values := make([]*string, len(indeces))
 			for i, group := range indeces {
 				values[i] = _series.Data_[group[0]]
 			}
+			result.series = append(result.series, series.NewSeriesStringFromPtrs(values, keyNulls, false, _series.GetContext()))
 
-			result.series = append(result.series, series.Strings{
-				IsNullable_: _series.IsNullable(),
-				NullMask_:   utils.BinVecInit(len(indeces), false),
-				Data_:       values,
-				Ctx_:        _series.GetContext(),
-			})
+		case series.Times:
+			values := make([]time.Time, len(indeces))
+			for i, group := range indeces {
+				values[i] = _series.Data_[group[0]]
+			}
+			result.series = append(result.series, series.NewSeriesTime(values, keyNulls, false, _series.GetContext()))
+
+		case series.Durations:
+			values := make([]time.Duration, len(indeces))
+			for i, group := range indeces {
+				values[i] = _series.Data_[group[0]]
+			}
+			result.series = append(result.series, series.NewSeriesDuration(values, keyNulls, false, _series.GetContext()))
+
+		default:
+			// Unsupported key type: keep names and series aligned.
+			result.series = append(result.series, series.NewSeriesNA(len(indeces), df.ctx))
 		}
 	}
 
@@ -639,8 +638,9 @@ func (df BaseDataFrame) Join(how DataFrameJoinType, other DataFrame, on ...strin
 
 		// Series B
 		found = false
+		otherNames := other.Names()
 		for idx, series := range other.(BaseDataFrame).series {
-			if df.names[idx] == name {
+			if idx < len(otherNames) && otherNames[idx] == name {
 				found = true
 
 				// CHECK: the types must match

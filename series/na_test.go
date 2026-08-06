@@ -3,8 +3,8 @@ package series
 import (
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func Test_SeriesNA_Append(t *testing.T) {
@@ -51,7 +51,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append NullableInt64
-	res = nas.Append(aargh.NullableInt64{Value: 1, Valid: true})
+	res = nas.Append(enchanter.NullableInt64{Value: 1, Valid: true})
 	expectedMask = append(baseMask, false)
 	if res.Len() != 11 {
 		t.Errorf("Expected length 11, got %d", res.Len())
@@ -64,7 +64,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append NullableInt64
-	res = nas.Append(aargh.NullableInt64{Value: 1, Valid: false})
+	res = nas.Append(enchanter.NullableInt64{Value: 1, Valid: false})
 	expectedMask = append(baseMask, true)
 	if res.Len() != 11 {
 		t.Errorf("Expected length 11, got %d", res.Len())
@@ -84,7 +84,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append []NullableInt64
-	res = nas.Append([]aargh.NullableInt64{
+	res = nas.Append([]enchanter.NullableInt64{
 		{Value: 1, Valid: true},
 		{Value: 2, Valid: false},
 		{Value: 3, Valid: true},
@@ -122,7 +122,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append NullableString
-	res = nas.Append(aargh.NullableString{Value: "a", Valid: true})
+	res = nas.Append(enchanter.NullableString{Value: "a", Valid: true})
 	expectedMask = append(baseMask, false)
 	if res.Len() != 11 {
 		t.Errorf("Expected length 11, got %d", res.Len())
@@ -135,7 +135,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append NullableString
-	res = nas.Append(aargh.NullableString{Value: "a", Valid: false})
+	res = nas.Append(enchanter.NullableString{Value: "a", Valid: false})
 	expectedMask = append(baseMask, true)
 	if res.Len() != 11 {
 		t.Errorf("Expected length 11, got %d", res.Len())
@@ -158,7 +158,7 @@ func Test_SeriesNA_Append(t *testing.T) {
 	}
 
 	// Append []NullableString
-	res = nas.Append([]aargh.NullableString{
+	res = nas.Append([]enchanter.NullableString{
 		{Value: "a", Valid: true},
 		{Value: "b", Valid: false},
 		{Value: "c", Valid: true},

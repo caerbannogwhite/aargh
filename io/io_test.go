@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func Test_IoAll(t *testing.T) {

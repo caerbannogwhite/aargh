@@ -4,7 +4,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 func __series_groupby(
@@ -22,7 +22,7 @@ func __series_groupby(
 
 			// Add the nulls to the map
 			if len(nulls) > 0 {
-				nullKey := __series_get_nullkey(map_, aargh.HASH_NULL_KEY)
+				nullKey := __series_get_nullkey(map_, enchanter.HASH_NULL_KEY)
 				map_[nullKey] = nulls
 			}
 		} else {
@@ -33,15 +33,15 @@ func __series_groupby(
 	}
 
 	// Initialize the maps
-	maps := make([]map[int64][]int, aargh.THREADS_NUMBER)
-	for i := 0; i < aargh.THREADS_NUMBER; i++ {
-		maps[i] = make(map[int64][]int, aargh.DEFAULT_HASH_MAP_INITIAL_CAPACITY)
+	maps := make([]map[int64][]int, enchanter.THREADS_NUMBER)
+	for i := 0; i < enchanter.THREADS_NUMBER; i++ {
+		maps[i] = make(map[int64][]int, enchanter.DEFAULT_HASH_MAP_INITIAL_CAPACITY)
 	}
 
 	var nulls [][]int
 	if hasNulls {
-		nulls = make([][]int, aargh.THREADS_NUMBER)
-		for i := 0; i < aargh.THREADS_NUMBER; i++ {
+		nulls = make([][]int, enchanter.THREADS_NUMBER)
+		for i := 0; i < enchanter.THREADS_NUMBER; i++ {
 			nulls[i] = make([]int, 0)
 		}
 	}
@@ -171,7 +171,7 @@ func __series_groupby(
 
 	// Add the nulls to the map
 	if hasNulls && len(nulls[0]) > 0 {
-		nullKey := __series_get_nullkey(maps[0], aargh.HASH_NULL_KEY)
+		nullKey := __series_get_nullkey(maps[0], enchanter.HASH_NULL_KEY)
 		maps[0][nullKey] = nulls[0]
 	}
 
@@ -271,7 +271,7 @@ func __series_get_nullkey(map_ map[int64][]int, seed int64) int64 {
 		if _, ok := map_[seed]; !ok {
 			break
 		}
-		seed = aargh.HASH_MAGIC_NUMBER + (seed << 13) + (seed >> 4)
+		seed = enchanter.HASH_MAGIC_NUMBER + (seed << 13) + (seed >> 4)
 	}
 	return seed
 }

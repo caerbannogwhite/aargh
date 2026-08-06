@@ -2,11 +2,12 @@ package io
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func Test_FromCsv(t *testing.T) {
@@ -211,9 +212,9 @@ func Benchmark_FromCsv_100000Rows(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		f, err := os.OpenFile("testdata\\organizations-100000.csv", os.O_RDONLY, 0666)
+		f, err := os.OpenFile(filepath.Join(testDataFolder, "organizations-100000.csv"), os.O_RDONLY, 0666)
 		if err != nil {
-			b.Error(err)
+			b.Skip("benchmark fixture not available:", err)
 		}
 
 		iod = FromCsv(ctx).
@@ -294,9 +295,9 @@ func Benchmark_FromCsv_500000Rows(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		f, err := os.OpenFile("testdata\\organizations-500000.csv", os.O_RDONLY, 0666)
+		f, err := os.OpenFile(filepath.Join(testDataFolder, "organizations-500000.csv"), os.O_RDONLY, 0666)
 		if err != nil {
-			b.Error(err)
+			b.Skip("benchmark fixture not available:", err)
 		}
 
 		iod = FromCsv(ctx).
