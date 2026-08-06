@@ -1,5 +1,9 @@
 package series
 
+// The *_base.go and *_ops.go files in this package are produced by the code
+// generator in ../generators (its own Go module). Regenerate them with:
+//go:generate go -C ../generators run .
+
 import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/caerbannogwhite/aargh"

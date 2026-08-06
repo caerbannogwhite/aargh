@@ -897,7 +897,7 @@ func generateBase() {
 	}
 }
 
-const SERIES_FOLDER = "..\\series"
+var SERIES_FOLDER = filepath.Join("..", "series")
 
 func main() {
 	generateBase()
