@@ -5,23 +5,23 @@ import (
 	"sort"
 
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 // Bools represents a series of bools.
 type Bools struct {
 	IsNullable_ bool
-	Sorted_     aargh.SeriesSortOrder
+	Sorted_     enchanter.SeriesSortOrder
 	Data_       []bool
 	NullMask_   []uint8
 	Partition_  *SeriesBoolPartition
-	Ctx_        *aargh.Context
+	Ctx_        *enchanter.Context
 }
 
 // ArrowArray builds and returns a fresh Arrow array from the series data.
 // The caller owns the returned array; releasing it is optional under
-// GC-backed allocators (see aargh.Context.Allocator).
+// GC-backed allocators (see enchanter.Context.Allocator).
 func (s Bools) ArrowArray() arrow.Array {
 	return buildArrowBoolean(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
@@ -29,11 +29,11 @@ func (s Bools) ArrowArray() arrow.Array {
 // Get the element at index i as a string.
 func (s Bools) GetAsString(i int) string {
 	if s.IsNullable_ && s.NullMask_[i>>3]&(1<<uint(i%8)) != 0 {
-		return aargh.NA_TEXT
+		return enchanter.NA_TEXT
 	} else if s.Data_[i] {
-		return aargh.BOOL_TRUE_TEXT
+		return enchanter.BOOL_TRUE_TEXT
 	} else {
-		return aargh.BOOL_FALSE_TEXT
+		return enchanter.BOOL_FALSE_TEXT
 	}
 }
 
@@ -51,7 +51,7 @@ func (s Bools) Set(i int, v any) Series {
 	case bool:
 		s.Data_[i] = v
 
-	case aargh.NullableBool:
+	case enchanter.NullableBool:
 		s = s.MakeNullable().(Bools)
 		if v.Valid {
 			s.Data_[i] = v.Value
@@ -64,7 +64,7 @@ func (s Bools) Set(i int, v any) Series {
 		return Errors{fmt.Sprintf("Bools.Set: invalid type %T", v)}
 	}
 
-	s.Sorted_ = aargh.SORTED_NONE
+	s.Sorted_ = enchanter.SORTED_NONE
 	return s
 }
 
@@ -77,9 +77,9 @@ func (s Bools) Bools() []bool {
 
 // Return the underlying Data_ as a slice of NullableBool.
 func (s Bools) DataAsNullable() any {
-	Data_ := make([]aargh.NullableBool, len(s.Data_))
+	Data_ := make([]enchanter.NullableBool, len(s.Data_))
 	for i, v := range s.Data_ {
-		Data_[i] = aargh.NullableBool{Valid: !s.IsNull(i), Value: v}
+		Data_[i] = enchanter.NullableBool{Valid: !s.IsNull(i), Value: v}
 	}
 	return Data_
 }
@@ -90,19 +90,19 @@ func (s Bools) DataAsString() []string {
 	if s.IsNullable_ {
 		for i, v := range s.Data_ {
 			if s.IsNull(i) {
-				Data_[i] = aargh.NA_TEXT
+				Data_[i] = enchanter.NA_TEXT
 			} else if v {
-				Data_[i] = aargh.BOOL_TRUE_TEXT
+				Data_[i] = enchanter.BOOL_TRUE_TEXT
 			} else {
-				Data_[i] = aargh.BOOL_FALSE_TEXT
+				Data_[i] = enchanter.BOOL_FALSE_TEXT
 			}
 		}
 	} else {
 		for i, v := range s.Data_ {
 			if v {
-				Data_[i] = aargh.BOOL_TRUE_TEXT
+				Data_[i] = enchanter.BOOL_TRUE_TEXT
 			} else {
-				Data_[i] = aargh.BOOL_FALSE_TEXT
+				Data_[i] = enchanter.BOOL_FALSE_TEXT
 			}
 		}
 	}
@@ -169,9 +169,9 @@ func (s Bools) Cast(t meta.BaseType) Series {
 	case meta.StringType:
 		Data_ := make([]*string, len(s.Data_))
 
-		naTextPtr := s.Ctx_.StringPool.Put(aargh.NA_TEXT)
-		trueTextPtr := s.Ctx_.StringPool.Put(aargh.BOOL_TRUE_TEXT)
-		falseTextPtr := s.Ctx_.StringPool.Put(aargh.BOOL_FALSE_TEXT)
+		naTextPtr := s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
+		trueTextPtr := s.Ctx_.StringPool.Put(enchanter.BOOL_TRUE_TEXT)
+		falseTextPtr := s.Ctx_.StringPool.Put(enchanter.BOOL_FALSE_TEXT)
 
 		if s.IsNullable_ {
 			for i, v := range s.Data_ {
@@ -253,7 +253,7 @@ func (s Bools) Group() Series {
 
 	Partition_ := SeriesBoolPartition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_1, s.Len(), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, s.Len(), s.HasNull(),
 			worker, workerNulls),
 	}
 
@@ -278,9 +278,9 @@ func (s Bools) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				if s.Data_[index] {
-					newHash = (1 + aargh.HASH_MAGIC_NUMBER) + (h << 13) + (h >> 4)
+					newHash = (1 + enchanter.HASH_MAGIC_NUMBER) + (h << 13) + (h >> 4)
 				} else {
-					newHash = aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				}
 				map_[newHash] = append(map_[newHash], index)
 			}
@@ -293,11 +293,11 @@ func (s Bools) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				if s.IsNull(index) {
-					newHash = aargh.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
 				} else if s.Data_[index] {
-					newHash = (1 + aargh.HASH_MAGIC_NUMBER) + (h << 13) + (h >> 4)
+					newHash = (1 + enchanter.HASH_MAGIC_NUMBER) + (h << 13) + (h >> 4)
 				} else {
-					newHash = aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				}
 				map_[newHash] = append(map_[newHash], index)
 			}
@@ -306,7 +306,7 @@ func (s Bools) GroupBy(Partition_ SeriesPartition) Series {
 
 	newPartition := SeriesBoolPartition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}
 
@@ -361,17 +361,17 @@ func (s Bools) Swap(i, j int) {
 }
 
 func (s Bools) Sort() Series {
-	if s.Sorted_ != aargh.SORTED_ASC {
+	if s.Sorted_ != enchanter.SORTED_ASC {
 		sort.Sort(s)
-		s.Sorted_ = aargh.SORTED_ASC
+		s.Sorted_ = enchanter.SORTED_ASC
 	}
 	return s
 }
 
 func (s Bools) SortRev() Series {
-	if s.Sorted_ != aargh.SORTED_DESC {
+	if s.Sorted_ != enchanter.SORTED_DESC {
 		sort.Sort(sort.Reverse(s))
-		s.Sorted_ = aargh.SORTED_DESC
+		s.Sorted_ = enchanter.SORTED_DESC
 	}
 	return s
 }

@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 type DataFrameJoinType int8
@@ -23,7 +23,7 @@ type DataFrame interface {
 	// Basic accessors.
 
 	// GetContext returns the context of the dataframe.
-	GetContext() *aargh.Context
+	GetContext() *enchanter.Context
 
 	// Names returns the names of the series in the dataframe.
 	Names() []string

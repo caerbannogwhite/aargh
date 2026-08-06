@@ -5,21 +5,21 @@ import (
 
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
-// ArrowArrayToSeries converts an Arrow array into the corresponding aargh Series
+// ArrowArrayToSeries converts an Arrow array into the corresponding enchanter Series
 // type. The array's data is materialized (copied) into Go slices; no reference to
 // the input array is retained, so the caller keeps ownership and may Release it
 // as soon as this function returns.
-func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
+func ArrowArrayToSeries(arr arrow.Array, ctx *enchanter.Context) Series {
 	if arr == nil {
 		return Errors{"ArrowArrayToSeries: nil array"}
 	}
 
 	n := arr.Len()
 
-	// Build aargh null mask from Arrow validity bitmap.
+	// Build enchanter null mask from Arrow validity bitmap.
 	var isNullable bool
 	var nullMask []uint8
 	if arr.NullN() > 0 {
@@ -194,7 +194,7 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 		data := make([]*string, n)
 		for i := 0; i < n; i++ {
 			if a.IsNull(i) {
-				data[i] = ctx.StringPool.Put(aargh.NA_TEXT)
+				data[i] = ctx.StringPool.Put(enchanter.NA_TEXT)
 			} else {
 				data[i] = ctx.StringPool.Put(a.Value(i))
 			}
@@ -210,7 +210,7 @@ func ArrowArrayToSeries(arr arrow.Array, ctx *aargh.Context) Series {
 		data := make([]*string, n)
 		for i := 0; i < n; i++ {
 			if a.IsNull(i) {
-				data[i] = ctx.StringPool.Put(aargh.NA_TEXT)
+				data[i] = ctx.StringPool.Put(enchanter.NA_TEXT)
 			} else {
 				data[i] = ctx.StringPool.Put(a.Value(i))
 			}

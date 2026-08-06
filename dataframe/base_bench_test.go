@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 var G1_1e4_1e2_0_0_df *DataFrame

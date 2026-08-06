@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/series"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter/series"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 const (

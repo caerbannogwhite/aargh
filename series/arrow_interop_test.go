@@ -7,12 +7,12 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 func TestArrowArrayToSeriesFloat64(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewFloat64Builder(alloc)
@@ -41,7 +41,7 @@ func TestArrowArrayToSeriesFloat64(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesFloat64Nullable(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewFloat64Builder(alloc)
@@ -68,7 +68,7 @@ func TestArrowArrayToSeriesFloat64Nullable(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesInt64(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewInt64Builder(alloc)
@@ -88,7 +88,7 @@ func TestArrowArrayToSeriesInt64(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesBool(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewBooleanBuilder(alloc)
@@ -108,7 +108,7 @@ func TestArrowArrayToSeriesBool(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesString(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewStringBuilder(alloc)
@@ -131,7 +131,7 @@ func TestArrowArrayToSeriesString(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesTimestamp(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	t1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -158,7 +158,7 @@ func TestArrowArrayToSeriesTimestamp(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesDuration(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	d1 := 5 * time.Second
@@ -185,7 +185,7 @@ func TestArrowArrayToSeriesDuration(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesNull(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	builder := array.NewNullBuilder(alloc)
@@ -206,7 +206,7 @@ func TestArrowArrayToSeriesNull(t *testing.T) {
 }
 
 func TestArrowArrayToSeriesRoundTrip(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	// Create a series, convert to Arrow, convert back
 	orig := NewSeriesFloat64([]float64{1.1, 2.2, 3.3}, nil, false, ctx)

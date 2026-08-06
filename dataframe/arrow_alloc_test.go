@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 // ToArrowRecord's contract is that the caller Releases the record; under a
 // CheckedAllocator that must balance to zero outstanding bytes.
 func TestArrowRecordRoundTripNoLeaks(t *testing.T) {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	ctx.Allocator = mem
 	defer mem.AssertSize(t, 0)
 

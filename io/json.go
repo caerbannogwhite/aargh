@@ -6,19 +6,19 @@ import (
 	"io"
 	"os"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 type JsonReader struct {
 	path   string
 	reader io.Reader
 	schema *meta.Schema
-	ctx    *aargh.Context
+	ctx    *enchanter.Context
 }
 
-func NewJsonReader(ctx *aargh.Context) *JsonReader {
+func NewJsonReader(ctx *enchanter.Context) *JsonReader {
 	return &JsonReader{
 		path:   "",
 		reader: nil,
@@ -82,7 +82,7 @@ func (r *JsonReader) Read() *IoData {
 	return &iod
 }
 
-func readJson(reader io.Reader, schema *meta.Schema, ctx *aargh.Context) ([]string, []series.Series, error) {
+func readJson(reader io.Reader, schema *meta.Schema, ctx *enchanter.Context) ([]string, []series.Series, error) {
 
 	tokens := json.NewDecoder(reader)
 

@@ -6,9 +6,9 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/arrowutil"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/arrowutil"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 // ArrowSchema returns the Arrow schema corresponding to this DataFrame's columns.
@@ -31,7 +31,7 @@ func (df BaseDataFrame) ArrowSchema() *arrow.Schema {
 // ToArrowRecord converts this DataFrame to an Arrow Record (columnar batch).
 // The column arrays are freshly built copies owned by the record: the caller
 // should Release() the returned record when done (optional but recommended
-// under GC-backed allocators, see aargh.Context.Allocator).
+// under GC-backed allocators, see enchanter.Context.Allocator).
 func (df BaseDataFrame) ToArrowRecord() arrow.Record {
 	alloc := memory.DefaultAllocator
 	if df.ctx != nil {
@@ -66,7 +66,7 @@ func (df BaseDataFrame) ToArrowRecord() arrow.Record {
 // Each column in the record becomes a Series in the DataFrame. Column data is
 // materialized into Go slices, so this function does not take ownership of the
 // record: the caller may Release it as soon as this function returns.
-func NewBaseDataFrameFromArrowRecord(record arrow.Record, ctx *aargh.Context) DataFrame {
+func NewBaseDataFrameFromArrowRecord(record arrow.Record, ctx *enchanter.Context) DataFrame {
 	if ctx == nil {
 		return BaseDataFrame{err: fmt.Errorf("NewBaseDataFrameFromArrowRecord: context is nil")}
 	}

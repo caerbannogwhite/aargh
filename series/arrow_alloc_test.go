@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 // Leak tests: run the Arrow interop and compute paths under a CheckedAllocator
@@ -13,9 +13,9 @@ import (
 // to callers (Series.ArrowArray) are released explicitly here, per the
 // documented ownership contract.
 
-func newCheckedCtx() (*aargh.Context, *memory.CheckedAllocator) {
+func newCheckedCtx() (*enchanter.Context, *memory.CheckedAllocator) {
 	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	ctx.Allocator = mem
 	return ctx, mem
 }

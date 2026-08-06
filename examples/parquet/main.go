@@ -6,13 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/dataframe"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/dataframe"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func main() {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	df := dataframe.NewBaseDataFrame(ctx).
 		AddSeries("name", series.NewSeriesString([]string{"Alice", "Bob", "Charlie", "Dana"}, nil, false, ctx)).
@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dir, err := os.MkdirTemp("", "aargh-parquet-example")
+	dir, err := os.MkdirTemp("", "enchanter-parquet-example")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

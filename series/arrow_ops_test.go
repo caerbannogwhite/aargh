@@ -3,12 +3,12 @@ package series
 import (
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 func TestArrowAdd(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{10.0, 20.0, 30.0}, nil, false, ctx)
 
@@ -26,7 +26,7 @@ func TestArrowAdd(t *testing.T) {
 }
 
 func TestArrowSub(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{10.0, 20.0, 30.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 
@@ -41,7 +41,7 @@ func TestArrowSub(t *testing.T) {
 }
 
 func TestArrowMul(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{2.0, 3.0, 4.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{5.0, 6.0, 7.0}, nil, false, ctx)
 
@@ -56,7 +56,7 @@ func TestArrowMul(t *testing.T) {
 }
 
 func TestArrowDiv(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{10.0, 20.0, 30.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{2.0, 4.0, 5.0}, nil, false, ctx)
 
@@ -71,7 +71,7 @@ func TestArrowDiv(t *testing.T) {
 }
 
 func TestArrowInt64Add(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesInt64([]int64{1, 2, 3}, nil, false, ctx)
 	b := NewSeriesInt64([]int64{10, 20, 30}, nil, false, ctx)
 
@@ -86,7 +86,7 @@ func TestArrowInt64Add(t *testing.T) {
 }
 
 func TestArrowEq(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{1.0, 5.0, 3.0}, nil, false, ctx)
 
@@ -104,7 +104,7 @@ func TestArrowEq(t *testing.T) {
 }
 
 func TestArrowLt(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 5.0, 3.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{2.0, 3.0, 3.0}, nil, false, ctx)
 
@@ -119,7 +119,7 @@ func TestArrowLt(t *testing.T) {
 }
 
 func TestArrowGe(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 5.0, 3.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{2.0, 3.0, 3.0}, nil, false, ctx)
 
@@ -134,7 +134,7 @@ func TestArrowGe(t *testing.T) {
 }
 
 func TestArrowBoolAnd(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesBool([]bool{true, true, false, false}, nil, false, ctx)
 	b := NewSeriesBool([]bool{true, false, true, false}, nil, false, ctx)
 
@@ -149,7 +149,7 @@ func TestArrowBoolAnd(t *testing.T) {
 }
 
 func TestArrowBoolOr(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesBool([]bool{true, true, false, false}, nil, false, ctx)
 	b := NewSeriesBool([]bool{true, false, true, false}, nil, false, ctx)
 
@@ -164,7 +164,7 @@ func TestArrowBoolOr(t *testing.T) {
 }
 
 func TestArrowNullableAdd(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 0, 3.0}, []bool{false, true, false}, false, ctx)
 	b := NewSeriesFloat64([]float64{10.0, 20.0, 30.0}, nil, false, ctx)
 
@@ -185,7 +185,7 @@ func TestArrowNullableAdd(t *testing.T) {
 }
 
 func TestArrowBinaryOpInterface(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 
 	// Test with raw value (will be coerced to series)
@@ -200,7 +200,7 @@ func TestArrowBinaryOpInterface(t *testing.T) {
 }
 
 func TestArrowScalarBroadcast(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	a := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 	b := NewSeriesFloat64([]float64{10.0}, nil, false, ctx) // scalar
 

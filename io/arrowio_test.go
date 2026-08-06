@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func TestArrowIPCRoundTrip(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	iod := NewIoData(ctx)
 	iod.AddSeries(
@@ -82,7 +82,7 @@ func TestArrowIPCRoundTrip(t *testing.T) {
 }
 
 func TestArrowIPCRoundTripNullable(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	iod := NewIoData(ctx)
 	iod.AddSeries(
@@ -116,7 +116,7 @@ func TestArrowIPCRoundTripNullable(t *testing.T) {
 }
 
 func TestArrowIPCRoundTripStrings(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	iod := NewIoData(ctx)
 	iod.AddSeries(

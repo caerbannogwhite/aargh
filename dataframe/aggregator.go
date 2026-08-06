@@ -3,7 +3,7 @@ package dataframe
 import (
 	"fmt"
 
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 type aggregatorBuilder struct {

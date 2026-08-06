@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
-var testCtx = aargh.NewContext()
+var testCtx = enchanter.NewContext()
 
 // Test data with null values for comprehensive testing
 const testDataWithNulls = `

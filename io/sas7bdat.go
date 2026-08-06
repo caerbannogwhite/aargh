@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 // https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf
@@ -27,7 +27,7 @@ var _MAGIC_NUMBER = []byte{
 type Sas7bdatReader struct {
 	path   string
 	reader io.ReadSeeker
-	ctx    *aargh.Context
+	ctx    *enchanter.Context
 	iod    *IoData
 
 	is64Bit    bool
@@ -41,7 +41,7 @@ type Sas7bdatReader struct {
 	columns    []*_SAS7BDATColumn
 }
 
-func NewSas7bdatReader(ctx *aargh.Context) *Sas7bdatReader {
+func NewSas7bdatReader(ctx *enchanter.Context) *Sas7bdatReader {
 	return &Sas7bdatReader{
 		path:   "",
 		reader: nil,

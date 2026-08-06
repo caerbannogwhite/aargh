@@ -7,19 +7,19 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 ////////////////////////			ARROW IPC READER
 
 type ArrowIPCReader struct {
-	ctx   *aargh.Context
+	ctx   *enchanter.Context
 	path  string
 	alloc memory.Allocator
 }
 
-func NewArrowIPCReader(ctx *aargh.Context) *ArrowIPCReader {
+func NewArrowIPCReader(ctx *enchanter.Context) *ArrowIPCReader {
 	alloc := memory.DefaultAllocator
 	if ctx != nil {
 		alloc = ctx.Allocator
@@ -27,7 +27,7 @@ func NewArrowIPCReader(ctx *aargh.Context) *ArrowIPCReader {
 	return &ArrowIPCReader{ctx: ctx, alloc: alloc}
 }
 
-func FromArrowIPC(ctx *aargh.Context) *ArrowIPCReader {
+func FromArrowIPC(ctx *enchanter.Context) *ArrowIPCReader {
 	return NewArrowIPCReader(ctx)
 }
 

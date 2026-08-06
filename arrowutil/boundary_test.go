@@ -6,7 +6,7 @@ import (
 )
 
 // Boundary tests for the null-mask <-> validity-bitmap conversion at byte
-// boundaries. aargh uses bit-set=null, Arrow uses bit-set=valid; trailing
+// boundaries. enchanter uses bit-set=null, Arrow uses bit-set=valid; trailing
 // bits past the logical length must always be zero.
 
 func bit(b []byte, i int) bool { return b[i>>3]&(1<<uint(i%8)) != 0 }

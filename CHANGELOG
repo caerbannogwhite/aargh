@@ -1,4 +1,5 @@
 v0.2.0
+ - [Changed] Library renamed from aargh to enchanter: module is now github.com/caerbannogwhite/enchanter, root package is `enchanter`
  - [Feature] Apache Arrow interop: Series.ArrowArray(), DataFrame.ArrowSchema() / ToArrowRecord(), NewBaseDataFrameFromArrowRecord()
  - [Feature] Parquet reader and writer: DataFrame.FromParquet() / ToParquet()
  - [Feature] Arrow IPC (Feather) reader and writer: DataFrame.FromArrowIPC() / ToArrowIPC()

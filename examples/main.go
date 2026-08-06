@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/dataframe"
-	"github.com/caerbannogwhite/aargh/io"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/dataframe"
+	"github.com/caerbannogwhite/enchanter/io"
 )
 
 const (
@@ -35,7 +35,7 @@ Operations,5,250000
 `
 )
 
-var ctx = aargh.NewContext()
+var ctx = enchanter.NewContext()
 
 func Example01() {
 	dataframe.NewBaseDataFrame(ctx).

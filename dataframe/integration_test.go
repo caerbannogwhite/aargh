@@ -3,10 +3,10 @@ package dataframe
 import (
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
-var integrationCtx = aargh.NewContext()
+var integrationCtx = enchanter.NewContext()
 
 func TestIntegration_ComplexJoinAndGroupBy(t *testing.T) {
 	// Create employee dataframe

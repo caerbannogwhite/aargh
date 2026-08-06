@@ -1,9 +1,9 @@
 package arrowutil
 
-// Package arrowutil provides conversion utilities between aargh's null mask
+// Package arrowutil provides conversion utilities between enchanter's null mask
 // convention (bit-set=null) and Arrow's validity bitmap convention (bit-set=valid).
 
-// NullMaskToValidityBitmap converts an aargh null mask (bit-set=null) to an
+// NullMaskToValidityBitmap converts an enchanter null mask (bit-set=null) to an
 // Arrow validity bitmap (bit-set=valid). The result is a byte slice suitable
 // for use with arrow.ArrayData or builders.
 func NullMaskToValidityBitmap(nullMask []uint8, length int) []byte {
@@ -25,7 +25,7 @@ func NullMaskToValidityBitmap(nullMask []uint8, length int) []byte {
 }
 
 // ValidityBitmapToNullMask converts an Arrow validity bitmap (bit-set=valid)
-// to an aargh null mask (bit-set=null).
+// to an enchanter null mask (bit-set=null).
 func ValidityBitmapToNullMask(validBitmap []byte, length int) []uint8 {
 	nbytes := (length + 7) / 8
 	nullMask := make([]uint8, nbytes)
@@ -56,7 +56,7 @@ func AllValid(length int) []byte {
 	return buf
 }
 
-// BoolSliceToValidityBitmap converts a bool slice (true=null, matching aargh
+// BoolSliceToValidityBitmap converts a bool slice (true=null, matching enchanter
 // convention) to an Arrow validity bitmap (bit-set=valid).
 func BoolSliceToValidityBitmap(nullMask []bool, length int) []byte {
 	nbytes := (length + 7) / 8

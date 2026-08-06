@@ -1,4 +1,4 @@
-package aargh
+package enchanter
 
 import (
 	"fmt"

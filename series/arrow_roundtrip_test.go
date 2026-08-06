@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 // Round-trip tests for the Series -> Arrow -> Series conversion across all
 // series types, byte-boundary lengths and null patterns. The null-mask
-// inversion (aargh bit-set=null vs Arrow bit-set=valid) is the invariant the
+// inversion (enchanter bit-set=null vs Arrow bit-set=valid) is the invariant the
 // whole Arrow integration rests on.
 
 var rtLengths = []int{1, 7, 8, 9, 64, 65}
@@ -70,7 +70,7 @@ func checkRoundTripNulls(t *testing.T, got Series, n int, pat func(i, n int) boo
 }
 
 func TestArrowRoundTripFloat64(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]float64, n)
 		for i := range data {
@@ -91,7 +91,7 @@ func TestArrowRoundTripFloat64(t *testing.T) {
 }
 
 func TestArrowRoundTripInt64(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]int64, n)
 		for i := range data {
@@ -114,7 +114,7 @@ func TestArrowRoundTripInt64(t *testing.T) {
 // Ints are stored as Arrow int64 (Arrow has no platform-dependent int), so the
 // round trip intentionally comes back as Int64s.
 func TestArrowRoundTripInt(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]int, n)
 		for i := range data {
@@ -138,7 +138,7 @@ func TestArrowRoundTripInt(t *testing.T) {
 }
 
 func TestArrowRoundTripBool(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]bool, n)
 		for i := range data {
@@ -159,7 +159,7 @@ func TestArrowRoundTripBool(t *testing.T) {
 }
 
 func TestArrowRoundTripString(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]string, n)
 		for i := range data {
@@ -180,7 +180,7 @@ func TestArrowRoundTripString(t *testing.T) {
 }
 
 func TestArrowRoundTripTime(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	base := time.Date(2020, 1, 2, 3, 4, 5, 123456789, time.UTC)
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]time.Time, n)
@@ -202,7 +202,7 @@ func TestArrowRoundTripTime(t *testing.T) {
 }
 
 func TestArrowRoundTripDuration(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	forEachLenPattern(t, func(t *testing.T, n int, pat func(i, n int) bool) {
 		data := make([]time.Duration, n)
 		for i := range data {
@@ -227,7 +227,7 @@ func TestArrowRoundTripDuration(t *testing.T) {
 // Data_ in place).
 
 func TestArrowBornSeriesSortNotStale(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	orig := NewSeriesFloat64([]float64{3, 1, 2}, nil, false, ctx)
 	arrowBorn := ArrowArrayToSeries(orig.ArrowArray(), ctx)
 
@@ -245,7 +245,7 @@ func TestArrowBornSeriesSortNotStale(t *testing.T) {
 }
 
 func TestArrowBornSeriesSetNotStale(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	orig := NewSeriesInt64([]int64{10, 20, 30}, nil, false, ctx)
 	arrowBorn := ArrowArrayToSeries(orig.ArrowArray(), ctx)
 

@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func Test_SeriesFloat64_Base(t *testing.T) {
@@ -208,9 +208,9 @@ func Test_SeriesFloat64_Append(t *testing.T) {
 		case 1:
 			s = s.Append([]float64{r}).(Float64s)
 		case 2:
-			s = s.Append(aargh.NullableFloat64{Valid: true, Value: r}).(Float64s)
+			s = s.Append(enchanter.NullableFloat64{Valid: true, Value: r}).(Float64s)
 		case 3:
-			s = s.Append([]aargh.NullableFloat64{{Valid: false, Value: r}}).(Float64s)
+			s = s.Append([]enchanter.NullableFloat64{{Valid: false, Value: r}}).(Float64s)
 		}
 
 		if s.Get(i) != r {
@@ -243,7 +243,7 @@ func Test_SeriesFloat64_Append(t *testing.T) {
 	s = NewSeriesFloat64([]float64{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append(aargh.NullableFloat64{Valid: false, Value: 1}).(Float64s)
+		s = s.Append(enchanter.NullableFloat64{Valid: false, Value: 1}).(Float64s)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -253,7 +253,7 @@ func Test_SeriesFloat64_Append(t *testing.T) {
 	s = NewSeriesFloat64([]float64{}, nil, true, ctx)
 
 	for i := 0; i < 100; i++ {
-		s = s.Append([]aargh.NullableFloat64{{Valid: false, Value: 1}}).(Float64s)
+		s = s.Append([]enchanter.NullableFloat64{{Valid: false, Value: 1}}).(Float64s)
 		if !s.IsNull(i) {
 			t.Errorf("Expected %t, got %t at index %d", true, s.IsNull(i), i)
 		}
@@ -336,8 +336,8 @@ func Test_SeriesFloat64_Cast(t *testing.T) {
 
 	// Check the data.
 	for i, v := range resString.Data().([]string) {
-		if mask[i] && v != aargh.NA_TEXT {
-			t.Errorf("Expected %s, got %s at index %d", aargh.NA_TEXT, v, i)
+		if mask[i] && v != enchanter.NA_TEXT {
+			t.Errorf("Expected %s, got %s at index %d", enchanter.NA_TEXT, v, i)
 		} else if !mask[i] && v != floatToString(data[i]) {
 			t.Errorf("Expected %s, got %s at index %d", floatToString(data[i]), v, i)
 		}

@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 
 	"github.com/tealeg/xlsx"
 )
@@ -21,16 +21,16 @@ type XlsxReader struct {
 	guessDataTypeLen int
 	nullValues       bool
 	schema           *meta.Schema
-	ctx              *aargh.Context
+	ctx              *enchanter.Context
 }
 
-func NewXlsxReader(ctx *aargh.Context) *XlsxReader {
+func NewXlsxReader(ctx *enchanter.Context) *XlsxReader {
 	return &XlsxReader{
 		path:             "",
 		sheet:            "",
 		header:           0,
 		rows:             -1,
-		guessDataTypeLen: aargh.XLSX_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
+		guessDataTypeLen: enchanter.XLSX_READER_DEFAULT_GUESS_DATA_TYPE_LEN,
 		nullValues:       false,
 		schema:           nil,
 		ctx:              ctx,
@@ -130,7 +130,7 @@ func (r *xlsxRowReader) Read() ([]string, error) {
 
 func readXlsx(
 	path string, sheet string, header, rows int, nullValues bool,
-	guessDataTypeLen int, schema *meta.Schema, ctx *aargh.Context,
+	guessDataTypeLen int, schema *meta.Schema, ctx *enchanter.Context,
 ) ([]string, []series.Series, error) {
 	wb, err := xlsx.OpenFile(path)
 	if err != nil {

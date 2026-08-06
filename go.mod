@@ -1,4 +1,4 @@
-module github.com/caerbannogwhite/aargh
+module github.com/caerbannogwhite/enchanter
 
 go 1.24.0
 

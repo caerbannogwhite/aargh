@@ -6,18 +6,18 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 const (
-	NA_TEXT = aargh.NA_TEXT
+	NA_TEXT = enchanter.NA_TEXT
 )
 
-var ctx *aargh.Context
+var ctx *enchanter.Context
 var testDataDir string
 
 func TestMain(m *testing.M) {
-	ctx = aargh.NewContext()
+	ctx = enchanter.NewContext()
 	testDataDir = filepath.Join("..", "testdata")
 
 	flag.Parse()

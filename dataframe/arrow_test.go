@@ -6,12 +6,12 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 func TestArrowSchema(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeriesFromFloat64s("price", []float64{1.1, 2.2, 3.3}, nil, false).
 		AddSeriesFromInts("qty", []int{10, 20, 30}, nil, false).
@@ -49,7 +49,7 @@ func TestArrowSchema(t *testing.T) {
 }
 
 func TestToArrowRecord(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeriesFromFloat64s("x", []float64{1.0, 2.0, 3.0}, nil, false).
 		AddSeriesFromInt64s("y", []int64{10, 20, 30}, nil, false)
@@ -76,7 +76,7 @@ func TestToArrowRecord(t *testing.T) {
 }
 
 func TestNewBaseDataFrameFromArrowRecord(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	alloc := memory.DefaultAllocator
 
 	// Build an Arrow record
@@ -136,7 +136,7 @@ func TestNewBaseDataFrameFromArrowRecord(t *testing.T) {
 }
 
 func TestArrowRecordRoundTrip(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	// Build a DataFrame
 	df := NewBaseDataFrame(ctx).

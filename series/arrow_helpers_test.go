@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/apache/arrow-go/v18/arrow/array"
-	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/enchanter"
 )
 
 func TestFloat64sArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesFloat64([]float64{1.0, 2.0, 3.0}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr == nil {
@@ -28,7 +28,7 @@ func TestFloat64sArrowArray(t *testing.T) {
 }
 
 func TestFloat64sArrowArrayNullable(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesFloat64([]float64{1.0, 0, 3.0}, []bool{false, true, false}, false, ctx)
 	arr := s.ArrowArray()
 	if arr.Len() != 3 {
@@ -46,7 +46,7 @@ func TestFloat64sArrowArrayNullable(t *testing.T) {
 }
 
 func TestInt64sArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesInt64([]int64{10, 20, 30}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr.Len() != 3 {
@@ -59,7 +59,7 @@ func TestInt64sArrowArray(t *testing.T) {
 }
 
 func TestIntsArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesInt([]int{100, 200}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr.Len() != 2 {
@@ -73,7 +73,7 @@ func TestIntsArrowArray(t *testing.T) {
 }
 
 func TestBoolsArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesBool([]bool{true, false, true}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr.Len() != 3 {
@@ -86,7 +86,7 @@ func TestBoolsArrowArray(t *testing.T) {
 }
 
 func TestStringsArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	s := NewSeriesString([]string{"hello", "world"}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr.Len() != 2 {
@@ -99,7 +99,7 @@ func TestStringsArrowArray(t *testing.T) {
 }
 
 func TestTimesArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	t1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2024, 6, 15, 12, 30, 0, 0, time.UTC)
 	s := NewSeriesTime([]time.Time{t1, t2}, nil, false, ctx)
@@ -120,7 +120,7 @@ func TestTimesArrowArray(t *testing.T) {
 }
 
 func TestDurationsArrowArray(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	d1 := 5 * time.Second
 	d2 := 100 * time.Millisecond
 	s := NewSeriesDuration([]time.Duration{d1, d2}, nil, false, ctx)
@@ -138,7 +138,7 @@ func TestDurationsArrowArray(t *testing.T) {
 }
 
 func TestArrowArrayViaInterface(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	var s Series = NewSeriesFloat64([]float64{1, 2, 3}, nil, false, ctx)
 	arr := s.ArrowArray()
 	if arr == nil {

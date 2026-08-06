@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func TestParquetRoundTrip(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	// Build IoData
 	iod := NewIoData(ctx)
@@ -78,7 +78,7 @@ func TestParquetRoundTrip(t *testing.T) {
 }
 
 func TestParquetRoundTripNullable(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	iod := NewIoData(ctx)
 	iod.AddSeries(

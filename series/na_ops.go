@@ -3,8 +3,8 @@ package series
 import (
 	"fmt"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 func (s NAs) Not() Series {
@@ -726,7 +726,7 @@ func (s NAs) Add(other any) Series {
 				} else {
 					resultNullMask = make([]uint8, 0)
 				}
-				result[0] = s.Ctx_.StringPool.Put(aargh.NA_TEXT + *o.Data_[0])
+				result[0] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT + *o.Data_[0])
 				return Strings{IsNullable_: false, NullMask_: resultNullMask, Data_: result, Ctx_: s.Ctx_}
 			} else {
 				resultSize := o.Len()
@@ -739,7 +739,7 @@ func (s NAs) Add(other any) Series {
 					resultNullMask = make([]uint8, 0)
 				}
 				for i := 0; i < resultSize; i++ {
-					result[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT + *o.Data_[i])
+					result[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT + *o.Data_[i])
 				}
 				return Strings{IsNullable_: false, NullMask_: resultNullMask, Data_: result, Ctx_: s.Ctx_}
 			}
@@ -754,7 +754,7 @@ func (s NAs) Add(other any) Series {
 					resultNullMask = make([]uint8, 0)
 				}
 				for i := 0; i < resultSize; i++ {
-					result[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT + *o.Data_[0])
+					result[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT + *o.Data_[0])
 				}
 				return Strings{IsNullable_: false, NullMask_: resultNullMask, Data_: result, Ctx_: s.Ctx_}
 			} else if s.Len() == o.Len() {
@@ -768,7 +768,7 @@ func (s NAs) Add(other any) Series {
 					resultNullMask = make([]uint8, 0)
 				}
 				for i := 0; i < resultSize; i++ {
-					result[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT + *o.Data_[i])
+					result[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT + *o.Data_[i])
 				}
 				return Strings{IsNullable_: false, NullMask_: resultNullMask, Data_: result, Ctx_: s.Ctx_}
 			}

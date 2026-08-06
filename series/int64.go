@@ -6,23 +6,23 @@ import (
 	"time"
 
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 // Int64s represents a series of ints.
 type Int64s struct {
 	IsNullable_ bool
-	Sorted_     aargh.SeriesSortOrder
+	Sorted_     enchanter.SeriesSortOrder
 	Data_       []int64
 	NullMask_   []uint8
 	Partition_  *SeriesInt64Partition
-	Ctx_        *aargh.Context
+	Ctx_        *enchanter.Context
 }
 
 // ArrowArray builds and returns a fresh Arrow array from the series data.
 // The caller owns the returned array; releasing it is optional under
-// GC-backed allocators (see aargh.Context.Allocator).
+// GC-backed allocators (see enchanter.Context.Allocator).
 func (s Int64s) ArrowArray() arrow.Array {
 	return buildArrowInt64(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
@@ -30,7 +30,7 @@ func (s Int64s) ArrowArray() arrow.Array {
 // Get the element at index i as a string.
 func (s Int64s) GetAsString(i int) string {
 	if s.IsNullable_ && s.IsNull(i) {
-		return aargh.NA_TEXT
+		return enchanter.NA_TEXT
 	}
 	return intToString(s.Data_[i])
 }
@@ -62,36 +62,36 @@ func (s Int64s) Set(i int, v any) Series {
 	case int64:
 		s.Data_[i] = val
 
-	case aargh.NullableInt8:
+	case enchanter.NullableInt8:
 		s = s.MakeNullable().(Int64s)
-		if v.(aargh.NullableInt8).Valid {
+		if v.(enchanter.NullableInt8).Valid {
 			s.Data_[i] = int64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt16:
+	case enchanter.NullableInt16:
 		s = s.MakeNullable().(Int64s)
-		if v.(aargh.NullableInt16).Valid {
+		if v.(enchanter.NullableInt16).Valid {
 			s.Data_[i] = int64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt:
+	case enchanter.NullableInt:
 		s = s.MakeNullable().(Int64s)
-		if v.(aargh.NullableInt).Valid {
+		if v.(enchanter.NullableInt).Valid {
 			s.Data_[i] = int64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt64:
+	case enchanter.NullableInt64:
 		s = s.MakeNullable().(Int64s)
-		if v.(aargh.NullableInt64).Valid {
+		if v.(enchanter.NullableInt64).Valid {
 			s.Data_[i] = val.Value
 		} else {
 			s.Data_[i] = 0
@@ -102,7 +102,7 @@ func (s Int64s) Set(i int, v any) Series {
 		return Errors{fmt.Sprintf("Int64s.Set: invalid type %T", v)}
 	}
 
-	s.Sorted_ = aargh.SORTED_NONE
+	s.Sorted_ = enchanter.SORTED_NONE
 	return s
 }
 
@@ -115,9 +115,9 @@ func (s Int64s) Int64s() []int64 {
 
 // Return the underlying Data_ as a slice of NullableInt64.
 func (s Int64s) DataAsNullable() any {
-	Data_ := make([]aargh.NullableInt64, len(s.Data_))
+	Data_ := make([]enchanter.NullableInt64, len(s.Data_))
 	for i, v := range s.Data_ {
-		Data_[i] = aargh.NullableInt64{Valid: !s.IsNull(i), Value: v}
+		Data_[i] = enchanter.NullableInt64{Valid: !s.IsNull(i), Value: v}
 	}
 	return Data_
 }
@@ -128,7 +128,7 @@ func (s Int64s) DataAsString() []string {
 	if s.IsNullable_ {
 		for i, v := range s.Data_ {
 			if s.IsNull(i) {
-				Data_[i] = aargh.NA_TEXT
+				Data_[i] = enchanter.NA_TEXT
 			} else {
 				Data_[i] = intToString(v)
 			}
@@ -152,7 +152,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Bools{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -167,7 +167,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Ints{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -185,7 +185,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Float64s{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -201,7 +201,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 		if s.IsNullable_ {
 			for i, v := range s.Data_ {
 				if s.IsNull(i) {
-					Data_[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+					Data_[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 				} else {
 					Data_[i] = s.Ctx_.StringPool.Put(intToString(v))
 				}
@@ -214,7 +214,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Strings{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -229,7 +229,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Times{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -244,7 +244,7 @@ func (s Int64s) Cast(t meta.BaseType) Series {
 
 		return Durations{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -288,7 +288,7 @@ func (gp *SeriesInt64Partition) GetMap() map[int64][]int {
 
 		// Merge the nulls to the map
 		if gp.Partition_DenseNulls != nil && len(gp.Partition_DenseNulls) > 0 {
-			nullKey := __series_get_nullkey(map_, aargh.HASH_NULL_KEY)
+			nullKey := __series_get_nullkey(map_, enchanter.HASH_NULL_KEY)
 			map_[nullKey] = gp.Partition_DenseNulls
 		}
 
@@ -321,7 +321,7 @@ func (s Int64s) Group() Series {
 
 	// If the difference between the maximum and minimum values is acceptable,
 	// then we can use a dense map, otherwise we use a sparse map
-	if useDenseMap && (max-min >= aargh.MINIMUM_PARALLEL_SIZE_1) {
+	if useDenseMap && (max-min >= enchanter.MINIMUM_PARALLEL_SIZE_1) {
 		useDenseMap = false
 	}
 
@@ -399,7 +399,7 @@ func (s Int64s) Group() Series {
 		Partition_ = SeriesInt64Partition{
 			isDense: false,
 			Partition_: __series_groupby(
-				aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
+				enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
 				worker, workerNulls),
 		}
 	}
@@ -428,7 +428,7 @@ func (s Int64s) GroupBy(Partition_ SeriesPartition) Series {
 		var newHash int64
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
-				newHash = s.Data_[index] + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+				newHash = s.Data_[index] + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				map_[newHash] = append(map_[newHash], index)
 			}
 		}
@@ -440,9 +440,9 @@ func (s Int64s) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				if s.IsNull(index) {
-					newHash = aargh.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
 				} else {
-					newHash = s.Data_[index] + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+					newHash = s.Data_[index] + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				}
 				map_[newHash] = append(map_[newHash], index)
 			}
@@ -451,7 +451,7 @@ func (s Int64s) GroupBy(Partition_ SeriesPartition) Series {
 
 	newPartition := SeriesInt64Partition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_2, len(keys), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}
 
@@ -507,17 +507,17 @@ func (s Int64s) Swap(i, j int) {
 }
 
 func (s Int64s) Sort() Series {
-	if s.Sorted_ != aargh.SORTED_ASC {
+	if s.Sorted_ != enchanter.SORTED_ASC {
 		sort.Sort(s)
-		s.Sorted_ = aargh.SORTED_ASC
+		s.Sorted_ = enchanter.SORTED_ASC
 	}
 	return s
 }
 
 func (s Int64s) SortRev() Series {
-	if s.Sorted_ != aargh.SORTED_DESC {
+	if s.Sorted_ != enchanter.SORTED_DESC {
 		sort.Sort(sort.Reverse(s))
-		s.Sorted_ = aargh.SORTED_DESC
+		s.Sorted_ = enchanter.SORTED_DESC
 	}
 	return s
 }

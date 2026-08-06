@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 // Null keys group together, and the resulting key column must keep the null
 // flag instead of surfacing the zero value as valid data.
 func TestGroupByNullKeyKeepsNullInResult(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeries("k", series.NewSeriesInt64([]int64{1, 1, 2, 0, 2}, []bool{false, false, false, true, false}, false, ctx)).
 		AddSeries("v", series.NewSeriesFloat64([]float64{10, 20, 30, 40, 50}, nil, false, ctx))
@@ -43,7 +43,7 @@ func TestGroupByNullKeyKeepsNullInResult(t *testing.T) {
 // GroupBy on an already grouped dataframe must replace the grouping, not
 // silently keep the old one.
 func TestGroupByOnGroupedRegroups(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeries("a", series.NewSeriesInt64([]int64{1, 1, 2, 2}, nil, false, ctx)).
 		AddSeries("b", series.NewSeriesString([]string{"x", "y", "x", "y"}, nil, false, ctx))
@@ -70,7 +70,7 @@ func TestGroupByOnGroupedRegroups(t *testing.T) {
 // Grouping by a Times key must produce an aligned result frame (the key
 // column used to be silently dropped, leaving names and series misaligned).
 func TestGroupByTimeKeyProducesAlignedResult(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	t0 := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	t1 := time.Date(2021, 6, 15, 0, 0, 0, 0, time.UTC)
 	df := NewBaseDataFrame(ctx).

@@ -11,15 +11,15 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/apache/arrow-go/v18/parquet"
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 // Multi-chunk reads: parquet row groups / IPC record batches after the first
 // must keep their null masks when concatenated into a single series.
 
 func TestParquetMultiRowGroupWithNulls(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	path := filepath.Join(t.TempDir(), "multi.parquet")
 
 	const n = 10
@@ -107,7 +107,7 @@ func TestParquetMultiRowGroupWithNulls(t *testing.T) {
 // multi-chunk concatenation helper directly: null masks in chunks after the
 // first must be merged, including promotion of a non-nullable first chunk.
 func TestMultiChunkToSeriesPreservesNulls(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 
 	c1 := series.NewSeriesFloat64([]float64{0, 1, 2}, nil, false, ctx) // not nullable
 	c2 := series.NewSeriesFloat64([]float64{3, 4, 5}, []bool{false, true, false}, false, ctx)
@@ -158,7 +158,7 @@ func TestMultiChunkToSeriesPreservesNulls(t *testing.T) {
 }
 
 func TestArrowIPCMultiRecordWithNulls(t *testing.T) {
-	ctx := aargh.NewContext()
+	ctx := enchanter.NewContext()
 	path := filepath.Join(t.TempDir(), "multi.arrow")
 
 	s1 := series.NewSeriesFloat64([]float64{0, 1, 2, 3, 4}, []bool{false, true, false, false, false}, false, ctx)

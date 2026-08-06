@@ -2,10 +2,10 @@ package arrowutil
 
 import (
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
-// BaseTypeToArrowType maps an aargh BaseType to the corresponding Arrow DataType.
+// BaseTypeToArrowType maps an enchanter BaseType to the corresponding Arrow DataType.
 // Returns nil for types that have no direct Arrow mapping.
 func BaseTypeToArrowType(bt meta.BaseType) arrow.DataType {
 	switch bt {
@@ -31,7 +31,7 @@ func BaseTypeToArrowType(bt meta.BaseType) arrow.DataType {
 	}
 }
 
-// ArrowTypeToBaseType maps an Arrow DataType to the corresponding aargh BaseType.
+// ArrowTypeToBaseType maps an Arrow DataType to the corresponding enchanter BaseType.
 // Returns meta.ErrorType for unsupported types.
 func ArrowTypeToBaseType(dt arrow.DataType) meta.BaseType {
 	switch dt.ID() {

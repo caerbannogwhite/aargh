@@ -7,22 +7,22 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 // NAs represents a series with no Data_.
 type NAs struct {
 	size       int
 	Partition_ *SeriesNAPartition
-	Ctx_       *aargh.Context
+	Ctx_       *enchanter.Context
 }
 
 func (s NAs) printInfo() {}
 
 // Return the context of the series.
-func (s NAs) GetContext() *aargh.Context {
+func (s NAs) GetContext() *enchanter.Context {
 	return s.Ctx_
 }
 
@@ -41,8 +41,8 @@ func (s NAs) IsNullable() bool {
 	return true
 }
 
-func (s NAs) IsSorted() aargh.SeriesSortOrder {
-	return aargh.SORTED_ASC
+func (s NAs) IsSorted() enchanter.SeriesSortOrder {
+	return enchanter.SORTED_ASC
 }
 
 // Returns if the series is error.
@@ -110,7 +110,7 @@ func (s NAs) Get(i int) any {
 }
 
 func (s NAs) GetAsString(i int) string {
-	return aargh.NA_TEXT
+	return enchanter.NA_TEXT
 }
 
 // Set the element at index i.
@@ -135,7 +135,7 @@ func (s NAs) Append(v any) Series {
 		s.size += v.size
 		return s
 
-	case bool, aargh.NullableBool, []bool, []aargh.NullableBool, Bools:
+	case bool, enchanter.NullableBool, []bool, []enchanter.NullableBool, Bools:
 		var Data_ []bool
 		switch v := v.(type) {
 		case bool:
@@ -144,7 +144,7 @@ func (s NAs) Append(v any) Series {
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 
-		case aargh.NullableBool:
+		case enchanter.NullableBool:
 			Data_ = make([]bool, s.size+1)
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			if v.Valid {
@@ -156,7 +156,7 @@ func (s NAs) Append(v any) Series {
 			Data_ = append(make([]bool, s.size), v...)
 			_, NullMask_ = utils.MergeNullMasks(s.size, true, utils.BinVecInit(s.size, true), len(v), false, make([]uint8, 0))
 
-		case []aargh.NullableBool:
+		case []enchanter.NullableBool:
 			Data_ = make([]bool, s.size+len(v))
 			NullMask_ = utils.BinVecInit(len(v), false)
 			for i, v := range v {
@@ -176,14 +176,14 @@ func (s NAs) Append(v any) Series {
 
 		return Bools{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
 			Ctx_:        s.Ctx_,
 		}
 
-	case int, aargh.NullableInt, []int, []aargh.NullableInt, Ints:
+	case int, enchanter.NullableInt, []int, []enchanter.NullableInt, Ints:
 		var Data_ []int
 		switch v := v.(type) {
 		case int:
@@ -192,7 +192,7 @@ func (s NAs) Append(v any) Series {
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 
-		case aargh.NullableInt:
+		case enchanter.NullableInt:
 			Data_ = make([]int, s.size+1)
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			if v.Valid {
@@ -204,7 +204,7 @@ func (s NAs) Append(v any) Series {
 			Data_ = append(make([]int, s.size), v...)
 			_, NullMask_ = utils.MergeNullMasks(s.size, true, utils.BinVecInit(s.size, true), len(v), false, make([]uint8, 0))
 
-		case []aargh.NullableInt:
+		case []enchanter.NullableInt:
 			Data_ = make([]int, s.size+len(v))
 			NullMask_ = utils.BinVecInit(len(v), false)
 			for i, v := range v {
@@ -224,14 +224,14 @@ func (s NAs) Append(v any) Series {
 
 		return Ints{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
 			Ctx_:        s.Ctx_,
 		}
 
-	case int64, aargh.NullableInt64, []int64, []aargh.NullableInt64, Int64s:
+	case int64, enchanter.NullableInt64, []int64, []enchanter.NullableInt64, Int64s:
 		var Data_ []int64
 		switch v := v.(type) {
 		case int64:
@@ -240,7 +240,7 @@ func (s NAs) Append(v any) Series {
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 
-		case aargh.NullableInt64:
+		case enchanter.NullableInt64:
 			Data_ = make([]int64, s.size+1)
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			if v.Valid {
@@ -252,7 +252,7 @@ func (s NAs) Append(v any) Series {
 			Data_ = append(make([]int64, s.size), v...)
 			_, NullMask_ = utils.MergeNullMasks(s.size, true, utils.BinVecInit(s.size, true), len(v), false, make([]uint8, 0))
 
-		case []aargh.NullableInt64:
+		case []enchanter.NullableInt64:
 			Data_ = make([]int64, s.size+len(v))
 			NullMask_ = utils.BinVecInit(len(v), false)
 			for i, v := range v {
@@ -272,14 +272,14 @@ func (s NAs) Append(v any) Series {
 
 		return Int64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
 			Ctx_:        s.Ctx_,
 		}
 
-	case float64, aargh.NullableFloat64, []float64, []aargh.NullableFloat64, Float64s:
+	case float64, enchanter.NullableFloat64, []float64, []enchanter.NullableFloat64, Float64s:
 		var Data_ []float64
 		switch v := v.(type) {
 		case float64:
@@ -288,7 +288,7 @@ func (s NAs) Append(v any) Series {
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 
-		case aargh.NullableFloat64:
+		case enchanter.NullableFloat64:
 			Data_ = make([]float64, s.size+1)
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			if v.Valid {
@@ -300,7 +300,7 @@ func (s NAs) Append(v any) Series {
 			Data_ = append(make([]float64, s.size), v...)
 			_, NullMask_ = utils.MergeNullMasks(s.size, true, utils.BinVecInit(s.size, true), len(v), false, make([]uint8, 0))
 
-		case []aargh.NullableFloat64:
+		case []enchanter.NullableFloat64:
 			Data_ = make([]float64, s.size+len(v))
 			NullMask_ = utils.BinVecInit(len(v), false)
 			for i, v := range v {
@@ -320,17 +320,17 @@ func (s NAs) Append(v any) Series {
 
 		return Float64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
 			Ctx_:        s.Ctx_,
 		}
 
-	case string, aargh.NullableString, []string, []aargh.NullableString, Strings:
+	case string, enchanter.NullableString, []string, []enchanter.NullableString, Strings:
 		Data_ := make([]*string, s.size)
 		for i := 0; i < s.size; i++ {
-			Data_[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+			Data_[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 		}
 
 		switch v := v.(type) {
@@ -339,13 +339,13 @@ func (s NAs) Append(v any) Series {
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 
-		case aargh.NullableString:
+		case enchanter.NullableString:
 			NullMask_ = utils.BinVecInit(s.size+1, true)
 			if v.Valid {
 				Data_ = append(Data_, s.Ctx_.StringPool.Put(v.Value))
 				NullMask_[s.size>>3] &= ^(1 << uint(s.size%8))
 			} else {
-				Data_ = append(Data_, s.Ctx_.StringPool.Put(aargh.NA_TEXT))
+				Data_ = append(Data_, s.Ctx_.StringPool.Put(enchanter.NA_TEXT))
 			}
 
 		case []string:
@@ -355,7 +355,7 @@ func (s NAs) Append(v any) Series {
 			}
 			_, NullMask_ = utils.MergeNullMasks(s.size, true, utils.BinVecInit(s.size, true), len(v), false, make([]uint8, 0))
 
-		case []aargh.NullableString:
+		case []enchanter.NullableString:
 			Data_ = append(Data_, make([]*string, len(v))...)
 			NullMask_ = utils.BinVecInit(len(v), false)
 			for i, v := range v {
@@ -363,7 +363,7 @@ func (s NAs) Append(v any) Series {
 					Data_[s.size+i] = s.Ctx_.StringPool.Put(v.Value)
 				} else {
 					NullMask_[i>>3] |= 1 << uint(i%8)
-					Data_[s.size+i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+					Data_[s.size+i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 				}
 			}
 
@@ -376,7 +376,7 @@ func (s NAs) Append(v any) Series {
 
 		return Strings{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   NullMask_,
 			Partition_:  nil,
@@ -397,14 +397,14 @@ func (s NAs) Data() any {
 
 // Returns the nullable Data_ of the series.
 func (s NAs) DataAsNullable() any {
-	return make([]aargh.NullableBool, s.size)
+	return make([]enchanter.NullableBool, s.size)
 }
 
 // Returns the Data_ of the series as a slice of strings.
 func (s NAs) DataAsString() []string {
 	Data_ := make([]string, s.size)
 	for i := 0; i < s.size; i++ {
-		Data_[i] = aargh.NA_TEXT
+		Data_[i] = enchanter.NA_TEXT
 	}
 	return Data_
 }
@@ -418,7 +418,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.BoolType:
 		return Bools{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]bool, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -428,7 +428,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.IntType:
 		return Ints{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]int, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -438,7 +438,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.Int64Type:
 		return Int64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]int64, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -448,7 +448,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.Float64Type:
 		return Float64s{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]float64, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -458,7 +458,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.StringType:
 		return Strings{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]*string, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -468,7 +468,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.TimeType:
 		return Times{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]time.Time, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -478,7 +478,7 @@ func (s NAs) Cast(t meta.BaseType) Series {
 	case meta.DurationType:
 		return Durations{
 			IsNullable_: true,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       make([]time.Duration, s.size),
 			NullMask_:   utils.BinVecInit(s.size, true),
 			Partition_:  nil,
@@ -550,11 +550,11 @@ func (s NAs) FilterIntSlice(indexes []int, check bool) Series {
 	return s
 }
 
-func (s NAs) Map(f aargh.MapFunc) Series {
+func (s NAs) Map(f enchanter.MapFunc) Series {
 	return s
 }
 
-func (s NAs) MapNull(f aargh.MapFuncNull) Series {
+func (s NAs) MapNull(f enchanter.MapFuncNull) Series {
 	return s
 }
 

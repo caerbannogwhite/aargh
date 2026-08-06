@@ -2,10 +2,10 @@ module examples
 
 go 1.24.0
 
-require github.com/caerbannogwhite/aargh v0.1.2
+require github.com/caerbannogwhite/enchanter v0.1.2
 
 // Examples always build against the checkout they live in.
-replace github.com/caerbannogwhite/aargh => ..
+replace github.com/caerbannogwhite/enchanter => ..
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect

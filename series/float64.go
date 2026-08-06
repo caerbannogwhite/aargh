@@ -7,23 +7,23 @@ import (
 	"unsafe"
 
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 // Float64s represents a series of floats.
 type Float64s struct {
 	IsNullable_ bool
-	Sorted_     aargh.SeriesSortOrder
+	Sorted_     enchanter.SeriesSortOrder
 	Data_       []float64
 	NullMask_   []uint8
 	Partition_  *SeriesFloat64Partition
-	Ctx_        *aargh.Context
+	Ctx_        *enchanter.Context
 }
 
 // ArrowArray builds and returns a fresh Arrow array from the series data.
 // The caller owns the returned array; releasing it is optional under
-// GC-backed allocators (see aargh.Context.Allocator).
+// GC-backed allocators (see enchanter.Context.Allocator).
 func (s Float64s) ArrowArray() arrow.Array {
 	return buildArrowFloat64(s.Ctx_.Allocator, s.Data_, s.IsNullable_, s.NullMask_)
 }
@@ -31,7 +31,7 @@ func (s Float64s) ArrowArray() arrow.Array {
 // Get the element at index i as a string.
 func (s Float64s) GetAsString(i int) string {
 	if s.IsNullable_ && s.IsNull(i) {
-		return aargh.NA_TEXT
+		return enchanter.NA_TEXT
 	}
 	return floatToString(s.Data_[i])
 }
@@ -69,54 +69,54 @@ func (s Float64s) Set(i int, v any) Series {
 	case float64:
 		s.Data_[i] = val
 
-	case aargh.NullableInt8:
+	case enchanter.NullableInt8:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableInt8).Valid {
+		if v.(enchanter.NullableInt8).Valid {
 			s.Data_[i] = float64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt16:
+	case enchanter.NullableInt16:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableInt16).Valid {
+		if v.(enchanter.NullableInt16).Valid {
 			s.Data_[i] = float64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt:
+	case enchanter.NullableInt:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableInt).Valid {
+		if v.(enchanter.NullableInt).Valid {
 			s.Data_[i] = float64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableInt64:
+	case enchanter.NullableInt64:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableInt64).Valid {
+		if v.(enchanter.NullableInt64).Valid {
 			s.Data_[i] = float64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableFloat32:
+	case enchanter.NullableFloat32:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableFloat32).Valid {
+		if v.(enchanter.NullableFloat32).Valid {
 			s.Data_[i] = float64(val.Value)
 		} else {
 			s.Data_[i] = 0
 			s.NullMask_[i>>3] |= 1 << uint(i%8)
 		}
 
-	case aargh.NullableFloat64:
+	case enchanter.NullableFloat64:
 		s = s.MakeNullable().(Float64s)
-		if v.(aargh.NullableFloat64).Valid {
+		if v.(enchanter.NullableFloat64).Valid {
 			s.Data_[i] = val.Value
 		} else {
 			s.Data_[i] = 0
@@ -127,7 +127,7 @@ func (s Float64s) Set(i int, v any) Series {
 		return Errors{fmt.Sprintf("Float64s.Set: invalid type %T", v)}
 	}
 
-	s.Sorted_ = aargh.SORTED_NONE
+	s.Sorted_ = enchanter.SORTED_NONE
 	return s
 }
 
@@ -140,9 +140,9 @@ func (s Float64s) Float64s() []float64 {
 
 // Return the underlying Data_ as a slice of NullableFloat64.
 func (s Float64s) DataAsNullable() any {
-	Data_ := make([]aargh.NullableFloat64, len(s.Data_))
+	Data_ := make([]enchanter.NullableFloat64, len(s.Data_))
 	for i, v := range s.Data_ {
-		Data_[i] = aargh.NullableFloat64{Valid: !s.IsNull(i), Value: v}
+		Data_[i] = enchanter.NullableFloat64{Valid: !s.IsNull(i), Value: v}
 	}
 	return Data_
 }
@@ -153,7 +153,7 @@ func (s Float64s) DataAsString() []string {
 	if s.IsNullable_ {
 		for i, v := range s.Data_ {
 			if s.IsNull(i) {
-				Data_[i] = aargh.NA_TEXT
+				Data_[i] = enchanter.NA_TEXT
 			} else {
 				Data_[i] = floatToString(v)
 			}
@@ -177,7 +177,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Bools{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -192,7 +192,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Ints{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -207,7 +207,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Int64s{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -222,7 +222,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 		if s.IsNullable_ {
 			for i, v := range s.Data_ {
 				if s.IsNull(i) {
-					Data_[i] = s.Ctx_.StringPool.Put(aargh.NA_TEXT)
+					Data_[i] = s.Ctx_.StringPool.Put(enchanter.NA_TEXT)
 				} else {
 					Data_[i] = s.Ctx_.StringPool.Put(floatToString(v))
 				}
@@ -235,7 +235,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Strings{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -250,7 +250,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Times{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -265,7 +265,7 @@ func (s Float64s) Cast(t meta.BaseType) Series {
 
 		return Durations{
 			IsNullable_: s.IsNullable_,
-			Sorted_:     aargh.SORTED_NONE,
+			Sorted_:     enchanter.SORTED_NONE,
 			Data_:       Data_,
 			NullMask_:   s.NullMask_,
 			Partition_:  nil,
@@ -317,7 +317,7 @@ func (s Float64s) Group() Series {
 
 	Partition_ := SeriesFloat64Partition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
 			worker, workerNulls),
 	}
 
@@ -341,7 +341,7 @@ func (s Float64s) GroupBy(Partition_ SeriesPartition) Series {
 		var newHash int64
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
-				newHash = *(*int64)(unsafe.Pointer((&(s.Data_)[index]))) + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+				newHash = *(*int64)(unsafe.Pointer((&(s.Data_)[index]))) + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				map_[newHash] = append(map_[newHash], index)
 			}
 		}
@@ -353,9 +353,9 @@ func (s Float64s) GroupBy(Partition_ SeriesPartition) Series {
 		for _, h := range keys[start:end] { // keys is defined outside the function
 			for _, index := range otherIndeces[h] { // otherIndeces is defined outside the function
 				if s.IsNull(index) {
-					newHash = aargh.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
+					newHash = enchanter.HASH_MAGIC_NUMBER_NULL + (h << 13) + (h >> 4)
 				} else {
-					newHash = *(*int64)(unsafe.Pointer((&(s.Data_)[index]))) + aargh.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
+					newHash = *(*int64)(unsafe.Pointer((&(s.Data_)[index]))) + enchanter.HASH_MAGIC_NUMBER + (h << 13) + (h >> 4)
 				}
 				map_[newHash] = append(map_[newHash], index)
 			}
@@ -364,7 +364,7 @@ func (s Float64s) GroupBy(Partition_ SeriesPartition) Series {
 
 	newPartition := SeriesFloat64Partition{
 		Partition_: __series_groupby(
-			aargh.THREADS_NUMBER, aargh.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
+			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}
 
@@ -420,17 +420,17 @@ func (s Float64s) Swap(i, j int) {
 }
 
 func (s Float64s) Sort() Series {
-	if s.Sorted_ != aargh.SORTED_ASC {
+	if s.Sorted_ != enchanter.SORTED_ASC {
 		sort.Sort(s)
-		s.Sorted_ = aargh.SORTED_ASC
+		s.Sorted_ = enchanter.SORTED_ASC
 	}
 	return s
 }
 
 func (s Float64s) SortRev() Series {
-	if s.Sorted_ != aargh.SORTED_DESC {
+	if s.Sorted_ != enchanter.SORTED_DESC {
 		sort.Sort(sort.Reverse(s))
-		s.Sorted_ = aargh.SORTED_DESC
+		s.Sorted_ = enchanter.SORTED_DESC
 	}
 	return s
 }
@@ -439,7 +439,7 @@ func (s Float64s) SortRev() Series {
 
 func (s Float64s) Min() any {
 	if s.IsNullable_ {
-		return aargh.NullableFloat64{Valid: false, Value: 0}
+		return enchanter.NullableFloat64{Valid: false, Value: 0}
 	}
 
 	min := s.Data_[0]

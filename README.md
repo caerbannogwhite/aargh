@@ -1,11 +1,11 @@
-## Aargh 🧙‍♂️
+## Enchanter 🧙‍♂️
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/caerbannogwhite/aargh.svg)](https://pkg.go.dev/github.com/caerbannogwhite/aargh)
-[![CI](https://github.com/caerbannogwhite/aargh/actions/workflows/ci.yml/badge.svg)](https://github.com/caerbannogwhite/aargh/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/caerbannogwhite/enchanter.svg)](https://pkg.go.dev/github.com/caerbannogwhite/enchanter)
+[![CI](https://github.com/caerbannogwhite/enchanter/actions/workflows/ci.yml/badge.svg)](https://github.com/caerbannogwhite/enchanter/actions/workflows/ci.yml)
 
 ### What is it?
 
-Aargh is a library for data wrangling in Go.
+Enchanter is a library for data wrangling in Go.
 The goal is to provide a simple and efficient API for data manipulation in Go,
 similar to Pandas or Polars in Python, and Dplyr in R.
 It supports nullable types: null data is optimized for memory usage.
@@ -13,7 +13,7 @@ Series and DataFrames interoperate with [Apache Arrow](https://arrow.apache.org/
 (`Series.ArrowArray()`, `DataFrame.ToArrowRecord()`), which also powers the
 Parquet and Arrow IPC readers and writers.
 
-Aargh is a work in progress, and the API is not stable yet.
+Enchanter is a work in progress, and the API is not stable yet.
 The DataFrame package is still being developed.
 
 However, it already supports the following formats:
@@ -35,8 +35,8 @@ package main
 import (
 	"strings"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/dataframe"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/dataframe"
 )
 
 func main() {
@@ -52,7 +52,7 @@ Ursula,27,65.0,f,Business,4
 Charlie,33,60.0,t,Business,2
 Megan,26,55.0,F,IT,3`
 
-	dataframe.NewBaseDataFrame(aargh.NewContext()).
+	dataframe.NewBaseDataFrame(enchanter.NewContext()).
 		FromCsv().
 		SetReader(strings.NewReader(data1)).
 		Read().

@@ -6,8 +6,8 @@ package series
 
 import (
 	"github.com/apache/arrow-go/v18/arrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 type Series interface {
@@ -17,7 +17,7 @@ type Series interface {
 	// Basic accessors.
 
 	// Return the context of the series.
-	GetContext() *aargh.Context
+	GetContext() *enchanter.Context
 	// Return the number of elements in the series.
 	Len() int
 	// Return the type of the series.
@@ -29,7 +29,7 @@ type Series interface {
 	// Return if the series admits null values.
 	IsNullable() bool
 	// Return if the series is sorted.
-	IsSorted() aargh.SeriesSortOrder
+	IsSorted() enchanter.SeriesSortOrder
 	// Return if the series is error.
 	IsError() bool
 	// Return the error message of the series.
@@ -88,8 +88,8 @@ type Series interface {
 	FilterIntSlice(mask []int, check bool) Series
 
 	// Apply the given function to each element of the series.
-	Map(f aargh.MapFunc) Series
-	MapNull(f aargh.MapFuncNull) Series
+	Map(f enchanter.MapFunc) Series
+	MapNull(f enchanter.MapFuncNull) Series
 
 	// Group the elements in the series.
 	Group() Series

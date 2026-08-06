@@ -7,14 +7,14 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/compute"
 	"github.com/apache/arrow-go/v18/arrow/scalar"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
 // arrowBinaryArith performs a binary arithmetic operation using Arrow compute.
 // It handles type promotion and scalar broadcasting automatically.
 // Returns a new Series with the result.
-func arrowBinaryArith(opName string, left, right Series, ctx *aargh.Context) Series {
+func arrowBinaryArith(opName string, left, right Series, ctx *enchanter.Context) Series {
 	lArr := left.ArrowArray()
 	rArr := right.ArrowArray()
 	if lArr == nil || rArr == nil {
@@ -63,7 +63,7 @@ func arrowBinaryArith(opName string, left, right Series, ctx *aargh.Context) Ser
 
 // arrowBinaryCompare performs a binary comparison using Arrow compute.
 // Always returns a Bool Series.
-func arrowBinaryCompare(opName string, left, right Series, ctx *aargh.Context) Series {
+func arrowBinaryCompare(opName string, left, right Series, ctx *enchanter.Context) Series {
 	lArr := left.ArrowArray()
 	rArr := right.ArrowArray()
 	if lArr == nil || rArr == nil {
@@ -93,7 +93,7 @@ func arrowBinaryCompare(opName string, left, right Series, ctx *aargh.Context) S
 }
 
 // arrowBooleanOp performs a binary boolean operation (and, or, xor).
-func arrowBooleanOp(opName string, left, right Series, ctx *aargh.Context) Series {
+func arrowBooleanOp(opName string, left, right Series, ctx *enchanter.Context) Series {
 	lArr := left.ArrowArray()
 	rArr := right.ArrowArray()
 	if lArr == nil || rArr == nil {
@@ -124,7 +124,7 @@ func scalarDatum(arr arrow.Array) compute.Datum {
 
 // datumToSeries converts a compute.Datum result back to a Series, releasing
 // the datum and the intermediate Arrow arrays it materializes from.
-func datumToSeries(d compute.Datum, ctx *aargh.Context) Series {
+func datumToSeries(d compute.Datum, ctx *enchanter.Context) Series {
 	defer d.Release()
 	switch dt := d.(type) {
 	case *compute.ArrayDatum:
@@ -145,72 +145,72 @@ func datumToSeries(d compute.Datum, ctx *aargh.Context) Series {
 }
 
 // ArrowAdd performs addition using Arrow compute.
-func ArrowAdd(left, right Series, ctx *aargh.Context) Series {
+func ArrowAdd(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryArith("add", left, right, ctx)
 }
 
 // ArrowSub performs subtraction using Arrow compute.
-func ArrowSub(left, right Series, ctx *aargh.Context) Series {
+func ArrowSub(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryArith("subtract", left, right, ctx)
 }
 
 // ArrowMul performs multiplication using Arrow compute.
-func ArrowMul(left, right Series, ctx *aargh.Context) Series {
+func ArrowMul(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryArith("multiply", left, right, ctx)
 }
 
 // ArrowDiv performs division using Arrow compute.
-func ArrowDiv(left, right Series, ctx *aargh.Context) Series {
+func ArrowDiv(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryArith("divide", left, right, ctx)
 }
 
 // ArrowPow performs exponentiation using Arrow compute.
-func ArrowPow(left, right Series, ctx *aargh.Context) Series {
+func ArrowPow(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryArith("power", left, right, ctx)
 }
 
 // ArrowEq performs equality comparison using Arrow compute.
-func ArrowEq(left, right Series, ctx *aargh.Context) Series {
+func ArrowEq(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("equal", left, right, ctx)
 }
 
 // ArrowNe performs not-equal comparison using Arrow compute.
-func ArrowNe(left, right Series, ctx *aargh.Context) Series {
+func ArrowNe(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("not_equal", left, right, ctx)
 }
 
 // ArrowLt performs less-than comparison using Arrow compute.
-func ArrowLt(left, right Series, ctx *aargh.Context) Series {
+func ArrowLt(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("less", left, right, ctx)
 }
 
 // ArrowLe performs less-or-equal comparison using Arrow compute.
-func ArrowLe(left, right Series, ctx *aargh.Context) Series {
+func ArrowLe(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("less_equal", left, right, ctx)
 }
 
 // ArrowGt performs greater-than comparison using Arrow compute.
-func ArrowGt(left, right Series, ctx *aargh.Context) Series {
+func ArrowGt(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("greater", left, right, ctx)
 }
 
 // ArrowGe performs greater-or-equal comparison using Arrow compute.
-func ArrowGe(left, right Series, ctx *aargh.Context) Series {
+func ArrowGe(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBinaryCompare("greater_equal", left, right, ctx)
 }
 
 // ArrowAnd performs boolean AND using Arrow compute.
-func ArrowAnd(left, right Series, ctx *aargh.Context) Series {
+func ArrowAnd(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBooleanOp("and", left, right, ctx)
 }
 
 // ArrowOr performs boolean OR using Arrow compute.
-func ArrowOr(left, right Series, ctx *aargh.Context) Series {
+func ArrowOr(left, right Series, ctx *enchanter.Context) Series {
 	return arrowBooleanOp("or", left, right, ctx)
 }
 
 // coerceToSeries normalizes an `any` value to a Series for use in arrow ops.
-func coerceToSeries(val any, ctx *aargh.Context) Series {
+func coerceToSeries(val any, ctx *enchanter.Context) Series {
 	if s, ok := val.(Series); ok {
 		return s
 	}
@@ -220,7 +220,7 @@ func coerceToSeries(val any, ctx *aargh.Context) Series {
 // ArrowBinaryOp is the unified entry point for Arrow-based binary operations.
 // It normalizes `other` to a Series, checks contexts, and dispatches to the
 // appropriate Arrow compute function.
-func ArrowBinaryOp(op string, left Series, other any, ctx *aargh.Context) Series {
+func ArrowBinaryOp(op string, left Series, other any, ctx *enchanter.Context) Series {
 	right := coerceToSeries(other, ctx)
 	if right.IsError() {
 		return right

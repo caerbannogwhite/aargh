@@ -10,19 +10,19 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/apache/arrow-go/v18/parquet"
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 ////////////////////////			PARQUET READER
 
 type ParquetReader struct {
-	ctx   *aargh.Context
+	ctx   *enchanter.Context
 	path  string
 	alloc memory.Allocator
 }
 
-func NewParquetReader(ctx *aargh.Context) *ParquetReader {
+func NewParquetReader(ctx *enchanter.Context) *ParquetReader {
 	alloc := memory.DefaultAllocator
 	if ctx != nil {
 		alloc = ctx.Allocator
@@ -30,7 +30,7 @@ func NewParquetReader(ctx *aargh.Context) *ParquetReader {
 	return &ParquetReader{ctx: ctx, alloc: alloc}
 }
 
-func FromParquet(ctx *aargh.Context) *ParquetReader {
+func FromParquet(ctx *enchanter.Context) *ParquetReader {
 	return NewParquetReader(ctx)
 }
 
@@ -96,7 +96,7 @@ func (r *ParquetReader) Read() *IoData {
 
 // multiChunkToSeries handles multi-chunk Arrow columns by converting each
 // chunk to a series and appending them together.
-func multiChunkToSeries(chunks []arrow.Array, ctx *aargh.Context) series.Series {
+func multiChunkToSeries(chunks []arrow.Array, ctx *enchanter.Context) series.Series {
 	if len(chunks) == 0 {
 		return series.NewSeriesNA(0, ctx)
 	}

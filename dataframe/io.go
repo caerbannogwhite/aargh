@@ -4,12 +4,12 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/caerbannogwhite/aargh"
-	aarghio "github.com/caerbannogwhite/aargh/io"
-	"github.com/caerbannogwhite/aargh/meta"
+	"github.com/caerbannogwhite/enchanter"
+	encio "github.com/caerbannogwhite/enchanter/io"
+	"github.com/caerbannogwhite/enchanter/meta"
 )
 
-func FromIoData(iod *aarghio.IoData) DataFrame {
+func FromIoData(iod *encio.IoData) DataFrame {
 	df := NewBaseDataFrame(iod.GetContext()).(BaseDataFrame)
 
 	if iod.Error != nil {
@@ -23,13 +23,13 @@ func FromIoData(iod *aarghio.IoData) DataFrame {
 	return df
 }
 
-func (df BaseDataFrame) ToIoData() *aarghio.IoData {
-	iod := aarghio.NewIoData(df.ctx)
+func (df BaseDataFrame) ToIoData() *encio.IoData {
+	iod := encio.NewIoData(df.ctx)
 
 	iod.Error = df.GetError()
 
 	for i, s := range df.series {
-		iod.AddSeries(s, aarghio.SeriesMeta{
+		iod.AddSeries(s, encio.SeriesMeta{
 			Name: df.names[i],
 		})
 	}
@@ -40,12 +40,12 @@ func (df BaseDataFrame) ToIoData() *aarghio.IoData {
 ////////////////////////			CSV READER
 
 type csvReaderWrapper struct {
-	reader *aarghio.CsvReader
+	reader *encio.CsvReader
 }
 
 func (df BaseDataFrame) FromCsv() *csvReaderWrapper {
 	return &csvReaderWrapper{
-		reader: aarghio.NewCsvReader(df.ctx),
+		reader: encio.NewCsvReader(df.ctx),
 	}
 }
 
@@ -89,7 +89,7 @@ func (r *csvReaderWrapper) SetSchema(schema *meta.Schema) *csvReaderWrapper {
 	return r
 }
 
-func (r *csvReaderWrapper) SetContext(ctx *aargh.Context) *csvReaderWrapper {
+func (r *csvReaderWrapper) SetContext(ctx *enchanter.Context) *csvReaderWrapper {
 	r.reader = r.reader.SetContext(ctx)
 	return r
 }
@@ -102,12 +102,12 @@ func (r *csvReaderWrapper) Read() DataFrame {
 ////////////////////////			CSV WRITER
 
 type csvWriterWrapper struct {
-	writer *aarghio.CsvWriter
+	writer *encio.CsvWriter
 }
 
 func (df BaseDataFrame) ToCsv() *csvWriterWrapper {
 	return &csvWriterWrapper{
-		writer: aarghio.NewCsvWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewCsvWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -146,7 +146,7 @@ func (w *csvWriterWrapper) SetQuote(quote string) *csvWriterWrapper {
 	return w
 }
 
-func (w *csvWriterWrapper) SetQuoting(quoting aarghio.CsvQuotingType) *csvWriterWrapper {
+func (w *csvWriterWrapper) SetQuoting(quoting encio.CsvQuotingType) *csvWriterWrapper {
 	w.writer = w.writer.SetQuoting(quoting)
 	return w
 }
@@ -163,12 +163,12 @@ func (w *csvWriterWrapper) Write() error {
 ////////////////////////			JSON READER
 
 type jsonReaderWrapper struct {
-	reader *aarghio.JsonReader
+	reader *encio.JsonReader
 }
 
 func (df BaseDataFrame) FromJson() *jsonReaderWrapper {
 	return &jsonReaderWrapper{
-		reader: aarghio.NewJsonReader(df.ctx),
+		reader: encio.NewJsonReader(df.ctx),
 	}
 }
 
@@ -195,12 +195,12 @@ func (r *jsonReaderWrapper) Read() DataFrame {
 ////////////////////////			JSON WRITER
 
 type jsonWriterWrapper struct {
-	writer *aarghio.JsonWriter
+	writer *encio.JsonWriter
 }
 
 func (df BaseDataFrame) ToJson() *jsonWriterWrapper {
 	return &jsonWriterWrapper{
-		writer: aarghio.NewJsonWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewJsonWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -231,12 +231,12 @@ func (w *jsonWriterWrapper) Write() error {
 ////////////////////////			XPT READER
 
 type xptReaderWrapper struct {
-	reader *aarghio.XptReader
+	reader *encio.XptReader
 }
 
 func (df BaseDataFrame) FromXpt() *xptReaderWrapper {
 	return &xptReaderWrapper{
-		reader: aarghio.NewXptReader(df.ctx),
+		reader: encio.NewXptReader(df.ctx),
 	}
 }
 
@@ -245,7 +245,7 @@ func (r *xptReaderWrapper) SetMaxObservations(maxObservations int) *xptReaderWra
 	return r
 }
 
-func (r *xptReaderWrapper) SetVersion(version aarghio.XptVersionType) *xptReaderWrapper {
+func (r *xptReaderWrapper) SetVersion(version encio.XptVersionType) *xptReaderWrapper {
 	r.reader = r.reader.SetVersion(version)
 	return r
 }
@@ -273,16 +273,16 @@ func (r *xptReaderWrapper) Read() DataFrame {
 ////////////////////////			XPT WRITER
 
 type xptWriterWrapper struct {
-	writer *aarghio.XptWriter
+	writer *encio.XptWriter
 }
 
 func (df BaseDataFrame) ToXpt() *xptWriterWrapper {
 	return &xptWriterWrapper{
-		writer: aarghio.NewXptWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewXptWriter().SetIoData(df.ToIoData()),
 	}
 }
 
-func (w *xptWriterWrapper) SetVersion(version aarghio.XptVersionType) *xptWriterWrapper {
+func (w *xptWriterWrapper) SetVersion(version encio.XptVersionType) *xptWriterWrapper {
 	w.writer = w.writer.SetVersion(version)
 	return w
 }
@@ -309,12 +309,12 @@ func (w *xptWriterWrapper) Write() error {
 ////////////////////////			XLSX READER
 
 type xlsxReaderWrapper struct {
-	reader *aarghio.XlsxReader
+	reader *encio.XlsxReader
 }
 
 func (df BaseDataFrame) FromXlsx() *xlsxReaderWrapper {
 	return &xlsxReaderWrapper{
-		reader: aarghio.NewXlsxReader(df.ctx),
+		reader: encio.NewXlsxReader(df.ctx),
 	}
 }
 
@@ -361,12 +361,12 @@ func (r *xlsxReaderWrapper) Read() DataFrame {
 ////////////////////////			XLSX WRITER
 
 type xlsxWriterWrapper struct {
-	writer *aarghio.XlsxWriter
+	writer *encio.XlsxWriter
 }
 
 func (df BaseDataFrame) ToXlsx() *xlsxWriterWrapper {
 	return &xlsxWriterWrapper{
-		writer: aarghio.NewXlsxWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewXlsxWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -397,12 +397,12 @@ func (w *xlsxWriterWrapper) Write() error {
 ////////////////////////			HTML WRITER
 
 type htmlWriterWrapper struct {
-	writer *aarghio.HtmlWriter
+	writer *encio.HtmlWriter
 }
 
 func (df BaseDataFrame) ToHtml() *htmlWriterWrapper {
 	return &htmlWriterWrapper{
-		writer: aarghio.NewHtmlWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewHtmlWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -443,12 +443,12 @@ func (w *htmlWriterWrapper) Write() error {
 ////////////////////////			MARKDOWN WRITER
 
 type markDownWriterWrapper struct {
-	writer *aarghio.MarkDownWriter
+	writer *encio.MarkDownWriter
 }
 
 func (df BaseDataFrame) ToMarkDown() *markDownWriterWrapper {
 	return &markDownWriterWrapper{
-		writer: aarghio.NewMarkDownWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewMarkDownWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -484,12 +484,12 @@ func (w *markDownWriterWrapper) Write() error {
 ////////////////////////			PARQUET READER
 
 type parquetReaderWrapper struct {
-	reader *aarghio.ParquetReader
+	reader *encio.ParquetReader
 }
 
 func (df BaseDataFrame) FromParquet() *parquetReaderWrapper {
 	return &parquetReaderWrapper{
-		reader: aarghio.NewParquetReader(df.ctx),
+		reader: encio.NewParquetReader(df.ctx),
 	}
 }
 
@@ -506,12 +506,12 @@ func (r *parquetReaderWrapper) Read() DataFrame {
 ////////////////////////			PARQUET WRITER
 
 type parquetWriterWrapper struct {
-	writer *aarghio.ParquetWriter
+	writer *encio.ParquetWriter
 }
 
 func (df BaseDataFrame) ToParquet() *parquetWriterWrapper {
 	return &parquetWriterWrapper{
-		writer: aarghio.NewParquetWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewParquetWriter().SetIoData(df.ToIoData()),
 	}
 }
 
@@ -527,12 +527,12 @@ func (w *parquetWriterWrapper) Write() error {
 ////////////////////////			ARROW IPC READER
 
 type arrowIPCReaderWrapper struct {
-	reader *aarghio.ArrowIPCReader
+	reader *encio.ArrowIPCReader
 }
 
 func (df BaseDataFrame) FromArrowIPC() *arrowIPCReaderWrapper {
 	return &arrowIPCReaderWrapper{
-		reader: aarghio.NewArrowIPCReader(df.ctx),
+		reader: encio.NewArrowIPCReader(df.ctx),
 	}
 }
 
@@ -549,12 +549,12 @@ func (r *arrowIPCReaderWrapper) Read() DataFrame {
 ////////////////////////			ARROW IPC WRITER
 
 type arrowIPCWriterWrapper struct {
-	writer *aarghio.ArrowIPCWriter
+	writer *encio.ArrowIPCWriter
 }
 
 func (df BaseDataFrame) ToArrowIPC() *arrowIPCWriterWrapper {
 	return &arrowIPCWriterWrapper{
-		writer: aarghio.NewArrowIPCWriter().SetIoData(df.ToIoData()),
+		writer: encio.NewArrowIPCWriter().SetIoData(df.ToIoData()),
 	}
 }
 

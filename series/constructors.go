@@ -5,15 +5,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/caerbannogwhite/aargh"
-	"github.com/caerbannogwhite/aargh/utils"
+	"github.com/caerbannogwhite/enchanter"
+	"github.com/caerbannogwhite/enchanter/utils"
 )
 
 // Build a Series from a generic interface.
 // The interface can be a single value, slice of values,
 // a nullable value, a slice of nullable values.
 // If nullMask is nil then the series is not nullable.
-func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ctx *aargh.Context) Series {
+func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ctx *enchanter.Context) Series {
 	if ctx == nil {
 		return Errors{"NewSeries: context is nil"}
 	}
@@ -32,9 +32,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesBool(data, nullMask, makeCopy, ctx)
-	case aargh.NullableBool:
+	case enchanter.NullableBool:
 		return NewSeriesBool([]bool{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableBool:
+	case []enchanter.NullableBool:
 		values := make([]bool, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -53,9 +53,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesInt(data, nullMask, makeCopy, ctx)
-	case aargh.NullableInt:
+	case enchanter.NullableInt:
 		return NewSeriesInt([]int{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableInt:
+	case []enchanter.NullableInt:
 		values := make([]int, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -74,9 +74,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesInt64(data, nullMask, makeCopy, ctx)
-	case aargh.NullableInt64:
+	case enchanter.NullableInt64:
 		return NewSeriesInt64([]int64{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableInt64:
+	case []enchanter.NullableInt64:
 		values := make([]int64, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -95,9 +95,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesFloat64(data, nullMask, makeCopy, ctx)
-	case aargh.NullableFloat64:
+	case enchanter.NullableFloat64:
 		return NewSeriesFloat64([]float64{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableFloat64:
+	case []enchanter.NullableFloat64:
 		values := make([]float64, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -116,9 +116,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesString(data, nullMask, makeCopy, ctx)
-	case aargh.NullableString:
+	case enchanter.NullableString:
 		return NewSeriesString([]string{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableString:
+	case []enchanter.NullableString:
 		values := make([]string, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -137,9 +137,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesTime(data, nullMask, makeCopy, ctx)
-	case aargh.NullableTime:
+	case enchanter.NullableTime:
 		return NewSeriesTime([]time.Time{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableTime:
+	case []enchanter.NullableTime:
 		values := make([]time.Time, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -158,9 +158,9 @@ func NewSeries(data interface{}, nullMask []bool, makeCopy bool, memOpt bool, ct
 			return Errors{fmt.Sprintf("NewSeries: null mask length %d does not match data length %d", len(nullMask), len(data))}
 		}
 		return NewSeriesDuration(data, nullMask, makeCopy, ctx)
-	case aargh.NullableDuration:
+	case enchanter.NullableDuration:
 		return NewSeriesDuration([]time.Duration{data.Value}, []bool{!data.Valid}, false, ctx)
-	case []aargh.NullableDuration:
+	case []enchanter.NullableDuration:
 		values := make([]time.Duration, len(data))
 		nulls := make([]bool, len(data))
 		for i, v := range data {
@@ -180,7 +180,7 @@ func NewSeriesError(err string) Errors {
 }
 
 // Build an NA Series
-func NewSeriesNA(size int, ctx *aargh.Context) NAs {
+func NewSeriesNA(size int, ctx *enchanter.Context) NAs {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesNA: context is nil")
 	}
@@ -193,7 +193,7 @@ func NewSeriesNA(size int, ctx *aargh.Context) NAs {
 }
 
 // Build a Bool Series, if nullMask is nil then the series is not nullable
-func NewSeriesBool(data []bool, nullMask []bool, makeCopy bool, ctx *aargh.Context) Bools {
+func NewSeriesBool(data []bool, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Bools {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesBool: context is nil")
 	}
@@ -228,7 +228,7 @@ func NewSeriesBool(data []bool, nullMask []bool, makeCopy bool, ctx *aargh.Conte
 }
 
 // Build a Int Series, if nullMask is nil then the series is not nullable
-func NewSeriesInt(data []int, nullMask []bool, makeCopy bool, ctx *aargh.Context) Ints {
+func NewSeriesInt(data []int, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Ints {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesInt: context is nil")
 	}
@@ -263,7 +263,7 @@ func NewSeriesInt(data []int, nullMask []bool, makeCopy bool, ctx *aargh.Context
 }
 
 // Build a Int64 Series, if nullMask is nil then the series is not nullable
-func NewSeriesInt64(data []int64, nullMask []bool, makeCopy bool, ctx *aargh.Context) Int64s {
+func NewSeriesInt64(data []int64, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Int64s {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesInt64: context is nil")
 	}
@@ -298,7 +298,7 @@ func NewSeriesInt64(data []int64, nullMask []bool, makeCopy bool, ctx *aargh.Con
 }
 
 // Build a Float64 Series, if nullMask is nil then the series is not nullable
-func NewSeriesFloat64(data []float64, nullMask []bool, makeCopy bool, ctx *aargh.Context) Float64s {
+func NewSeriesFloat64(data []float64, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Float64s {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesFloat64: context is nil")
 	}
@@ -333,7 +333,7 @@ func NewSeriesFloat64(data []float64, nullMask []bool, makeCopy bool, ctx *aargh
 }
 
 // Build a String Series, if nullMask is nil then the series is not nullable
-func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *aargh.Context) Strings {
+func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Strings {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesString: context is nil")
 	}
@@ -357,7 +357,7 @@ func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *aargh.C
 	if nullMask != nil {
 		for i, v := range data {
 			if nullMask[i] {
-				actualData[i] = ctx.StringPool.Put(aargh.NA_TEXT)
+				actualData[i] = ctx.StringPool.Put(enchanter.NA_TEXT)
 				continue
 			}
 			actualData[i] = ctx.StringPool.Put(v)
@@ -377,7 +377,7 @@ func NewSeriesString(data []string, nullMask []bool, makeCopy bool, ctx *aargh.C
 }
 
 // Build a String Series from a slice of pointers to strings, if nullMask is nil then the series is not nullable
-func NewSeriesStringFromPtrs(data []*string, nullMask []bool, makeCopy bool, ctx *aargh.Context) Strings {
+func NewSeriesStringFromPtrs(data []*string, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Strings {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesStringFromPtrs: context is nil")
 	}
@@ -406,7 +406,7 @@ func NewSeriesStringFromPtrs(data []*string, nullMask []bool, makeCopy bool, ctx
 }
 
 // Build a Time Series, if nullMask is nil then the series is not nullable
-func NewSeriesTime(data []time.Time, nullMask []bool, makeCopy bool, ctx *aargh.Context) Times {
+func NewSeriesTime(data []time.Time, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Times {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesTime: context is nil")
 	}
@@ -442,7 +442,7 @@ func NewSeriesTime(data []time.Time, nullMask []bool, makeCopy bool, ctx *aargh.
 }
 
 // Build a Duration Series, if nullMask is nil then the series is not nullable
-func NewSeriesDuration(data []time.Duration, nullMask []bool, makeCopy bool, ctx *aargh.Context) Durations {
+func NewSeriesDuration(data []time.Duration, nullMask []bool, makeCopy bool, ctx *enchanter.Context) Durations {
 	if ctx == nil {
 		fmt.Fprintln(os.Stderr, "WARNING: NewSeriesDuration: context is nil")
 	}

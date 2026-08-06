@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caerbannogwhite/aargh/meta"
-	"github.com/caerbannogwhite/aargh/series"
+	"github.com/caerbannogwhite/enchanter/meta"
+	"github.com/caerbannogwhite/enchanter/series"
 )
 
 func Test_TypeGuesser(t *testing.T) {
