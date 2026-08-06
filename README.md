@@ -224,6 +224,9 @@ Next (0.3.0):
 
 Later:
 
+- [ ] Pivot longer / wider (started on the `dev-pivot` branch).
+- [ ] Custom aggregators (prototype archived as `archive/dev-fix-agg`).
+- [ ] Stricter CSV type guessing with acceptance threshold (archived as `archive/dev-0.1.3`).
 - [ ] Implement chunked series.
 - [ ] Implement SPSS reader and writer.
 - [ ] Improve filtering interface.
