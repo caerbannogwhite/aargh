@@ -1,0 +1,47 @@
+// Round-trip a DataFrame through Parquet: types and nulls survive, unlike CSV.
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/caerbannogwhite/aargh"
+	"github.com/caerbannogwhite/aargh/dataframe"
+	"github.com/caerbannogwhite/aargh/series"
+)
+
+func main() {
+	ctx := aargh.NewContext()
+
+	df := dataframe.NewBaseDataFrame(ctx).
+		AddSeries("name", series.NewSeriesString([]string{"Alice", "Bob", "Charlie", "Dana"}, nil, false, ctx)).
+		AddSeries("age", series.NewSeriesInt64([]int64{29, 31, 0, 25}, []bool{false, false, true, false}, false, ctx)).
+		AddSeries("score", series.NewSeriesFloat64([]float64{7.5, 8.25, 9.0, 6.75}, nil, false, ctx))
+	if df.IsErrored() {
+		fmt.Fprintln(os.Stderr, df.GetError())
+		os.Exit(1)
+	}
+
+	dir, err := os.MkdirTemp("", "aargh-parquet-example")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer os.RemoveAll(dir)
+	path := filepath.Join(dir, "people.parquet")
+
+	if err := df.ToParquet().SetPath(path).Write(); err != nil {
+		fmt.Fprintln(os.Stderr, "write:", err)
+		os.Exit(1)
+	}
+
+	back := dataframe.NewBaseDataFrame(ctx).FromParquet().SetPath(path).Read()
+	if back.IsErrored() {
+		fmt.Fprintln(os.Stderr, "read:", back.GetError())
+		os.Exit(1)
+	}
+
+	// The null in "age" and all column types come back intact.
+	back.PPrint(dataframe.NewPPrintParams())
+}
