@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, "dev-*"]
   pull_request:
+  workflow_dispatch: # allow re-running CI on demand (e.g. after a runner outage)
 
 jobs:
   test:
