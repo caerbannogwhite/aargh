@@ -25,3 +25,15 @@ func TestUngroupedStdRemoveNAs(t *testing.T) {
 		t.Fatalf("std removeNAs: got %v, want [1]", got)
 	}
 }
+
+func TestGroupedStdUnequalGroups(t *testing.T) {
+	// group 0: [1, 3] -> mean 2, pop std 1
+	// group 1: [10, 10, 10, 10] -> mean 10, pop std 0
+	// flatGroupIndeces maps each row to its group index.
+	data := []float64{1, 3, 10, 10, 10, 10}
+	flat := []int{0, 0, 1, 1, 1, 1}
+	got := __gdl_std(data, flat, 2, false)
+	if len(got) != 2 || !approx(got[0], 1.0) || !approx(got[1], 0.0) {
+		t.Fatalf("grouped std unequal groups: got %v, want [1 0]", got)
+	}
+}

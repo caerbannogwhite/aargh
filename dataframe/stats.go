@@ -361,19 +361,28 @@ func __gdl_std(dataF64 []float64, flatGroupIndeces []int, groupsNum int, removeN
 		return []float64{math.Sqrt(std_ / float64(count))}
 	} else {
 		std_ := make([]float64, groupsNum)
+		counts_ := make([]int, groupsNum)
 		if removeNAs {
 			for idx, gi := range flatGroupIndeces {
 				if !math.IsNaN(dataF64[idx]) {
-					std_[gi] += (dataF64[idx] - mean_[gi]) * (dataF64[idx] - mean_[gi])
+					d := dataF64[idx] - mean_[gi]
+					std_[gi] += d * d
+					counts_[gi]++
 				}
 			}
 		} else {
 			for idx, gi := range flatGroupIndeces {
-				std_[gi] += (dataF64[idx] - mean_[gi]) * (dataF64[idx] - mean_[gi])
+				d := dataF64[idx] - mean_[gi]
+				std_[gi] += d * d
+				counts_[gi]++
 			}
 		}
 		for i, v := range std_ {
-			std_[i] = math.Sqrt(v / float64(len(flatGroupIndeces)/groupsNum))
+			if counts_[i] == 0 {
+				std_[i] = math.NaN()
+			} else {
+				std_[i] = math.Sqrt(v / float64(counts_[i]))
+			}
 		}
 		return std_
 	}
