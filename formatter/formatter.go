@@ -204,7 +204,7 @@ func (f *NumericFormatter) Push(val any) {
 
 	// If this is 0, no need to check anything, otherwise find out where the rounding digit is related to the exponent.
 	if digits > 0 && (math.Abs(signif) >= 10-math.Pow(0.1, float64(min(f.maxDigits+exponent, f.movingDigits))+1)*(5+cutoffDelta)) { // this is for rounding issues
-		signif = 1 // not used but will keep for consistency
+		signif = 1 //nolint:ineffassign // dead store kept intentionally, mirrors the equivalent rounding-correction branch in render() for readability
 		exponent++
 	}
 

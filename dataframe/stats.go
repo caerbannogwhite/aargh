@@ -9,7 +9,7 @@ import (
 // type __numeric_thread_data struct {
 // 	op      AggregateType
 // 	gi      int
-// 	indeces []int
+// 	indices []int
 // 	series  Series
 // 	res     []float64
 // }
@@ -24,7 +24,7 @@ import (
 // 			case Ints:
 // 				sum_ := int(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = float64(sum_)
@@ -32,7 +32,7 @@ import (
 // 			case Int64s:
 // 				sum_ := int64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = float64(sum_)
@@ -40,7 +40,7 @@ import (
 // 			case Float64s:
 // 				sum_ := float64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = sum_
@@ -56,26 +56,26 @@ import (
 // 			case Ints:
 // 				sum_ := int(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = float64(sum_) / float64(len(td.indeces))
+// 				td.res[td.gi] = float64(sum_) / float64(len(td.indices))
 
 // 			case Int64s:
 // 				sum_ := int64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = float64(sum_) / float64(len(td.indeces))
+// 				td.res[td.gi] = float64(sum_) / float64(len(td.indices))
 
 // 			case Float64s:
 // 				sum_ := float64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = sum_ / float64(len(td.indeces))
+// 				td.res[td.gi] = sum_ / float64(len(td.indices))
 // 			}
 // 		}
 // 	}

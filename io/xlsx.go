@@ -158,7 +158,7 @@ func readXlsx(
 		cells: nil,
 	}
 
-	series, err := readRowData(xlsxRowReader, nullValues, guessDataTypeLen, sh.MaxRow, schema, ctx)
+	series, err := readRowData(xlsxRowReader, nullValues, guessDataTypeLen, rows, schema, ctx)
 	if err != nil {
 		return nil, nil, err
 	}

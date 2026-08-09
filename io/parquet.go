@@ -190,7 +190,7 @@ func (w *ParquetWriter) Write() error {
 	return writeRecordAsParquet(rec, f)
 }
 
-func writeRecordAsParquet(rec arrow.Record, w io.Writer) error {
+func writeRecordAsParquet(rec arrow.RecordBatch, w io.Writer) error {
 	tbl := recordToTable(rec)
 	defer tbl.Release()
 

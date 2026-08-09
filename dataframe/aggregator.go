@@ -49,11 +49,11 @@ func (ab aggregatorBuilder) Run() DataFrame {
 
 	var result DataFrame
 	if df.isGrouped {
-		var indeces [][]int
-		var flatIndeces []int
-		result, indeces, flatIndeces, _ = df.groupHelper()
+		var indices [][]int
+		var flatIndices []int
+		result, indices, flatIndices, _ = df.groupHelper()
 
-		groupsNum := len(indeces)
+		groupsNum := len(indices)
 
 		var _series series.Series
 		for _, agg := range ab.aggregators {
@@ -62,30 +62,30 @@ func (ab aggregatorBuilder) Run() DataFrame {
 			switch agg.type_ {
 			case AGGREGATE_COUNT:
 				counts := make([]int64, groupsNum)
-				for i, group := range indeces {
+				for i, group := range indices {
 					counts[i] = int64(len(group))
 				}
 				result = result.AddSeries(agg.newName, series.NewSeriesInt64(counts, nil, false, df.ctx))
 
 			case AGGREGATE_SUM:
 				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, flatIndeces, groupsNum, ab.removeNAs), nil, false, df.ctx))
+				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
 
 			case AGGREGATE_MIN:
 				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, flatIndeces, groupsNum, ab.removeNAs), nil, false, df.ctx))
+				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
 
 			case AGGREGATE_MAX:
 				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, flatIndeces, groupsNum, ab.removeNAs), nil, false, df.ctx))
+				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
 
 			case AGGREGATE_MEAN:
 				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, flatIndeces, groupsNum, ab.removeNAs), nil, false, df.ctx))
+				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
 
 			case AGGREGATE_STD:
 				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, flatIndeces, groupsNum, ab.removeNAs), nil, false, df.ctx))
+				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
 			}
 		}
 
@@ -100,13 +100,13 @@ func (ab aggregatorBuilder) Run() DataFrame {
 		// for _, agg := range aggregators {
 		// 	series := df.__series(agg.name)
 
-		// 	resultData := make([]float64, len(*indeces))
+		// 	resultData := make([]float64, len(*indices))
 		// 	result = result.AddSeries(agg.name, NewSeriesFloat64(resultData, nil, false, df.ctx))
-		// 	for gi, group := range *indeces {
+		// 	for gi, group := range *indices {
 		// 		buffer <- __stats_thread_data{
 		// 			op:      agg.type_,
 		// 			gi:      gi,
-		// 			indeces: group,
+		// 			indices: group,
 		// 			series:  series,
 		// 			res:     resultData,
 		// 		}

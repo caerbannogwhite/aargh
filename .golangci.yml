@@ -1,0 +1,25 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - govet
+    - ineffassign
+    - misspell
+  exclusions:
+    paths:
+      - "series/.*_base\\.go"
+      - "series/.*_ops\\.go"
+      - "benchmarking"
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - "series/.*_base\\.go"
+      - "series/.*_ops\\.go"
+      - "benchmarking"

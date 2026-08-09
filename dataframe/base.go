@@ -494,9 +494,9 @@ func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
 
 	// The last partition tells us how many groups there are
 	// and how many rows are in each group
-	indeces := make([][]int, 0, df.partitions[len(df.partitions)-1].partition.GetSize())
+	indices := make([][]int, 0, df.partitions[len(df.partitions)-1].partition.GetSize())
 	for _, group := range df.partitions[len(df.partitions)-1].partition.GetMap() {
-		indeces = append(indeces, group)
+		indices = append(indices, group)
 	}
 
 	// Keep only the grouped series
@@ -510,65 +510,65 @@ func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
 		// so the key column keeps the null flag of that representative row.
 		var keyNulls []bool
 		if old.IsNullable() {
-			keyNulls = make([]bool, len(indeces))
-			for i, group := range indeces {
+			keyNulls = make([]bool, len(indices))
+			for i, group := range indices {
 				keyNulls[i] = old.IsNull(group[0])
 			}
 		}
 
 		switch _series := old.(type) {
 		case series.Bools:
-			values := make([]bool, len(indeces))
-			for i, group := range indeces {
+			values := make([]bool, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesBool(values, keyNulls, false, _series.GetContext()))
 
 		case series.Ints:
-			values := make([]int, len(indeces))
-			for i, group := range indeces {
+			values := make([]int, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesInt(values, keyNulls, false, _series.GetContext()))
 
 		case series.Int64s:
-			values := make([]int64, len(indeces))
-			for i, group := range indeces {
+			values := make([]int64, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesInt64(values, keyNulls, false, _series.GetContext()))
 
 		case series.Float64s:
-			values := make([]float64, len(indeces))
-			for i, group := range indeces {
+			values := make([]float64, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesFloat64(values, keyNulls, false, _series.GetContext()))
 
 		case series.Strings:
-			values := make([]*string, len(indeces))
-			for i, group := range indeces {
+			values := make([]*string, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesStringFromPtrs(values, keyNulls, false, _series.GetContext()))
 
 		case series.Times:
-			values := make([]time.Time, len(indeces))
-			for i, group := range indeces {
+			values := make([]time.Time, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesTime(values, keyNulls, false, _series.GetContext()))
 
 		case series.Durations:
-			values := make([]time.Duration, len(indeces))
-			for i, group := range indeces {
+			values := make([]time.Duration, len(indices))
+			for i, group := range indices {
 				values[i] = _series.Data_[group[0]]
 			}
 			result.series = append(result.series, series.NewSeriesDuration(values, keyNulls, false, _series.GetContext()))
 
 		default:
 			// Unsupported key type: keep names and series aligned.
-			result.series = append(result.series, series.NewSeriesNA(len(indeces), df.ctx))
+			result.series = append(result.series, series.NewSeriesNA(len(indices), df.ctx))
 		}
 	}
 
@@ -583,15 +583,15 @@ func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
 	// sort the indices
 	sort.Ints(ungroupedSeriesIndices)
 
-	// Flatten the indeces
-	flatIndeces := make([]int, df.NRows())
-	for i, group := range indeces {
+	// Flatten the indices
+	flatIndices := make([]int, df.NRows())
+	for i, group := range indices {
 		for _, index := range group {
-			flatIndeces[index] = i
+			flatIndices[index] = i
 		}
 	}
 
-	return result, indeces, flatIndeces, ungroupedSeriesIndices
+	return result, indices, flatIndices, ungroupedSeriesIndices
 }
 
 func (df BaseDataFrame) Join(how DataFrameJoinType, other DataFrame, on ...string) DataFrame {
@@ -1093,7 +1093,7 @@ func (df BaseDataFrame) Take(params ...int) DataFrame {
 		return df
 	}
 
-	indeces, err := series.SeriesTakePreprocess("BaseDataFrame", df.NRows(), params...)
+	indices, err := series.SeriesTakePreprocess("BaseDataFrame", df.NRows(), params...)
 	if err != nil {
 		df.err = err
 		return df
@@ -1101,7 +1101,7 @@ func (df BaseDataFrame) Take(params ...int) DataFrame {
 
 	taken := NewBaseDataFrame(df.ctx)
 	for idx, series := range df.series {
-		taken = taken.AddSeries(df.names[idx], series.FilterIntSlice(indeces, false))
+		taken = taken.AddSeries(df.names[idx], series.FilterIntSlice(indices, false))
 	}
 
 	return taken
@@ -1484,7 +1484,7 @@ func (df BaseDataFrame) PPrint(params PPrintParams) DataFrame {
 	if addTail {
 		// separator (bottom)
 		buffer += params.indent + "┊"
-		for j, _ := range df.series[:nColsOut] {
+		for j := range df.series[:nColsOut] {
 			buffer += utils.Center("⋮", widths[j]+2) + "┊"
 		}
 		buffer += "\n"
