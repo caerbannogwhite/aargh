@@ -6,3 +6,5 @@
 /testdata/*.csv
 /testdata/*.parquet
 /testdata/*.arrow
+# Go build artifacts
+*.exe

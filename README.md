@@ -21,7 +21,7 @@ Enchanter is a work in progress and the API is not stable yet.
 go get github.com/caerbannogwhite/enchanter
 ```
 
-Requires Go 1.24+. Pure Go, no cgo.
+Requires Go 1.26+. Pure Go, no cgo.
 
 ### Quick start
 
