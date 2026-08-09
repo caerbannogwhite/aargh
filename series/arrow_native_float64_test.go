@@ -40,3 +40,11 @@ func TestArrowFloat64sGreaterThanFilter(t *testing.T) {
 		t.Fatalf("GreaterThan+Filter: got len=%d [%v %v], want len=2 [5 8]", out.Len(), out.Get(0), out.Get(1))
 	}
 }
+
+func TestArrowFloat64sSum(t *testing.T) {
+	a := NewArrowFloat64s([]float64{1, 2, 3, 4}, memory.DefaultAllocator)
+	defer a.Release()
+	if got := a.Sum(); got != 10 {
+		t.Fatalf("Sum: got %v, want 10", got)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/compute"
+	arrmath "github.com/apache/arrow-go/v18/arrow/math"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/apache/arrow-go/v18/arrow/scalar"
 )
@@ -73,4 +74,9 @@ func (s ArrowFloat64s) Filter(mask *array.Boolean) ArrowFloat64s {
 		panic(err)
 	}
 	return ArrowFloat64s{arr: out.(*array.Float64), alloc: s.alloc}
+}
+
+// Sum returns the SIMD-accelerated sum of the elements (arrow/math).
+func (s ArrowFloat64s) Sum() float64 {
+	return arrmath.Float64.Sum(s.arr)
 }
