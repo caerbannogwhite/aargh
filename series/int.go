@@ -303,7 +303,7 @@ func (s Ints) Group() Series {
 	// If the difference between the maximum and minimum values is acceptable,
 	// then we can use a dense map, otherwise we use a sparse map
 	if useDenseMap && (max-min >= enchanter.MINIMUM_PARALLEL_SIZE_1) {
-		useDenseMap = false
+		useDenseMap = false //nolint:ineffassign // unreachable while the dense-map fast path above stays disabled (see TODO: FIX DENSE MAP below); kept so this guard is correct once that path is restored
 	}
 
 	// TODO: FIX DENSE MAP
