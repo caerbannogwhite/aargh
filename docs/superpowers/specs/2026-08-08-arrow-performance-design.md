@@ -178,10 +178,16 @@ recommendation grounded in the table of measurements, not a single pass/fail bit
 
 Groupby aggregation end-to-end (arrow-go has no grouped-aggregation kernels, so
 there is nothing to compare against), and mutation-heavy workloads (out of scope
-for the prototype). Both are noted as open questions in the design doc. The
-cross-library comparison harness on the `dev-benchmarking` branch (polars /
-pandas / dplyr) is a separate concern and is not entangled with these internal
-microbenchmarks.
+for the prototype). Both are noted as open questions in the design doc.
+
+The cross-library comparison harness (h2oai db-benchmark: polars / pandas /
+dplyr) is imported from the `dev-benchmarking` branch into `benchmarking/` and
+provides the **baseline that frames why storage performance matters** —
+enchanter's ancestor ran 2.3–7.8× slower than Polars on groupby. The internal
+three-regime microbenchmarks answer the narrower go-slice-vs-Arrow question; the
+design doc reads them against that baseline (motivation, not a direct
+comparand). Modernizing the harness scripts (old `gandalff` name, old library
+versions) is out of scope for 0.3.0.
 
 ---
 
