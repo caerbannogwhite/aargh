@@ -19,8 +19,6 @@ type NAs struct {
 	Ctx_       *enchanter.Context
 }
 
-func (s NAs) printInfo() {}
-
 // Return the context of the series.
 func (s NAs) GetContext() *enchanter.Context {
 	return s.Ctx_

@@ -11,8 +11,6 @@ type Errors struct {
 	Msg_ string
 }
 
-func (s Errors) printInfo() {}
-
 // Return the context of the series.
 func (s Errors) GetContext() *enchanter.Context {
 	return nil
