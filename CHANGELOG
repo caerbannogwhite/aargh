@@ -1,6 +1,7 @@
 v0.3.0
  - [Changed] Arrow interop uses arrow.RecordBatch (DataFrame.ToArrowRecord and NewBaseDataFrameFromArrowRecord); arrow.Record was deprecated upstream
  - [BugFix] Aggregations: grouped std used the average group size as divisor; ungrouped mean/std under removeNAs divided by the total length instead of the non-null count
+ - [Added] Arrow-native storage prototype and benchmark; see docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md for the 0.4.0 go/no-go
 
 v0.2.0: third-fish
  - [Changed] Library renamed from aargh to enchanter: module is now github.com/caerbannogwhite/enchanter, root package is `enchanter`
