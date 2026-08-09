@@ -58,7 +58,7 @@ func (r *ArrowIPCReader) Read() *IoData {
 	// Read all record batches
 	var allSeries []series.Series
 	for i := 0; i < reader.NumRecords(); i++ {
-		rec, err := reader.Record(i)
+		rec, err := reader.RecordBatch(i)
 		if err != nil {
 			iod.Error = fmt.Errorf("ArrowIPCReader.Read: record %d: %w", i, err)
 			return iod

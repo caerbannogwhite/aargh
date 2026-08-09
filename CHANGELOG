@@ -1,3 +1,6 @@
+v0.3.0
+ - [Changed] Arrow interop uses arrow.RecordBatch (DataFrame.ToArrowRecord and NewBaseDataFrameFromArrowRecord); arrow.Record was deprecated upstream
+
 v0.2.0: third-fish
  - [Changed] Library renamed from aargh to enchanter: module is now github.com/caerbannogwhite/enchanter, root package is `enchanter`
  - [Feature] Apache Arrow interop: Series.ArrowArray(), DataFrame.ArrowSchema() / ToArrowRecord(), NewBaseDataFrameFromArrowRecord()

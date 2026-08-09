@@ -42,11 +42,11 @@ func TestParquetMultiRowGroupWithNulls(t *testing.T) {
 		{Name: "f", Type: farr.DataType(), Nullable: true},
 		{Name: "s", Type: sarr.DataType(), Nullable: true},
 	}, nil)
-	rec := array.NewRecord(schema, []arrow.Array{farr, sarr}, int64(n))
+	rec := array.NewRecordBatch(schema, []arrow.Array{farr, sarr}, int64(n))
 	defer rec.Release()
 	farr.Release()
 	sarr.Release()
-	tbl := array.NewTableFromRecords(schema, []arrow.Record{rec})
+	tbl := array.NewTableFromRecords(schema, []arrow.RecordBatch{rec})
 	defer tbl.Release()
 
 	f, err := os.Create(path)
@@ -177,8 +177,8 @@ func TestArrowIPCMultiRecordWithNulls(t *testing.T) {
 		f.Close()
 		t.Fatal(err)
 	}
-	rec1 := array.NewRecord(schema, []arrow.Array{a1}, 5)
-	rec2 := array.NewRecord(schema, []arrow.Array{a2}, 5)
+	rec1 := array.NewRecordBatch(schema, []arrow.Array{a1}, 5)
+	rec2 := array.NewRecordBatch(schema, []arrow.Array{a2}, 5)
 	a1.Release()
 	a2.Release()
 	if err := w.Write(rec1); err != nil {
