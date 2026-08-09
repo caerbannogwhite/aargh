@@ -7,6 +7,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/compute"
 	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/apache/arrow-go/v18/arrow/scalar"
 )
 
 // ArrowFloat64s is a MEASUREMENT-ONLY prototype of an Arrow-native Float64
@@ -52,4 +53,24 @@ func (s ArrowFloat64s) Add(other ArrowFloat64s) ArrowFloat64s {
 	}
 	out := res.(*compute.ArrayDatum).MakeArray().(*array.Float64)
 	return ArrowFloat64s{arr: out, alloc: s.alloc}
+}
+
+// GreaterThan returns a boolean mask of s > k, computed on the Arrow array.
+func (s ArrowFloat64s) GreaterThan(k float64) *array.Boolean {
+	ld := &compute.ArrayDatum{Value: s.arr.Data()}
+	kd := compute.NewDatum(scalar.NewFloat64Scalar(k))
+	res, err := compute.CallFunction(context.Background(), "greater", nil, ld, kd)
+	if err != nil {
+		panic(err)
+	}
+	return res.(*compute.ArrayDatum).MakeArray().(*array.Boolean)
+}
+
+// Filter selects the elements where mask is true, via the Arrow selection kernel.
+func (s ArrowFloat64s) Filter(mask *array.Boolean) ArrowFloat64s {
+	out, err := compute.FilterArray(context.Background(), s.arr, mask, compute.FilterOptions{})
+	if err != nil {
+		panic(err)
+	}
+	return ArrowFloat64s{arr: out.(*array.Float64), alloc: s.alloc}
 }

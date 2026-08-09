@@ -28,3 +28,15 @@ func TestArrowFloat64sAdd(t *testing.T) {
 		t.Fatalf("Add: got [%v ... %v], want 11..33", c.Get(0), c.Get(2))
 	}
 }
+
+func TestArrowFloat64sGreaterThanFilter(t *testing.T) {
+	a := NewArrowFloat64s([]float64{1, 5, 2, 8, 3}, memory.DefaultAllocator)
+	defer a.Release()
+	mask := a.GreaterThan(3)
+	defer mask.Release()
+	out := a.Filter(mask)
+	defer out.Release()
+	if out.Len() != 2 || out.Get(0) != 5 || out.Get(1) != 8 {
+		t.Fatalf("GreaterThan+Filter: got len=%d [%v %v], want len=2 [5 8]", out.Len(), out.Get(0), out.Get(1))
+	}
+}
