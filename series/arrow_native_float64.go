@@ -1,8 +1,11 @@
 package series
 
 import (
+	"context"
+
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/compute"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 )
 
@@ -38,3 +41,15 @@ func (s ArrowFloat64s) ArrowArray() arrow.Array { return s.arr }
 
 // Release frees the underlying Arrow array.
 func (s ArrowFloat64s) Release() { s.arr.Release() }
+
+// Add returns s + other element-wise, computed on the Arrow arrays.
+func (s ArrowFloat64s) Add(other ArrowFloat64s) ArrowFloat64s {
+	ld := &compute.ArrayDatum{Value: s.arr.Data()}
+	rd := &compute.ArrayDatum{Value: other.arr.Data()}
+	res, err := compute.Add(context.Background(), compute.ArithmeticOptions{}, ld, rd)
+	if err != nil {
+		panic(err)
+	}
+	out := res.(*compute.ArrayDatum).MakeArray().(*array.Float64)
+	return ArrowFloat64s{arr: out, alloc: s.alloc}
+}
