@@ -8,3 +8,6 @@
 /testdata/*.arrow
 # Go build artifacts
 *.exe
+
+# python venv for benchmarking
+benchmarking/.venv/
