@@ -185,31 +185,44 @@ and the race detector on Linux and Windows.
 
 ### Roadmap
 
-Next (0.3.0):
+Enchanter is pre-1.0. Releases are themed so each has a single focus, working
+toward a stable 1.0.
 
-- [ ] Route series operations through Arrow compute kernels (replacing the generated per-type loops).
-- [ ] Aggregations via Arrow compute (Sum, Min, Max, Mean).
-- [ ] Dictionary-encoded (factor) strings.
-- [ ] SAS7BDAT data reading ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)).
+**0.3.0 — measure & clean up** (current). Deprecation cleanup (`arrow.Record` →
+`RecordBatch`), aggregation correctness fixes, CI + lint, and a *measured*
+decision on Arrow-native storage: **not worth it** — in pure Go, Arrow-backed
+columns only match plain Go slices, and arrow-go has no grouped-aggregation
+kernels, so Arrow stays an interop layer (Parquet, IPC, ecosystem handoff). See
+the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md).
 
-Later:
+**0.4.0 — make it fast.** The performance headline, validated by a
+[spike](benchmarking/README.md):
 
-- [ ] Pivot longer / wider (started on the `dev-pivot` branch).
-- [ ] Custom aggregators (prototype archived as `archive/dev-fix-agg`).
-- [ ] Stricter CSV type guessing with acceptance threshold (archived as `archive/dev-0.1.3`).
-- [ ] Implement chunked series.
-- [ ] Implement SPSS reader and writer.
-- [ ] Improve filtering interface.
-- [ ] Improve dataframe PrettyPrint: add parameters, optimize data display, use lipgloss.
-- [ ] Times: set time format.
-- [ ] Implement `Set(i []int, v []any) Series`.
-- [ ] Add `Slice(i []int) Series` (using filter?).
-- [ ] Implement memory optimized Bool series with uint64.
-- [ ] Use uint64 for null mask.
-- [ ] Optimize XPT reader/writer with float32.
-- [ ] Add url resolver to each reader.
-- [ ] Add format option to each writer.
-- [ ] JSON reader by records.
+- [ ] Single-pass, parallel hash aggregation for `GroupBy().Agg()` — ~10–17×
+      over today's groupby, and class-leading on the h2oai Q1 benchmark.
+- [ ] Fused combinators for element-wise op chains (no intermediate arrays).
+- [ ] Benchmark-regression tracking so the gains don't rot.
+
+**0.5.0 — stabilize for 1.0** (breaking changes, batched together):
+
+- [ ] Public API: hide internal fields (`Data_`, `NullMask_`), standardize the
+      reader constructors.
+- [ ] Generics to collapse the generated per-type code — *spike-gated* (only if
+      it measurably shrinks the code without regressing speed).
+- [ ] Broaden test coverage; decide SAS7BDAT
+      ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)) —
+      finish the data path or drop it.
+
+**1.0 — commit** to the stable API.
+
+Parking lot (unversioned, picked up as they fit): dictionary-encoded (factor)
+strings; pivot longer/wider (in progress on `dev-pivot`); custom aggregators
+(archived on `archive/dev-fix-agg`); stricter CSV type guessing (archived on
+`archive/dev-0.1.3`); chunked series; SPSS reader/writer; JSON-by-records;
+`Median` / `Variance` / `Quantile`; configurable time format; `Set(i []int, …)`
+and `Slice(i []int)`; url resolvers and format options on the I/O builders;
+PrettyPrint and filtering-interface polish; memory-optimized `Bool` /
+`uint64` null mask.
 
 ### Dependencies
 
