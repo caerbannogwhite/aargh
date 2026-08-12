@@ -1,3 +1,9 @@
+v0.3.0: fourth-fish
+ - [Changed] Arrow interop uses arrow.RecordBatch (DataFrame.ToArrowRecord and NewBaseDataFrameFromArrowRecord); arrow.Record was deprecated upstream
+ - [BugFix] Aggregations: grouped std used the average group size as divisor; ungrouped mean/std under removeNAs divided by the total length instead of the non-null count
+ - [Changed] Evaluated Arrow-native column storage (three-regime benchmark) and decided against it; Arrow stays an interop layer (Parquet, IPC, ecosystem handoff). See docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md
+ - [Removed] Measurement-only Arrow-native storage prototype and the unwired Arrow compute-dispatch layer (series/arrow_ops.go); neither was reachable outside its own tests. Arrow interop (Series.ArrowArray / ArrowArrayToSeries) is unchanged
+
 v0.2.0: third-fish
  - [Changed] Library renamed from aargh to enchanter: module is now github.com/caerbannogwhite/enchanter, root package is `enchanter`
  - [Feature] Apache Arrow interop: Series.ArrowArray(), DataFrame.ArrowSchema() / ToArrowRecord(), NewBaseDataFrameFromArrowRecord()

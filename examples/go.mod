@@ -1,6 +1,6 @@
 module examples
 
-go 1.24.0
+go 1.26.5
 
 require github.com/caerbannogwhite/enchanter v0.1.2
 

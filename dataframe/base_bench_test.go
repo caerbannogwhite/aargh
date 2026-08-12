@@ -344,7 +344,7 @@ func Benchmark_Filter_Q2_1e7(b *testing.B) {
 
 ////////////////////////			GROUP BY TESTS
 //
-// GroupBy challege: more info here https://github.com/h2oai/db-benchmark/tree/master
+// GroupBy challenge: more info here https://github.com/h2oai/db-benchmark/tree/master
 
 func Test_GroupBy_Q1_1e4(t *testing.T) {
 	if G1_1e4_1e2_0_0_df == nil {

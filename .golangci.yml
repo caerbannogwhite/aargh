@@ -1,0 +1,25 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - govet
+    - ineffassign
+    - misspell
+  exclusions:
+    paths:
+      - "series/(bool|duration|float64|int|int64|na|string|time)_base\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_ops\\.go"
+      - "benchmarking"
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - "series/(bool|duration|float64|int|int64|na|string|time)_base\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_ops\\.go"
+      - "benchmarking"

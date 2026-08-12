@@ -751,8 +751,6 @@ func Test_SeriesInt64_Group(t *testing.T) {
 	// debugPrintPartition(s1.GetPartition(), s1)
 	// debugPrintPartition(s2.GetPartition(), s1, s2)
 	// debugPrintPartition(s3.GetPartition(), s1, s2, s3)
-
-	partMap = nil
 }
 
 func Test_SeriesInt64_Sort(t *testing.T) {

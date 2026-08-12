@@ -1,0 +1,13 @@
+solution	version	rows	question	time_sec
+polars	1.43.2	1000000	Q1_sum_v1_by_id1	0.005781
+polars	1.43.2	10000000	Q1_sum_v1_by_id1	0.043224
+pandas	3.0.5	1000000	Q1_sum_v1_by_id1	0.049425
+pandas	3.0.5	10000000	Q1_sum_v1_by_id1	0.511928
+data.table	1.18.4	1000000	Q1_sum_v1_by_id1	0.009810
+data.table	1.18.4	10000000	Q1_sum_v1_by_id1	0.138010
+dplyr	1.2.1	1000000	Q1_sum_v1_by_id1	0.031292
+dplyr	1.2.1	10000000	Q1_sum_v1_by_id1	0.514838
+enchanter	0.3.0-dev	1000000	Q1_sum_v1_by_id1	0.018748
+enchanter	0.3.0-dev	10000000	Q1_sum_v1_by_id1	0.268885
+enchanter-hashpar	0.4.0-spike	1000000	Q1_sum_v1_by_id1	0.001943
+enchanter-hashpar	0.4.0-spike	10000000	Q1_sum_v1_by_id1	0.015500

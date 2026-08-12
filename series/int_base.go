@@ -11,17 +11,6 @@ import (
 	"github.com/caerbannogwhite/enchanter/utils"
 )
 
-func (s Ints) printInfo() {
-	fmt.Println("Ints")
-	fmt.Println("==========")
-	fmt.Println("IsNullable:", s.IsNullable_)
-	fmt.Println("Sorted:    ", s.Sorted_)
-	fmt.Println("Data:      ", s.Data_)
-	fmt.Println("NullMask:  ", s.NullMask_)
-	fmt.Println("Partition: ", s.Partition_)
-	fmt.Println("Context:   ", s.Ctx_)
-}
-
 ////////////////////////			BASIC ACCESSORS
 
 // Return the context of the series.

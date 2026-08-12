@@ -21,7 +21,7 @@ Enchanter is a work in progress and the API is not stable yet.
 go get github.com/caerbannogwhite/enchanter
 ```
 
-Requires Go 1.24+. Pure Go, no cgo.
+Requires Go 1.26+. Pure Go, no cgo.
 
 ### Quick start
 
@@ -127,79 +127,49 @@ Conversion notes:
 - Releasing values returned to you is optional under GC-backed allocators
   (the default); see `Context.Allocator` for the exact ownership contract.
 
-### Supported data types
+### Data types
 
-The data types not checked are not yet supported, but might be in the future.
+Seven nullable, columnar series types. Nulls live in a separate bit-packed
+mask, so a column with no nulls carries no null overhead.
 
-- [x] Bool
-- [ ] Bool (memory optimized, not fully implemented yet)
-- [ ] Int16
-- [x] Int
-- [x] Int64
-- [ ] Float32
-- [x] Float64
-- [ ] Complex64
-- [ ] Complex128
-- [x] String
-- [x] Time
-- [x] Duration
+| Series      | Go element type                        |
+| ----------- | -------------------------------------- |
+| `Bools`     | `bool`                                 |
+| `Ints`      | `int`                                  |
+| `Int64s`    | `int64`                                |
+| `Float64s`  | `float64`                              |
+| `Strings`   | `*string` (interned via a shared pool) |
+| `Times`     | `time.Time`                            |
+| `Durations` | `time.Duration`                        |
 
-### Supported operations for Series
+Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
+`Float32`, complex numbers, and a bit-packed memory-optimized `Bool`.
 
-- [x] Filter
+### Operations
 
-  - [x] filter by bool slice
-  - [x] filter by int slice
-  - [x] filter by bool series
-  - [x] filter by int series
+**Series** carry element-wise arithmetic (`Add`, `Sub`, `Mul`, `Div`, `Mod`,
+`Exp`, `Neg`), comparison (`Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge`), and boolean
+(`And`, `Or`, `Not`) operators, plus `Filter` (by a `[]bool` / `[]int` or a
+`Bools` / `Ints` series), null-aware `Group` / `SubGroup` and `Sort` /
+`SortRev`, and `Map`, `Take`, `Cast`, `Append`.
 
-- [x] Group
+**DataFrame**
 
-  - [x] Group (with nulls)
-  - [x] SubGroup (with nulls)
+| Operation            | Status | Notes                                    |
+| -------------------- | :----: | ---------------------------------------- |
+| Select               |   ✅   |                                          |
+| Filter               |   ✅   | by a `Bools` series                      |
+| GroupBy + Agg        |   ✅   | null-aware group keys                    |
+| Join                 |   ✅   | inner / left / right / outer, null-aware |
+| OrderBy              |   ✅   | multi-key, ascending / descending        |
+| Take                 |   ✅   |                                          |
+| Pivot (longer/wider) |   🚧   | in progress on `dev-pivot`               |
+| Map                  |   ❌   | planned                                  |
+| Stack / Append       |   ❌   | planned                                  |
 
-- [x] Map
-- [x] Sort
-
-  - [x] Sort (with nulls)
-  - [x] SortRev (with nulls)
-
-- [x] Take
-
-### Supported operations for DataFrame
-
-- [x] Agg
-- [x] Filter
-- [x] GroupBy
-- [x] Join
-
-  - [x] Inner
-  - [x] Left
-  - [x] Right
-  - [x] Outer
-  - [x] Inner with nulls
-  - [x] Left with nulls
-  - [x] Right with nulls
-  - [x] Outer with nulls
-
-- [ ] Map
-- [x] OrderBy
-- [x] Select
-- [x] Take
-- [ ] Pivot
-- [ ] Stack/Append
-
-### Supported stats functions
-
-- [x] Count
-- [x] Sum
-- [x] Mean
-- [ ] Median
-- [x] Min
-- [x] Max
-- [x] StdDev
-- [ ] Variance
-- [ ] Quantile
+**Aggregations** (via `Agg`): `Count`, `Sum`, `Mean`, `Min`, `Max`, and
+`StdDev` (population) are supported; `Median`, `Variance`, and `Quantile` are
+planned.
 
 ### Development
 
@@ -215,31 +185,44 @@ and the race detector on Linux and Windows.
 
 ### Roadmap
 
-Next (0.3.0):
+Enchanter is pre-1.0. Releases are themed so each has a single focus, working
+toward a stable 1.0.
 
-- [ ] Route series operations through Arrow compute kernels (replacing the generated per-type loops).
-- [ ] Aggregations via Arrow compute (Sum, Min, Max, Mean).
-- [ ] Dictionary-encoded (factor) strings.
-- [ ] SAS7BDAT data reading ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)).
+**0.3.0 — measure & clean up** (current). Deprecation cleanup (`arrow.Record` →
+`RecordBatch`), aggregation correctness fixes, CI + lint, and a *measured*
+decision on Arrow-native storage: **not worth it** — in pure Go, Arrow-backed
+columns only match plain Go slices, and arrow-go has no grouped-aggregation
+kernels, so Arrow stays an interop layer (Parquet, IPC, ecosystem handoff). See
+the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md).
 
-Later:
+**0.4.0 — make it fast.** The performance headline, validated by a
+[spike](benchmarking/README.md):
 
-- [ ] Pivot longer / wider (started on the `dev-pivot` branch).
-- [ ] Custom aggregators (prototype archived as `archive/dev-fix-agg`).
-- [ ] Stricter CSV type guessing with acceptance threshold (archived as `archive/dev-0.1.3`).
-- [ ] Implement chunked series.
-- [ ] Implement SPSS reader and writer.
-- [ ] Improve filtering interface.
-- [ ] Improve dataframe PrettyPrint: add parameters, optimize data display, use lipgloss.
-- [ ] Times: set time format.
-- [ ] Implement `Set(i []int, v []any) Series`.
-- [ ] Add `Slice(i []int) Series` (using filter?).
-- [ ] Implement memory optimized Bool series with uint64.
-- [ ] Use uint64 for null mask.
-- [ ] Optimize XPT reader/writer with float32.
-- [ ] Add url resolver to each reader.
-- [ ] Add format option to each writer.
-- [ ] JSON reader by records.
+- [ ] Single-pass, parallel hash aggregation for `GroupBy().Agg()` — ~10–17×
+      over today's groupby, and class-leading on the h2oai Q1 benchmark.
+- [ ] Fused combinators for element-wise op chains (no intermediate arrays).
+- [ ] Benchmark-regression tracking so the gains don't rot.
+
+**0.5.0 — stabilize for 1.0** (breaking changes, batched together):
+
+- [ ] Public API: hide internal fields (`Data_`, `NullMask_`), standardize the
+      reader constructors.
+- [ ] Generics to collapse the generated per-type code — *spike-gated* (only if
+      it measurably shrinks the code without regressing speed).
+- [ ] Broaden test coverage; decide SAS7BDAT
+      ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)) —
+      finish the data path or drop it.
+
+**1.0 — commit** to the stable API.
+
+Parking lot (unversioned, picked up as they fit): dictionary-encoded (factor)
+strings; pivot longer/wider (in progress on `dev-pivot`); custom aggregators
+(archived on `archive/dev-fix-agg`); stricter CSV type guessing (archived on
+`archive/dev-0.1.3`); chunked series; SPSS reader/writer; JSON-by-records;
+`Median` / `Variance` / `Quantile`; configurable time format; `Set(i []int, …)`
+and `Slice(i []int)`; url resolvers and format options on the I/O builders;
+PrettyPrint and filtering-interface polish; memory-optimized `Bool` /
+`uint64` null mask.
 
 ### Dependencies
 

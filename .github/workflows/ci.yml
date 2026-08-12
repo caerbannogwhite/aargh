@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, "dev-*"]
   pull_request:
+  workflow_dispatch: # allow re-running CI on demand (e.g. after a runner outage)
 
 jobs:
   test:
@@ -56,3 +57,18 @@ jobs:
 
       - name: Test with race detector
         run: go test -race -short -count=1 ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # Build golangci-lint with the project's Go toolchain. Prebuilt release
+      # binaries (what golangci-lint-action downloads) lag new Go releases, and
+      # golangci-lint refuses to run when its build-Go is older than the module's
+      # go directive — which broke CI after the go1.26.5 bump. `go run` builds it
+      # with our toolchain, so there is no version skew. Pinned for reproducibility.
+      - name: golangci-lint
+        run: go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 run ./...

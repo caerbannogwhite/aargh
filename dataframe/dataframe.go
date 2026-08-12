@@ -128,5 +128,5 @@ type DataFrame interface {
 
 	// Arrow interop.
 	ArrowSchema() *arrow.Schema
-	ToArrowRecord() arrow.Record
+	ToArrowRecord() arrow.RecordBatch
 }

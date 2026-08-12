@@ -11,9 +11,6 @@ import (
 )
 
 type Series interface {
-	// Utility functions.
-	printInfo()
-
 	// Basic accessors.
 
 	// Return the context of the series.

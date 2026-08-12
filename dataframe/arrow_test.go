@@ -98,7 +98,7 @@ func TestNewBaseDataFrameFromArrowRecord(t *testing.T) {
 	sArr := sb.NewStringArray()
 	defer sArr.Release()
 
-	rec := array.NewRecord(schema, []arrow.Array{fArr, sArr}, 2)
+	rec := array.NewRecordBatch(schema, []arrow.Array{fArr, sArr}, 2)
 	defer rec.Release()
 
 	df := NewBaseDataFrameFromArrowRecord(rec, ctx)

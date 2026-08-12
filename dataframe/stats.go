@@ -9,7 +9,7 @@ import (
 // type __numeric_thread_data struct {
 // 	op      AggregateType
 // 	gi      int
-// 	indeces []int
+// 	indices []int
 // 	series  Series
 // 	res     []float64
 // }
@@ -24,7 +24,7 @@ import (
 // 			case Ints:
 // 				sum_ := int(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = float64(sum_)
@@ -32,7 +32,7 @@ import (
 // 			case Int64s:
 // 				sum_ := int64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = float64(sum_)
@@ -40,7 +40,7 @@ import (
 // 			case Float64s:
 // 				sum_ := float64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
 // 				td.res[td.gi] = sum_
@@ -56,26 +56,26 @@ import (
 // 			case Ints:
 // 				sum_ := int(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = float64(sum_) / float64(len(td.indeces))
+// 				td.res[td.gi] = float64(sum_) / float64(len(td.indices))
 
 // 			case Int64s:
 // 				sum_ := int64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = float64(sum_) / float64(len(td.indeces))
+// 				td.res[td.gi] = float64(sum_) / float64(len(td.indices))
 
 // 			case Float64s:
 // 				sum_ := float64(0)
 // 				data := series.GetDataPtr()
-// 				for _, i := range td.indeces {
+// 				for _, i := range td.indices {
 // 					sum_ += (*data)[i]
 // 				}
-// 				td.res[td.gi] = sum_ / float64(len(td.indeces))
+// 				td.res[td.gi] = sum_ / float64(len(td.indices))
 // 			}
 // 		}
 // 	}
@@ -297,12 +297,17 @@ func __gdl_mean(dataF64 []float64, flatGroupIndeces []int, groupsNum int, remove
 	if flatGroupIndeces == nil {
 		mean_ := float64(0)
 		if removeNAs {
+			count := 0
 			for _, v := range dataF64 {
 				if !math.IsNaN(v) {
 					mean_ += v
+					count++
 				}
 			}
-			return []float64{mean_ / float64(len(dataF64))}
+			if count == 0 {
+				return []float64{math.NaN()}
+			}
+			return []float64{mean_ / float64(count)}
 		} else {
 			for _, v := range dataF64 {
 				mean_ += v
@@ -336,33 +341,48 @@ func __gdl_std(dataF64 []float64, flatGroupIndeces []int, groupsNum int, removeN
 	mean_ := __gdl_mean(dataF64, flatGroupIndeces, groupsNum, removeNAs)
 	if flatGroupIndeces == nil {
 		std_ := float64(0)
+		count := 0
 		if removeNAs {
 			for _, v := range dataF64 {
 				if !math.IsNaN(v) {
 					std_ += (v - mean_[0]) * (v - mean_[0])
+					count++
 				}
 			}
 		} else {
 			for _, v := range dataF64 {
 				std_ += (v - mean_[0]) * (v - mean_[0])
 			}
+			count = len(dataF64)
 		}
-		return []float64{math.Sqrt(std_ / float64(len(dataF64)))}
+		if count == 0 {
+			return []float64{math.NaN()}
+		}
+		return []float64{math.Sqrt(std_ / float64(count))}
 	} else {
 		std_ := make([]float64, groupsNum)
+		counts_ := make([]int, groupsNum)
 		if removeNAs {
 			for idx, gi := range flatGroupIndeces {
 				if !math.IsNaN(dataF64[idx]) {
-					std_[gi] += (dataF64[idx] - mean_[gi]) * (dataF64[idx] - mean_[gi])
+					d := dataF64[idx] - mean_[gi]
+					std_[gi] += d * d
+					counts_[gi]++
 				}
 			}
 		} else {
 			for idx, gi := range flatGroupIndeces {
-				std_[gi] += (dataF64[idx] - mean_[gi]) * (dataF64[idx] - mean_[gi])
+				d := dataF64[idx] - mean_[gi]
+				std_[gi] += d * d
+				counts_[gi]++
 			}
 		}
 		for i, v := range std_ {
-			std_[i] = math.Sqrt(v / float64(len(flatGroupIndeces)/groupsNum))
+			if counts_[i] == 0 {
+				std_[i] = math.NaN()
+			} else {
+				std_[i] = math.Sqrt(v / float64(counts_[i]))
+			}
 		}
 		return std_
 	}
