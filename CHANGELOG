@@ -1,4 +1,4 @@
-v0.3.0
+v0.3.0: fourth-fish
  - [Changed] Arrow interop uses arrow.RecordBatch (DataFrame.ToArrowRecord and NewBaseDataFrameFromArrowRecord); arrow.Record was deprecated upstream
  - [BugFix] Aggregations: grouped std used the average group size as divisor; ungrouped mean/std under removeNAs divided by the total length instead of the non-null count
  - [Changed] Evaluated Arrow-native column storage (three-regime benchmark) and decided against it; Arrow stays an interop layer (Parquet, IPC, ecosystem handoff). See docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md
