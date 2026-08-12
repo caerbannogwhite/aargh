@@ -11,8 +11,8 @@ linters:
     - misspell
   exclusions:
     paths:
-      - "series/.*_base\\.go"
-      - "series/.*_ops\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_base\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_ops\\.go"
       - "benchmarking"
 
 formatters:
@@ -20,6 +20,6 @@ formatters:
     - gofmt
   exclusions:
     paths:
-      - "series/.*_base\\.go"
-      - "series/.*_ops\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_base\\.go"
+      - "series/(bool|duration|float64|int|int64|na|string|time)_ops\\.go"
       - "benchmarking"
