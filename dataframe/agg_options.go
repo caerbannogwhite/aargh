@@ -5,11 +5,11 @@ package dataframe
 type Interpolation uint8
 
 const (
-	Linear Interpolation = iota // default: i + (j-i)*frac
-	Lower                       // value at the lower rank
-	Higher                      // value at the higher rank
-	Nearest                     // nearest rank
-	Midpoint                    // (i + j) / 2
+	Linear   Interpolation = iota // default: i + (j-i)*frac
+	Lower                         // value at the lower rank
+	Higher                        // value at the higher rank
+	Nearest                       // nearest rank
+	Midpoint                      // (i + j) / 2
 )
 
 type aggConfig struct {
