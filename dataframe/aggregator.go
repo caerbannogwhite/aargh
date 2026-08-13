@@ -163,42 +163,43 @@ const (
 	AGGREGATE_MIN
 	AGGREGATE_MAX
 	AGGREGATE_STD
+	AGGREGATE_VARIANCE
+	AGGREGATE_QUANTILE
 )
+
+func (t AggregateType) isHolistic() bool {
+	return t == AGGREGATE_MEDIAN || t == AGGREGATE_QUANTILE
+}
 
 const DEFAULT_COUNT_NAME = "n"
 
 type aggregator struct {
-	name    string
-	newName string
-	type_   AggregateType
+	name      string
+	newName   string
+	type_     AggregateType
+	p         float64       // quantile probability (AGGREGATE_QUANTILE)
+	ddof      int           // AGGREGATE_STD / AGGREGATE_VARIANCE
+	interp    Interpolation // AGGREGATE_MEDIAN / AGGREGATE_QUANTILE
+	ddofSet   bool
+	interpSet bool
 }
 
-func Count() aggregator {
-	return aggregator{DEFAULT_COUNT_NAME, DEFAULT_COUNT_NAME, AGGREGATE_COUNT}
+func mkAgg(name, newName string, t AggregateType, p float64, opts []AggOption) aggregator {
+	c := newAggConfig(opts)
+	return aggregator{name, newName, t, p, c.ddof, c.interp, c.ddofSet, c.interpSet}
 }
 
-func Sum(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("sum(%s)", name), AGGREGATE_SUM}
-}
+func Count() aggregator { return aggregator{DEFAULT_COUNT_NAME, DEFAULT_COUNT_NAME, AGGREGATE_COUNT, 0, 0, Linear, false, false} }
 
-func Mean(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("mean(%s)", name), AGGREGATE_MEAN}
-}
-
-func Median(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("median(%s)", name), AGGREGATE_MEDIAN}
-}
-
-func Min(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("min(%s)", name), AGGREGATE_MIN}
-}
-
-func Max(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("max(%s)", name), AGGREGATE_MAX}
-}
-
-func Std(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("std(%s)", name), AGGREGATE_STD}
+func Sum(name string, opts ...AggOption) aggregator  { return mkAgg(name, fmt.Sprintf("sum(%s)", name), AGGREGATE_SUM, 0, opts) }
+func Mean(name string, opts ...AggOption) aggregator { return mkAgg(name, fmt.Sprintf("mean(%s)", name), AGGREGATE_MEAN, 0, opts) }
+func Min(name string, opts ...AggOption) aggregator  { return mkAgg(name, fmt.Sprintf("min(%s)", name), AGGREGATE_MIN, 0, opts) }
+func Max(name string, opts ...AggOption) aggregator  { return mkAgg(name, fmt.Sprintf("max(%s)", name), AGGREGATE_MAX, 0, opts) }
+func Std(name string, opts ...AggOption) aggregator  { return mkAgg(name, fmt.Sprintf("std(%s)", name), AGGREGATE_STD, 0, opts) }
+func Variance(name string, opts ...AggOption) aggregator { return mkAgg(name, fmt.Sprintf("var(%s)", name), AGGREGATE_VARIANCE, 0, opts) }
+func Median(name string, opts ...AggOption) aggregator   { return mkAgg(name, fmt.Sprintf("median(%s)", name), AGGREGATE_MEDIAN, 0.5, opts) }
+func Quantile(name string, p float64, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("quantile_%g(%s)", p, name), AGGREGATE_QUANTILE, p, opts)
 }
 
 ////////////////////////			SORT
