@@ -16,11 +16,13 @@ import (
 // per group. A single pass over the rows updates the per-group state; nulls are
 // coerced to NaN by __gdl_stats_preprocess and detected with math.IsNaN.
 //
-//   - removeNAs == true  (the new default): null values are skipped.
-//   - removeNAs == false: a null value poisons that (group, aggregator)'s
-//     reducible result to NaN. Holistic aggregators always drop nulls (their
-//     collectors never receive NaN and there is no poison channel to merge in
-//     the parallel path), so removeNAs has no effect on Median/Quantile.
+//   - removeNAs == true  (the new default): null values are skipped for every
+//     aggregate; nothing is poisoned.
+//   - removeNAs == false: a null value poisons that (group, aggregator) so its
+//     result becomes NaN — for every aggregate alike, reducible (Mean, ...) and
+//     holistic (Median, Quantile). Count is the sole exception: it counts rows
+//     and is independent of value nulls. Collectors still never receive NaN; the
+//     poison flag overrides the collector's result at finalize.
 //
 // The result is the key columns (one value per group, taken from each group's
 // representative row) followed by one aggregate column per aggregator, with the
@@ -63,8 +65,8 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 					cols[j] = append(cols[j], newQuantileCollector(agg.p, agg.interp))
 				} else {
 					accs[j] = append(accs[j], newReducibleAcc(agg.type_, agg.ddof))
-					poisoned[j] = append(poisoned[j], false)
 				}
+				poisoned[j] = append(poisoned[j], false)
 			}
 			nGroups++
 		}
@@ -76,7 +78,9 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 			}
 			vj := valcols[j][row]
 			if math.IsNaN(vj) { // null
-				if !removeNAs && !isHol[j] {
+				if !removeNAs {
+					// Poisons every aggregate for this group under RemoveNAs(false),
+					// reducible and holistic alike (Count never reaches here).
 					poisoned[j][gid] = true
 				}
 				continue
@@ -113,10 +117,11 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 			var v float64
 			var isNull bool
 			switch {
+			case !removeNAs && poisoned[j][gid]:
+				// Poison overrides both reducible and holistic results.
+				v, isNull = math.NaN(), false
 			case isHol[j]:
 				v, isNull = cols[j][gid].result()
-			case !removeNAs && poisoned[j][gid]:
-				v, isNull = math.NaN(), false
 			default:
 				v, isNull = accs[j][gid].result()
 			}
