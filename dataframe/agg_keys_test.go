@@ -2,6 +2,7 @@ package dataframe
 
 import (
 	"testing"
+	"time"
 
 	"github.com/caerbannogwhite/enchanter"
 	"github.com/caerbannogwhite/enchanter/series"
@@ -48,5 +49,26 @@ func TestGroupTableNullKeys(t *testing.T) {
 	}
 	if g.numGroups() != 2 {
 		t.Fatalf("groups = %d, want 2", g.numGroups())
+	}
+}
+
+func TestGroupTableTimesSameInstantDifferentLocation(t *testing.T) {
+	ctx := enchanter.NewContext()
+	// Same instant, different *Location: raw time.Time equality (what a
+	// map[time.Time]key would use) compares wall/monotonic reading AND
+	// Location, so tm == tm2 is false even though tm.Equal(tm2) is true.
+	// The group-key table must key on instant equality (UnixNano), not raw
+	// time.Time equality, so these two rows must land in ONE group.
+	tm := time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
+	tm2 := tm.In(time.FixedZone("plus", 0))
+	k := series.NewSeriesTime([]time.Time{tm, tm2}, nil, false, ctx)
+	g := newGroupTable([]series.Series{k})
+	id0 := g.idOf(0)
+	id1 := g.idOf(1)
+	if id0 != id1 {
+		t.Fatalf("same-instant Times with different Location got different ids: %d vs %d", id0, id1)
+	}
+	if g.numGroups() != 1 {
+		t.Fatalf("groups = %d, want 1", g.numGroups())
 	}
 }

@@ -146,12 +146,18 @@ func makeCellCoder(col series.Series) func(int) uint64 {
 		}
 
 	case series.Times:
-		codes := make(map[time.Time]uint64, 16)
+		// Key by UnixNano (exact instant), not the raw time.Time value:
+		// time.Time equality via == also compares the monotonic reading and
+		// *Location pointer, so two values representing the same instant
+		// (t.Equal(t2) == true) can otherwise land in different groups.
+		// Mirrors series.Times.Group() (series/time.go), which also keys by
+		// UnixNano().
+		codes := make(map[int64]uint64, 16)
 		return func(row int) uint64 {
 			if c.IsNull(row) {
 				return 0
 			}
-			cell := c.Data_[row]
+			cell := c.Data_[row].UnixNano()
 			if v, ok := codes[cell]; ok {
 				return v
 			}
