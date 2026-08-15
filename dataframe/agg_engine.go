@@ -2,14 +2,25 @@ package dataframe
 
 import (
 	"math"
+	"runtime"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/caerbannogwhite/enchanter/series"
 )
 
-// aggregateSerial runs the fused single-pass aggregation over df in one worker.
+// aggMinParallel is the row-count threshold at or above which aggregate
+// spawns worker goroutines instead of running the single-chunk core inline.
+// Below it, the fixed cost of partitioning rows and merging worker state
+// outweighs the benefit of parallelism.
+const aggMinParallel = 1 << 16
+
+// aggregateSerial runs the fused single-pass aggregation over df in a single
+// chunk covering every row. It shares its accumulation core (accumulateChunk)
+// and result-building core (finalizeAggregate) with aggregate's parallel
+// workers; see aggregate for the parallel entry point and merge semantics.
 //
 // It builds one group per distinct composite key of keyCols (via groupTable),
 // holding one accumulator (reducible) or collector (holistic) per aggregator
@@ -32,13 +43,141 @@ import (
 //
 // len(keyCols) == 0 is handled as a single group with no key columns.
 func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, removeNAs bool) DataFrame {
-	ctx := df.GetContext()
 	nRows := df.NRows()
+	valcols, isHol := prepAggValueColumns(df, aggs)
 
-	// Coerce each aggregator's value column to []float64 once (NaN == null).
-	// Count needs no value column.
-	valcols := make([][]float64, len(aggs))
-	isHol := make([]bool, len(aggs))
+	gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, 0, nRows)
+
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
+}
+
+// aggregate is the public single-pass aggregation entry point. Below
+// aggMinParallel rows it runs the single-chunk core inline (identical output
+// to aggregateSerial). At or above the threshold, it partitions the rows into
+// runtime.GOMAXPROCS(0) contiguous chunks, accumulates each chunk in its own
+// goroutine into a chunk-local groupTable and accumulator/collector state
+// (accumulateChunk over disjoint row ranges — no shared mutable state between
+// workers), then merges every chunk's state into one global groupTable and
+// finalizes exactly as the serial path.
+//
+// Merge correctness relies on two points:
+//
+//   - Chunk-local group ids are NOT comparable across chunks: groupTable
+//     assigns dense ids in first-appearance order, which differs per chunk, so
+//     the same logical group can get different ids in different chunks. Each
+//     chunk-local group is therefore re-keyed into the global groupTable by
+//     replaying its representative row through global.idOf, which re-reads
+//     that row's actual key-column values, so equal groups collapse to the
+//     same global id regardless of which chunk (or which local id) they came
+//     from.
+//
+//   - Under removeNAs == false, poison flags are OR-merged per (aggregator,
+//     group): a group poisoned in any one chunk is poisoned in the merged
+//     result. This matches the serial engine's per-row poisoning exactly,
+//     since a poisoned group there stays poisoned once any row in it is null.
+func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, removeNAs bool) DataFrame {
+	nRows := df.NRows()
+	valcols, isHol := prepAggValueColumns(df, aggs)
+
+	if nRows < aggMinParallel {
+		gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, 0, nRows)
+		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
+	}
+
+	nWorkers := runtime.GOMAXPROCS(0)
+	if nWorkers < 1 {
+		nWorkers = 1
+	}
+	if nWorkers > nRows {
+		nWorkers = nRows
+	}
+	chunkSize := (nRows + nWorkers - 1) / nWorkers
+
+	type chunkState struct {
+		gt       *groupTable
+		accs     [][]accumulator
+		cols     [][]collector
+		poisoned [][]bool
+	}
+
+	// Each goroutine writes only its own index w; disjoint slice elements are
+	// safe to write concurrently. wg.Wait() below establishes the
+	// happens-before edge before the main goroutine reads any of them.
+	chunks := make([]chunkState, nWorkers)
+	var wg sync.WaitGroup
+	for w := 0; w < nWorkers; w++ {
+		lo := w * chunkSize
+		hi := lo + chunkSize
+		if hi > nRows {
+			hi = nRows
+		}
+		if lo >= hi {
+			continue
+		}
+		wg.Add(1)
+		go func(w, lo, hi int) {
+			defer wg.Done()
+			gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, lo, hi)
+			chunks[w] = chunkState{gt, accs, cols, poisoned}
+		}(w, lo, hi)
+	}
+	wg.Wait()
+
+	// Merge every chunk's local state into one global groupTable, re-keying
+	// each chunk-local group by its representative row (see doc comment
+	// above) and OR-merging poison flags. Chunks are merged in worker order
+	// for determinism; the merge itself is order-independent — accumulator
+	// and collector merge are commutative, and a group's representative row
+	// always carries the same key values no matter which chunk supplied it.
+	global := newGroupTable(keyCols)
+	gAccs := make([][]accumulator, len(aggs))
+	gCols := make([][]collector, len(aggs))
+	gPoisoned := make([][]bool, len(aggs))
+
+	nGroups := 0
+	for _, chunk := range chunks {
+		if chunk.gt == nil { // empty chunk (lo >= hi above)
+			continue
+		}
+		reps := chunk.gt.representativeRows()
+		for localGid, row := range reps {
+			gid := global.idOf(row)
+
+			if gid == nGroups {
+				for j, agg := range aggs {
+					if isHol[j] {
+						gCols[j] = append(gCols[j], newQuantileCollector(agg.p, agg.interp))
+					} else {
+						gAccs[j] = append(gAccs[j], newReducibleAcc(agg.type_, agg.ddof))
+					}
+					gPoisoned[j] = append(gPoisoned[j], false)
+				}
+				nGroups++
+			}
+
+			for j := range aggs {
+				if isHol[j] {
+					gCols[j][gid].merge(chunk.cols[j][localGid])
+				} else {
+					gAccs[j][gid].merge(chunk.accs[j][localGid])
+				}
+				if chunk.poisoned[j][localGid] {
+					gPoisoned[j][gid] = true
+				}
+			}
+		}
+	}
+
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gAccs, gCols, gPoisoned)
+}
+
+// prepAggValueColumns coerces each aggregator's value column to []float64
+// once (NaN == null); Count needs no value column. The returned slices are
+// read-only from this point on and safe to share across accumulateChunk
+// calls running concurrently over disjoint row ranges.
+func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (valcols [][]float64, isHol []bool) {
+	valcols = make([][]float64, len(aggs))
+	isHol = make([]bool, len(aggs))
 	for j, agg := range aggs {
 		isHol[j] = agg.type_.isHolistic()
 		if agg.type_ == AGGREGATE_COUNT {
@@ -46,7 +185,22 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 		}
 		valcols[j] = __gdl_stats_preprocess(df.C(agg.name))
 	}
+	return valcols, isHol
+}
 
+// accumulateChunk is the single-chunk accumulation core shared by
+// aggregateSerial and aggregate's parallel workers. It builds a fresh
+// groupTable over rows [lo, hi) of keyCols, with one accumulator (reducible)
+// or collector (holistic) per aggregator per group encountered in that row
+// range, and returns the per-(aggregator, group) poison flags for
+// removeNAs == false (see aggregateSerial's doc comment for poison
+// semantics). valcols/isHol come from prepAggValueColumns and are read-only.
+//
+// The returned groupTable, accumulators, collectors and poison flags are
+// local to [lo, hi): group ids are dense in first-appearance order within
+// this chunk only and are not meaningful outside it (see aggregate's doc
+// comment on merging).
+func accumulateChunk(keyCols []series.Series, aggs []aggregator, valcols [][]float64, isHol []bool, removeNAs bool, lo, hi int) (*groupTable, [][]accumulator, [][]collector, [][]bool) {
 	gt := newGroupTable(keyCols)
 
 	// Per-aggregator, per-gid state; grown lazily as new gids appear.
@@ -55,7 +209,7 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 	poisoned := make([][]bool, len(aggs))    // reducible poison (removeNAs == false)
 
 	nGroups := 0
-	for row := 0; row < nRows; row++ {
+	for row := lo; row < hi; row++ {
 		gid := gt.idOf(row)
 
 		// New group: append fresh state for every aggregator.
@@ -93,6 +247,20 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 		}
 	}
 
+	return gt, accs, cols, poisoned
+}
+
+// finalizeAggregate builds the sorted result DataFrame from a fully-populated
+// (or fully-merged) group table and its per-aggregator per-group state: the
+// key columns (one row per group, taken from each group's representative
+// row) followed by one aggregate column per aggregator, sorted by key
+// ascending, nulls last, lexicographic across keyCols. Count is emitted as
+// Int64s; every other aggregate as Float64s with a null mask from the
+// per-row isNull flags (poisoned groups under removeNAs == false surface as
+// non-null NaN, matching aggregateSerial).
+func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, accs [][]accumulator, cols [][]collector, poisoned [][]bool) DataFrame {
+	ctx := df.GetContext()
+	nGroups := gt.numGroups()
 	reps := gt.representativeRows()
 	order := sortGroupOrder(keyCols, reps)
 

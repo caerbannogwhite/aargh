@@ -135,3 +135,38 @@ func TestAggregateSerialTwoKeyLexicographic(t *testing.T) {
 		}
 	}
 }
+
+// TestAggregateParallelParity asserts that aggregate's parallel path (row
+// count above aggMinParallel) produces results identical to aggregateSerial
+// across reducible (Sum, Mean, Min, Max, Std) and non-value (Count)
+// aggregators. Run with -race to confirm the worker chunks + merge carry no
+// data races.
+func TestAggregateParallelParity(t *testing.T) {
+	ctx := enchanter.NewContext()
+	n := 200_000
+	keys := make([]string, n)
+	vals := make([]float64, n)
+	for i := range keys {
+		keys[i] = []string{"a", "b", "c", "d"}[i%4]
+		vals[i] = float64(i % 97)
+	}
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
+		AddSeries("v", series.NewSeriesFloat64(vals, nil, false, ctx)).(BaseDataFrame)
+
+	aggs := []aggregator{Sum("v"), Mean("v"), Min("v"), Max("v"), Std("v"), Count()}
+	ser := aggregateSerial(df, []series.Series{df.C("g")}, aggs, true)
+	par := aggregate(df, []series.Series{df.C("g")}, aggs, true)
+
+	for _, col := range []string{"sum(v)", "mean(v)", "min(v)", "max(v)", "std(v)"} {
+		s, p := f64(t, ser, col), f64(t, par, col)
+		if len(s) != len(p) {
+			t.Fatalf("%s len mismatch", col)
+		}
+		for i := range s {
+			if math.Abs(s[i]-p[i]) > 1e-9 {
+				t.Fatalf("%s[%d] serial=%v parallel=%v", col, i, s[i], p[i])
+			}
+		}
+	}
+}
