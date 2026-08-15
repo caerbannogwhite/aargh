@@ -2,6 +2,7 @@ package dataframe
 
 import (
 	"math"
+	"runtime"
 	"testing"
 
 	"github.com/caerbannogwhite/enchanter"
@@ -167,6 +168,118 @@ func TestAggregateParallelParity(t *testing.T) {
 			if math.Abs(s[i]-p[i]) > 1e-9 {
 				t.Fatalf("%s[%d] serial=%v parallel=%v", col, i, s[i], p[i])
 			}
+		}
+	}
+}
+
+// TestAggregateParallelPoisonCrossChunk exercises the cross-chunk poison
+// OR-merge (agg_engine.go's merge loop, which must OR a group's poison flag
+// across every worker chunk rather than reset it) and the holistic
+// (Median)/Count columns under the parallel path, neither of which
+// TestAggregateParallelParity exercises (it only runs removeNAs=true, which
+// never poisons anything).
+//
+// GOMAXPROCS is forced to 4 for the duration of the test so the null row and
+// this group's many non-null rows are guaranteed to land in different worker
+// chunks regardless of the host's actual CPU count: group "a" appears at
+// every 4th row across the full 200,000-row range (50,000 rows total, spread
+// evenly across all 4 forced chunks of 50,000 rows each), with a single null
+// at row 0 (chunk 0) and ~49,999 non-null rows for "a" spread across every
+// chunk, including chunks 1-3 which see no poison locally at all.
+func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
+	ctx := enchanter.NewContext()
+	n := 200_000
+	keys := make([]string, n)
+	vals := make([]float64, n)
+	nulls := make([]bool, n)
+	for i := range keys {
+		keys[i] = []string{"a", "b", "c", "d"}[i%4]
+		vals[i] = float64(i % 97)
+	}
+	nulls[0] = true // row 0 is key "a"; this is the only null in the frame
+
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
+		AddSeries("v", series.NewSeriesFloat64(vals, nulls, false, ctx)).(BaseDataFrame)
+
+	oldProcs := runtime.GOMAXPROCS(4)
+	defer runtime.GOMAXPROCS(oldProcs)
+
+	aggs := []aggregator{Sum("v"), Mean("v"), Median("v"), Count()}
+	ser := aggregateSerial(df, []series.Series{df.C("g")}, aggs, false)
+	par := aggregate(df, []series.Series{df.C("g")}, aggs, false)
+
+	if ser.NRows() != par.NRows() {
+		t.Fatalf("row count mismatch: serial=%d parallel=%d", ser.NRows(), par.NRows())
+	}
+
+	gcolPar := par.C("g").(series.Strings)
+	aIdx := -1
+	for i := 0; i < par.NRows(); i++ {
+		if gcolPar.GetAsString(i) == "a" {
+			aIdx = i
+			break
+		}
+	}
+	if aIdx == -1 {
+		t.Fatalf("group 'a' not found in parallel result")
+	}
+
+	// The poisoned group's reducible (Sum, Mean) and holistic (Median)
+	// aggregates must all be non-null NaN, matching the serial engine's
+	// poison-overrides-everything semantics.
+	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
+		s := par.C(col).(series.Float64s)
+		if s.IsNull(aIdx) {
+			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (poison)", col)
+		}
+		if !math.IsNaN(s.Data_[aIdx]) {
+			t.Fatalf("parallel %s[a] = %v, want NaN (poisoned)", col, s.Data_[aIdx])
+		}
+	}
+
+	// Count is unaffected by value nulls: it counts rows, not values.
+	wantCount := int64(n / 4)
+	cnt := par.C("n").(series.Int64s)
+	if cnt.Data_[aIdx] != wantCount {
+		t.Fatalf("parallel count[a] = %d, want %d", cnt.Data_[aIdx], wantCount)
+	}
+
+	// Parallel must match serial exactly for the SAME inputs: same keys in
+	// the same order, and every aggregate column equal (NaN-aware for the
+	// float columns; exact for Count).
+	gcolSer := ser.C("g").(series.Strings)
+	for i := 0; i < ser.NRows(); i++ {
+		if gcolSer.GetAsString(i) != gcolPar.GetAsString(i) {
+			t.Fatalf("key[%d] serial=%q parallel=%q", i, gcolSer.GetAsString(i), gcolPar.GetAsString(i))
+		}
+	}
+	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
+		sSer := ser.C(col).(series.Float64s)
+		sPar := par.C(col).(series.Float64s)
+		for i := 0; i < ser.NRows(); i++ {
+			if sSer.IsNull(i) != sPar.IsNull(i) {
+				t.Fatalf("%s[%d] null mask mismatch: serial=%v parallel=%v", col, i, sSer.IsNull(i), sPar.IsNull(i))
+			}
+			sv, pv := sSer.Data_[i], sPar.Data_[i]
+			// NaN-aware equality: NaN != NaN in Go, but poisoned cells on
+			// both sides must both be NaN for the rows to agree.
+			if math.IsNaN(sv) || math.IsNaN(pv) {
+				if !math.IsNaN(sv) || !math.IsNaN(pv) {
+					t.Fatalf("%s[%d] NaN mismatch: serial=%v parallel=%v", col, i, sv, pv)
+				}
+				continue
+			}
+			if math.Abs(sv-pv) > 1e-9 {
+				t.Fatalf("%s[%d] serial=%v parallel=%v", col, i, sv, pv)
+			}
+		}
+	}
+	nSer := ser.C("n").(series.Int64s)
+	nPar := par.C("n").(series.Int64s)
+	for i := 0; i < ser.NRows(); i++ {
+		if nSer.Data_[i] != nPar.Data_[i] {
+			t.Fatalf("n[%d] serial=%d parallel=%d", i, nSer.Data_[i], nPar.Data_[i])
 		}
 	}
 }
