@@ -212,6 +212,12 @@ the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage
 - [ ] Broaden test coverage; decide SAS7BDAT
       ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)) —
       finish the data path or drop it.
+- [ ] Internal naming: retire the legacy `__gdl_` / leading-double-underscore
+      helper names (Gandalff-era, pre-rename) for idiomatic Go unexported names.
+- [ ] Generated `*_ops.go` readability: flatten the length×nullability `if`
+      nesting via a generator-template refactor (the operand dispatch is already a
+      type-switch, so the win is the template, not the emitted files) — likely
+      folded into the fused-combinators work.
 
 **1.0 — commit** to the stable API.
 
