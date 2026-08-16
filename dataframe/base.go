@@ -1184,7 +1184,18 @@ func (df BaseDataFrame) OrderBy(params ...SortParam) DataFrame {
 ////////////////////////			SUMMARY
 
 func (df BaseDataFrame) Agg(aggregators ...aggregator) aggregatorBuilder {
-	return aggregatorBuilder{df, false, aggregators}
+	return aggregatorBuilder{df, true, aggregators}
+}
+
+// buildGroupKeyCols returns the group-by columns, in the order recorded by
+// GroupBy (df.groupByNames), for the aggregation engine (agg_engine.go) to
+// key its groups on.
+func (df BaseDataFrame) buildGroupKeyCols() []series.Series {
+	keyCols := make([]series.Series, len(df.groupByNames))
+	for i, name := range df.groupByNames {
+		keyCols[i] = df.series[df.GetSeriesIndex(name)]
+	}
+	return keyCols
 }
 
 ////////////////////////			PRINTING

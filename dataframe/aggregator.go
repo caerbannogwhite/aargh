@@ -47,110 +47,24 @@ func (ab aggregatorBuilder) Run() DataFrame {
 		}
 	}
 
-	var result DataFrame
-	if df.isGrouped {
-		var indices [][]int
-		var flatIndices []int
-		result, indices, flatIndices, _ = df.groupHelper()
-
-		groupsNum := len(indices)
-
-		var _series series.Series
-		for _, agg := range ab.aggregators {
-			_series = df.__series(agg.name)
-
-			switch agg.type_ {
-			case AGGREGATE_COUNT:
-				counts := make([]int64, groupsNum)
-				for i, group := range indices {
-					counts[i] = int64(len(group))
-				}
-				result = result.AddSeries(agg.newName, series.NewSeriesInt64(counts, nil, false, df.ctx))
-
-			case AGGREGATE_SUM:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MIN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MAX:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MEAN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_STD:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-			}
+	// CHECK: option applicability — ddof only applies to Std/Variance,
+	// interpolation only applies to Median/Quantile.
+	for _, agg := range ab.aggregators {
+		if agg.ddofSet && agg.type_ != AGGREGATE_STD && agg.type_ != AGGREGATE_VARIANCE {
+			df.err = fmt.Errorf("BaseDataFrame.Agg: WithDDoF is only applicable to Std/Variance, not to \"%s\"", agg.newName)
+			return df
 		}
-
-		// var wg sync.WaitGroup
-		// wg.Add(THREADS_NUMBER)
-
-		// buffer := make(chan __stats_thread_data)
-		// for i := 0; i < THREADS_NUMBER; i++ {
-		// 	go __stats_worker(&wg, buffer)
-		// }
-
-		// for _, agg := range aggregators {
-		// 	series := df.__series(agg.name)
-
-		// 	resultData := make([]float64, len(*indices))
-		// 	result = result.AddSeries(agg.name, NewSeriesFloat64(resultData, nil, false, df.ctx))
-		// 	for gi, group := range *indices {
-		// 		buffer <- __stats_thread_data{
-		// 			op:      agg.type_,
-		// 			gi:      gi,
-		// 			indices: group,
-		// 			series:  series,
-		// 			res:     resultData,
-		// 		}
-		// 	}
-		// }
-
-		// close(buffer)
-		// wg.Wait()
-
-	} else {
-		result = NewBaseDataFrame(df.ctx)
-
-		var _series series.Series
-		for _, agg := range ab.aggregators {
-			_series = df.__series(agg.name)
-
-			switch agg.type_ {
-			case AGGREGATE_COUNT:
-				result = result.AddSeries(agg.newName, series.NewSeriesInt64([]int64{int64(df.NRows())}, nil, false, df.ctx))
-
-			case AGGREGATE_SUM:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MIN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MAX:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MEAN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_STD:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-			}
+		if agg.interpSet && agg.type_ != AGGREGATE_MEDIAN && agg.type_ != AGGREGATE_QUANTILE {
+			df.err = fmt.Errorf("BaseDataFrame.Agg: WithInterpolation is only applicable to Median/Quantile, not to \"%s\"", agg.newName)
+			return df
 		}
 	}
 
-	return result
+	if df.isGrouped {
+		return aggregate(df, df.buildGroupKeyCols(), ab.aggregators, ab.removeNAs)
+	}
+
+	return aggregate(df, nil, ab.aggregators, ab.removeNAs)
 }
 
 type AggregateType int8
