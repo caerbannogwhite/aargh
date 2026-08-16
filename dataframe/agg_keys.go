@@ -60,8 +60,8 @@ func (g *groupTable) representativeRows() []int { return g.reps }
 
 // makeCellCoder returns a per-row dense code for one key column: 0 means
 // null, distinct non-null values get stable codes 1..k in order of first
-// appearance. Mirrors BaseDataFrame.groupHelper's type switch over the
-// concrete series types.
+// appearance. The type switch covers the same concrete series types as the
+// former BaseDataFrame.groupHelper.
 //
 // For interned Strings the map is keyed by the *string pointer (cheap,
 // pointer-identity is stable within a StringPool); the other supported key

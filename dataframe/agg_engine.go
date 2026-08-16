@@ -333,7 +333,7 @@ func sortGroupOrder(keyCols []series.Series, reps []int) []int {
 
 // compareKeyCells compares the cells of col at rows ra and rb, returning -1, 0
 // or +1. A null cell sorts after any non-null cell (nulls last); two nulls are
-// equal. The type switch mirrors groupHelper's supported key types.
+// equal. The type switch covers the same key types the group-key coder supports.
 func compareKeyCells(col series.Series, ra, rb int) int {
 	na, nb := col.IsNull(ra), col.IsNull(rb)
 	if na || nb {
@@ -393,8 +393,8 @@ func compareBool(a, b bool) int {
 
 // appendKeyColumns emits one key column per keyCol, one value per group taken
 // from the group's representative row, with the groups laid out in the sorted
-// order. The type switch mirrors groupHelper (base.go); the representative
-// row's null flag is carried into the emitted column.
+// order. The type switch covers the same key types as the former groupHelper;
+// the representative row's null flag is carried into the emitted column.
 func appendKeyColumns(result DataFrame, df BaseDataFrame, keyCols []series.Series, reps, order []int) DataFrame {
 	ctx := df.GetContext()
 	n := len(order)
