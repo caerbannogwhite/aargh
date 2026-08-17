@@ -434,3 +434,162 @@ func TestAggregateAnyAllPoisonNull(t *testing.T) {
 		t.Fatalf("group b: all(b) should be true")
 	}
 }
+
+// TestAggregateParallelAnyAllCrossChunk exercises the cross-chunk OR-merge of
+// reducibleState.bflag for AGGREGATE_ANY/AGGREGATE_ALL (agg_engine.go's
+// mergeReducible ANY/ALL case, and the merge-time growReducible call), which
+// TestAggregateAnyAll/TestAggregateAnyAllPoisonNull never exercise: those use
+// 3-4 rows, always below aggMinParallel, so aggregate() takes the
+// single-chunk inline branch and never calls mergeReducible at all.
+//
+// GOMAXPROCS is forced to 4 so the 200_000 rows split into exactly 4 worker
+// chunks of 50_000 rows each (regardless of host CPU count); every group
+// ("a".."d", by i%4) appears at every 4th row, spread evenly across all 4
+// chunks. Two "flip" rows are placed in specific chunks so the flipped value
+// can only reach the merged result via the cross-chunk bflag OR-merge, not
+// from any single chunk's local state alone:
+//   - group "a" is true everywhere except one row in chunk 3 (the LAST
+//     chunk) -> all(a) must be false, which only the OR-merge of chunk 3's
+//     bflag into the other chunks' (locally all-true) state can produce.
+//   - group "b" is false everywhere except one row in chunk 0 (the FIRST
+//     chunk) -> any(b) must be true, symmetric to the above.
+//
+// A second phase re-runs the same shape under RemoveNAs(false) with a single
+// null value for group "a" in chunk 2, verifying the poison flag OR-merges
+// across chunks for Any/All exactly as it already does for Sum/Mean/Median
+// (see TestAggregateParallelPoisonCrossChunk).
+func TestAggregateParallelAnyAllCrossChunk(t *testing.T) {
+	ctx := enchanter.NewContext()
+	n := 200_000
+	keys := make([]string, n)
+	vals := make([]bool, n)
+	for i := range keys {
+		keys[i] = []string{"a", "b", "c", "d"}[i%4]
+		switch i % 4 {
+		case 0: // group "a": true everywhere except one late-chunk row below
+			vals[i] = true
+		case 1: // group "b": false everywhere except one early-chunk row below
+			vals[i] = false
+		case 2: // group "c": true everywhere (control: any=all=true)
+			vals[i] = true
+		case 3: // group "d": false everywhere (control: any=all=false)
+			vals[i] = false
+		}
+	}
+	vals[150000] = false // group "a", chunk 3 (150000 % 4 == 0): the lone false
+	vals[1] = true       // group "b", chunk 0 (1 % 4 == 1): the lone true
+
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
+		AddSeries("b", series.NewSeriesBool(vals, nil, false, ctx)).(BaseDataFrame)
+
+	oldProcs := runtime.GOMAXPROCS(4)
+	defer runtime.GOMAXPROCS(oldProcs)
+
+	aggs := []aggregator{Any("b"), All("b")}
+	ser := aggregateSerial(df, []series.Series{df.C("g")}, aggs, true)
+	par := aggregate(df, []series.Series{df.C("g")}, aggs, true)
+
+	if ser.NRows() != par.NRows() || par.NRows() != 4 {
+		t.Fatalf("row count mismatch: serial=%d parallel=%d, want 4", ser.NRows(), par.NRows())
+	}
+
+	findIdx := func(d DataFrame, key string) int {
+		gcol := d.C("g").(series.Strings)
+		for i := 0; i < d.NRows(); i++ {
+			if gcol.GetAsString(i) == key {
+				return i
+			}
+		}
+		return -1
+	}
+
+	cases := []struct {
+		key     string
+		wantAny bool
+		wantAll bool
+	}{
+		{"a", true, false}, // lone chunk-3 false must survive the OR-merge into all(a)=false
+		{"b", true, false}, // lone chunk-0 true must survive the OR-merge into any(b)=true
+		{"c", true, true},
+		{"d", false, false},
+	}
+	anyC := par.C("any(b)").(series.Bools)
+	allC := par.C("all(b)").(series.Bools)
+	for _, c := range cases {
+		idx := findIdx(par, c.key)
+		if idx == -1 {
+			t.Fatalf("group %q not found in parallel result", c.key)
+		}
+		if anyC.IsNull(idx) || allC.IsNull(idx) {
+			t.Fatalf("group %q: any/all unexpectedly null", c.key)
+		}
+		if got := anyC.Get(idx); got != c.wantAny {
+			t.Fatalf("parallel any(b)[%s] = %v, want %v", c.key, got, c.wantAny)
+		}
+		if got := allC.Get(idx); got != c.wantAll {
+			t.Fatalf("parallel all(b)[%s] = %v, want %v", c.key, got, c.wantAll)
+		}
+	}
+
+	// Full parity: parallel must match serial exactly, value and null mask,
+	// for every group (not just the four spot-checked above).
+	gcolSer := ser.C("g").(series.Strings)
+	gcolPar := par.C("g").(series.Strings)
+	anySer := ser.C("any(b)").(series.Bools)
+	allSer := ser.C("all(b)").(series.Bools)
+	anyPar := par.C("any(b)").(series.Bools)
+	allPar := par.C("all(b)").(series.Bools)
+	for i := 0; i < ser.NRows(); i++ {
+		if gcolSer.GetAsString(i) != gcolPar.GetAsString(i) {
+			t.Fatalf("key[%d] serial=%q parallel=%q", i, gcolSer.GetAsString(i), gcolPar.GetAsString(i))
+		}
+		if anySer.IsNull(i) != anyPar.IsNull(i) || anySer.Get(i) != anyPar.Get(i) {
+			t.Fatalf("any(b)[%d] serial=(%v,null=%v) parallel=(%v,null=%v)", i, anySer.Get(i), anySer.IsNull(i), anyPar.Get(i), anyPar.IsNull(i))
+		}
+		if allSer.IsNull(i) != allPar.IsNull(i) || allSer.Get(i) != allPar.Get(i) {
+			t.Fatalf("all(b)[%d] serial=(%v,null=%v) parallel=(%v,null=%v)", i, allSer.Get(i), allSer.IsNull(i), allPar.Get(i), allPar.IsNull(i))
+		}
+	}
+
+	// Poison across chunks (RemoveNAs(false)): a single null value for group
+	// "a" placed in chunk 2 must poison any(b)/all(b) to NULL for that
+	// group, in both engines — the parallel merge OR's the poison flag
+	// exactly as it OR's bflag above.
+	nulls := make([]bool, n)
+	nulls[100000] = true // group "a" (100000 % 4 == 0), chunk 2
+	dfPoison := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
+		AddSeries("b", series.NewSeriesBool(vals, nulls, false, ctx)).(BaseDataFrame)
+
+	aggsPoison := []aggregator{Any("b"), All("b")}
+	serP := aggregateSerial(dfPoison, []series.Series{dfPoison.C("g")}, aggsPoison, false)
+	parP := aggregate(dfPoison, []series.Series{dfPoison.C("g")}, aggsPoison, false)
+
+	for _, d := range []DataFrame{serP, parP} {
+		idx := findIdx(d, "a")
+		if idx == -1 {
+			t.Fatalf("group \"a\" not found in poisoned result")
+		}
+		anyD := d.C("any(b)").(series.Bools)
+		allD := d.C("all(b)").(series.Bools)
+		if !anyD.IsNull(idx) || !allD.IsNull(idx) {
+			t.Fatalf("poisoned group \"a\": any(b)/all(b) should be null, got any.IsNull=%v all.IsNull=%v", anyD.IsNull(idx), allD.IsNull(idx))
+		}
+	}
+
+	// Unpoisoned groups must be unaffected by the other group's poison.
+	for _, key := range []string{"b", "c", "d"} {
+		for _, d := range []DataFrame{serP, parP} {
+			idx := findIdx(d, key)
+			if idx == -1 {
+				t.Fatalf("group %q not found in poisoned result", key)
+			}
+			anyD := d.C("any(b)").(series.Bools)
+			allD := d.C("all(b)").(series.Bools)
+			if anyD.IsNull(idx) || allD.IsNull(idx) {
+				t.Fatalf("group %q unexpectedly null after poisoning group \"a\"", key)
+			}
+		}
+	}
+}
