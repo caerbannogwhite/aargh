@@ -24,8 +24,11 @@ const aggMinParallel = 1 << 16
 //
 // It builds one group per distinct composite key of keyCols (via groupTable),
 // holding one accumulator (reducible) or collector (holistic) per aggregator
-// per group. A single pass over the rows updates the per-group state; nulls are
-// coerced to NaN by __gdl_stats_preprocess and detected with math.IsNaN.
+// per group. A single pass over the rows updates the per-group state; each
+// value column is read inline through an aggValueView (see
+// prepAggValueColumns) rather than pre-copied to []float64, and a value is
+// missing iff the column's null mask says so, or (for a Float64 column) the
+// raw value is NaN — see accumulateChunk.
 //
 //   - removeNAs == true  (the new default): null values are skipped for every
 //     aggregate; nothing is poisoned.
@@ -44,9 +47,9 @@ const aggMinParallel = 1 << 16
 // len(keyCols) == 0 is handled as a single group with no key columns.
 func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, removeNAs bool) DataFrame {
 	nRows := df.NRows()
-	valcols, isHol := prepAggValueColumns(df, aggs)
+	views, isHol := prepAggValueColumns(df, aggs)
 
-	gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, 0, nRows)
+	gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
 
 	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
 }
@@ -77,10 +80,10 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 //     since a poisoned group there stays poisoned once any row in it is null.
 func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, removeNAs bool) DataFrame {
 	nRows := df.NRows()
-	valcols, isHol := prepAggValueColumns(df, aggs)
+	views, isHol := prepAggValueColumns(df, aggs)
 
 	if nRows < aggMinParallel {
-		gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, 0, nRows)
+		gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
 		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
 	}
 
@@ -117,7 +120,7 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 		wg.Add(1)
 		go func(w, lo, hi int) {
 			defer wg.Done()
-			gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, valcols, isHol, removeNAs, lo, hi)
+			gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, lo, hi)
 			chunks[w] = chunkState{gt, accs, cols, poisoned}
 		}(w, lo, hi)
 	}
@@ -171,21 +174,78 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gAccs, gCols, gPoisoned)
 }
 
-// prepAggValueColumns coerces each aggregator's value column to []float64
-// once (NaN == null); Count needs no value column. The returned slices are
-// read-only from this point on and safe to share across accumulateChunk
-// calls running concurrently over disjoint row ranges.
-func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (valcols [][]float64, isHol []bool) {
-	valcols = make([][]float64, len(aggs))
+// aggValueKind identifies the element type backing an aggValueView, so
+// accumulateChunk's row loop can read+convert a value with a plain switch
+// instead of a per-row interface call.
+type aggValueKind uint8
+
+const (
+	// aggValUnsupported marks a value column whose type none of the other
+	// kinds cover (e.g. Strings). Reading such a view mirrors the previous
+	// behavior of __gdl_stats_preprocess returning nil for unsupported
+	// types, which made accumulateChunk panic with an out-of-range index on
+	// the first row read; see accumulateChunk's default case.
+	aggValUnsupported aggValueKind = iota
+	aggValF64
+	aggValI64
+	aggValInt
+	aggValBool
+	aggValDur
+)
+
+// aggValueView is a read-only, typed view over one aggregator's value
+// column, built once outside accumulateChunk's row loop (see
+// prepAggValueColumns) so the loop can read each row's value without any
+// per-row allocation or interface dispatch. nullable/nullMask mirror the
+// column's own bit-packed null representation (the same convention as, e.g.,
+// series.Int64s.IsNull: bit-packed, bit-set == null, 8 rows per byte), read
+// directly here instead of through the Series interface.
+type aggValueView struct {
+	kind     aggValueKind
+	nullable bool
+	nullMask []uint8
+	f64      []float64
+	i64      []int64
+	ints     []int
+	bools    []bool
+	dur      []time.Duration
+}
+
+// newAggValueView builds the typed view for col. Unsupported column types
+// (anything but Float64s/Int64s/Ints/Bools/Durations — the same set
+// __gdl_stats_preprocess supported) yield aggValUnsupported.
+func newAggValueView(col series.Series) aggValueView {
+	switch c := col.(type) {
+	case series.Float64s:
+		return aggValueView{kind: aggValF64, nullable: c.IsNullable_, nullMask: c.NullMask_, f64: c.Data_}
+	case series.Int64s:
+		return aggValueView{kind: aggValI64, nullable: c.IsNullable_, nullMask: c.NullMask_, i64: c.Data_}
+	case series.Ints:
+		return aggValueView{kind: aggValInt, nullable: c.IsNullable_, nullMask: c.NullMask_, ints: c.Data_}
+	case series.Bools:
+		return aggValueView{kind: aggValBool, nullable: c.IsNullable_, nullMask: c.NullMask_, bools: c.Data_}
+	case series.Durations:
+		return aggValueView{kind: aggValDur, nullable: c.IsNullable_, nullMask: c.NullMask_, dur: c.Data_}
+	default:
+		return aggValueView{kind: aggValUnsupported}
+	}
+}
+
+// prepAggValueColumns builds a typed aggValueView per aggregator once, up
+// front (Count needs no value column). The returned slice is read-only from
+// this point on and safe to share across accumulateChunk calls running
+// concurrently over disjoint row ranges — no per-op []float64 copy is made.
+func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (views []aggValueView, isHol []bool) {
+	views = make([]aggValueView, len(aggs))
 	isHol = make([]bool, len(aggs))
 	for j, agg := range aggs {
 		isHol[j] = agg.type_.isHolistic()
 		if agg.type_ == AGGREGATE_COUNT {
 			continue
 		}
-		valcols[j] = __gdl_stats_preprocess(df.C(agg.name))
+		views[j] = newAggValueView(df.C(agg.name))
 	}
-	return valcols, isHol
+	return views, isHol
 }
 
 // accumulateChunk is the single-chunk accumulation core shared by
@@ -194,13 +254,22 @@ func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (valcols [][]float
 // or collector (holistic) per aggregator per group encountered in that row
 // range, and returns the per-(aggregator, group) poison flags for
 // removeNAs == false (see aggregateSerial's doc comment for poison
-// semantics). valcols/isHol come from prepAggValueColumns and are read-only.
+// semantics). views/isHol come from prepAggValueColumns and are read-only.
+//
+// A value at (j, row) is missing iff views[j].nullable and the column's own
+// null mask says row is null, OR — for a Float64 value column only —
+// math.IsNaN(views[j].f64[row]). The Float64 case preserves the historical
+// behavior of __gdl_stats_preprocess mapping nulls to NaN and the engine
+// detecting missing values with math.IsNaN: a genuine NaN stored in a
+// Float64 column (as opposed to a null cell) is therefore still treated as
+// missing, exactly as before. For every other kind, only the null mask
+// applies — there is no NaN representation to alias against.
 //
 // The returned groupTable, accumulators, collectors and poison flags are
 // local to [lo, hi): group ids are dense in first-appearance order within
 // this chunk only and are not meaningful outside it (see aggregate's doc
 // comment on merging).
-func accumulateChunk(keyCols []series.Series, aggs []aggregator, valcols [][]float64, isHol []bool, removeNAs bool, lo, hi int) (*groupTable, [][]accumulator, [][]collector, [][]bool) {
+func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValueView, isHol []bool, removeNAs bool, lo, hi int) (*groupTable, [][]accumulator, [][]collector, [][]bool) {
 	gt := newGroupTable(keyCols)
 
 	// Per-aggregator, per-gid state; grown lazily as new gids appear.
@@ -230,8 +299,32 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, valcols [][]flo
 				accs[j][gid].update(0) // value ignored; Count counts rows
 				continue
 			}
-			vj := valcols[j][row]
-			if math.IsNaN(vj) { // null
+
+			view := &views[j]
+			missing := view.nullable && view.nullMask[row>>3]&(1<<uint(row%8)) != 0
+			var vj float64
+			if !missing {
+				switch view.kind {
+				case aggValF64:
+					vj = view.f64[row]
+					missing = math.IsNaN(vj) // a genuine NaN value is treated as missing, same as today
+				case aggValI64:
+					vj = float64(view.i64[row])
+				case aggValInt:
+					vj = float64(view.ints[row])
+				case aggValBool:
+					if view.bools[row] {
+						vj = 1
+					}
+				case aggValDur:
+					vj = float64(view.dur[row])
+				default:
+					// Unsupported value column type: mirrors the previous
+					// __gdl_stats_preprocess(nil)[row] out-of-range panic.
+					vj = view.f64[row]
+				}
+			}
+			if missing {
 				if !removeNAs {
 					// Poisons every aggregate for this group under RemoveNAs(false),
 					// reducible and holistic alike (Count never reaches here).

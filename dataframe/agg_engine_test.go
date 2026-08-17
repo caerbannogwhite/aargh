@@ -56,6 +56,29 @@ func TestAggregateSerialSkipNullsDefault(t *testing.T) {
 	}
 }
 
+// TestAggregateSerialSkipNullsDefaultInt64 is the Int64 analogue of
+// TestAggregateSerialSkipNullsDefault: it exercises the copy-free
+// aggValueView I64 read path (accumulateChunk reading an Int64 value column
+// inline instead of a []float64 copy) under both the skip-null default and
+// RemoveNAs(false) poisoning.
+func TestAggregateSerialSkipNullsDefaultInt64(t *testing.T) {
+	ctx := enchanter.NewContext()
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString([]string{"a", "a", "a"}, nil, false, ctx)).
+		AddSeries("v", series.NewSeriesInt64([]int64{1, 0, 3}, []bool{false, true, false}, false, ctx)).(BaseDataFrame)
+
+	// removeNAs=true (new default): mean of {1,3} = 2
+	out := aggregateSerial(df, []series.Series{df.C("g")}, []aggregator{Mean("v")}, true)
+	if got := f64(t, out, "mean(v)")[0]; got != 2 {
+		t.Fatalf("skip-null mean = %v, want 2", got)
+	}
+	// removeNAs=false: poisoned -> NaN
+	out2 := aggregateSerial(df, []series.Series{df.C("g")}, []aggregator{Mean("v")}, false)
+	if got := f64(t, out2, "mean(v)")[0]; !math.IsNaN(got) {
+		t.Fatalf("poison mean = %v, want NaN", got)
+	}
+}
+
 func TestAggregateSerialMedianMultiKey(t *testing.T) {
 	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
@@ -264,6 +287,106 @@ func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
 			sv, pv := sSer.Data_[i], sPar.Data_[i]
 			// NaN-aware equality: NaN != NaN in Go, but poisoned cells on
 			// both sides must both be NaN for the rows to agree.
+			if math.IsNaN(sv) || math.IsNaN(pv) {
+				if !math.IsNaN(sv) || !math.IsNaN(pv) {
+					t.Fatalf("%s[%d] NaN mismatch: serial=%v parallel=%v", col, i, sv, pv)
+				}
+				continue
+			}
+			if math.Abs(sv-pv) > 1e-9 {
+				t.Fatalf("%s[%d] serial=%v parallel=%v", col, i, sv, pv)
+			}
+		}
+	}
+	nSer := ser.C("n").(series.Int64s)
+	nPar := par.C("n").(series.Int64s)
+	for i := 0; i < ser.NRows(); i++ {
+		if nSer.Data_[i] != nPar.Data_[i] {
+			t.Fatalf("n[%d] serial=%d parallel=%d", i, nSer.Data_[i], nPar.Data_[i])
+		}
+	}
+}
+
+// TestAggregateParallelInt64ValuePoisonCrossChunk is the Int64 analogue of
+// TestAggregateParallelPoisonCrossChunk: it exercises the copy-free
+// aggValueView I64 read path (accumulateChunk reading an Int64 value column
+// inline, converting to float64 per row instead of pre-copying to
+// []float64) across the parallel engine's cross-chunk poison OR-merge, and
+// checks serial/parallel parity for the same inputs.
+func TestAggregateParallelInt64ValuePoisonCrossChunk(t *testing.T) {
+	ctx := enchanter.NewContext()
+	n := 200_000
+	keys := make([]string, n)
+	vals := make([]int64, n)
+	nulls := make([]bool, n)
+	for i := range keys {
+		keys[i] = []string{"a", "b", "c", "d"}[i%4]
+		vals[i] = int64(i % 97)
+	}
+	nulls[0] = true // row 0 is key "a"; this is the only null in the frame
+
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
+		AddSeries("v", series.NewSeriesInt64(vals, nulls, false, ctx)).(BaseDataFrame)
+
+	oldProcs := runtime.GOMAXPROCS(4)
+	defer runtime.GOMAXPROCS(oldProcs)
+
+	aggs := []aggregator{Sum("v"), Mean("v"), Median("v"), Count()}
+	ser := aggregateSerial(df, []series.Series{df.C("g")}, aggs, false)
+	par := aggregate(df, []series.Series{df.C("g")}, aggs, false)
+
+	if ser.NRows() != par.NRows() {
+		t.Fatalf("row count mismatch: serial=%d parallel=%d", ser.NRows(), par.NRows())
+	}
+
+	gcolPar := par.C("g").(series.Strings)
+	aIdx := -1
+	for i := 0; i < par.NRows(); i++ {
+		if gcolPar.GetAsString(i) == "a" {
+			aIdx = i
+			break
+		}
+	}
+	if aIdx == -1 {
+		t.Fatalf("group 'a' not found in parallel result")
+	}
+
+	// The poisoned group's reducible (Sum, Mean) and holistic (Median)
+	// aggregates must all be non-null NaN, matching the serial engine's
+	// poison-overrides-everything semantics.
+	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
+		s := par.C(col).(series.Float64s)
+		if s.IsNull(aIdx) {
+			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (poison)", col)
+		}
+		if !math.IsNaN(s.Data_[aIdx]) {
+			t.Fatalf("parallel %s[a] = %v, want NaN (poisoned)", col, s.Data_[aIdx])
+		}
+	}
+
+	// Count is unaffected by value nulls: it counts rows, not values.
+	wantCount := int64(n / 4)
+	cnt := par.C("n").(series.Int64s)
+	if cnt.Data_[aIdx] != wantCount {
+		t.Fatalf("parallel count[a] = %d, want %d", cnt.Data_[aIdx], wantCount)
+	}
+
+	// Parallel must match serial exactly for the SAME inputs.
+	gcolSer := ser.C("g").(series.Strings)
+	for i := 0; i < ser.NRows(); i++ {
+		if gcolSer.GetAsString(i) != gcolPar.GetAsString(i) {
+			t.Fatalf("key[%d] serial=%q parallel=%q", i, gcolSer.GetAsString(i), gcolPar.GetAsString(i))
+		}
+	}
+	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
+		sSer := ser.C(col).(series.Float64s)
+		sPar := par.C(col).(series.Float64s)
+		for i := 0; i < ser.NRows(); i++ {
+			if sSer.IsNull(i) != sPar.IsNull(i) {
+				t.Fatalf("%s[%d] null mask mismatch: serial=%v parallel=%v", col, i, sSer.IsNull(i), sPar.IsNull(i))
+			}
+			sv, pv := sSer.Data_[i], sPar.Data_[i]
 			if math.IsNaN(sv) || math.IsNaN(pv) {
 				if !math.IsNaN(sv) || !math.IsNaN(pv) {
 					t.Fatalf("%s[%d] NaN mismatch: serial=%v parallel=%v", col, i, sv, pv)
