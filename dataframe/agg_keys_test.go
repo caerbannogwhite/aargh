@@ -52,6 +52,46 @@ func TestGroupTableNullKeys(t *testing.T) {
 	}
 }
 
+func TestGroupTableSingleKeyAllocBound(t *testing.T) {
+	ctx := enchanter.NewContext()
+	vals := make([]string, 10000)
+	for i := range vals {
+		vals[i] = []string{"a", "b", "c"}[i%3] // 3 groups, 10k rows
+	}
+	k := series.NewSeriesString(vals, nil, false, ctx)
+	allocs := testing.AllocsPerRun(3, func() {
+		g := newGroupTable([]series.Series{k})
+		for i := 0; i < len(vals); i++ {
+			g.idOf(i)
+		}
+	})
+	// O(groups)+map-growth, NOT O(rows). The old string(buf) impl allocs ~10000/run.
+	if allocs > 100 {
+		t.Fatalf("single-key idOf allocated %.0f/run — want O(groups), not O(rows)", allocs)
+	}
+}
+
+func TestGroupTableMultiKeyAllocBound(t *testing.T) {
+	ctx := enchanter.NewContext()
+	a := make([]int64, 10000)
+	b := make([]string, 10000)
+	for i := range a {
+		a[i] = int64(i % 5)
+		b[i] = []string{"x", "y"}[i%2]
+	}
+	ci := series.NewSeriesInt64(a, nil, false, ctx)
+	cs := series.NewSeriesString(b, nil, false, ctx)
+	allocs := testing.AllocsPerRun(3, func() {
+		g := newGroupTable([]series.Series{ci, cs})
+		for i := 0; i < 10000; i++ {
+			g.idOf(i)
+		}
+	})
+	if allocs > 100 {
+		t.Fatalf("multi-key idOf allocated %.0f/run — array key should be alloc-free", allocs)
+	}
+}
+
 func TestGroupTableTimesSameInstantDifferentLocation(t *testing.T) {
 	ctx := enchanter.NewContext()
 	// Same instant, different *Location: raw time.Time equality (what a
