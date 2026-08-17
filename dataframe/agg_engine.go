@@ -255,8 +255,8 @@ func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (views []aggValueV
 }
 
 // reducibleState holds per-group struct-of-arrays state for one reducible
-// aggregator (Count/Sum/Mean/Min/Max/Std/Variance), indexed by group id. It
-// replaces the per-group accumulator OBJECTS behind the accumulator
+// aggregator (Count/Sum/Mean/Min/Max/Std/Variance/Any/All), indexed by group
+// id. It replaces the per-group accumulator OBJECTS behind the accumulator
 // interface (accumulator.go) with typed arrays, so accumulateChunk's row
 // loop can update them with a `switch kind` instead of a per-row virtual
 // call. Only the fields relevant to a given aggregator's AggregateType are
@@ -266,15 +266,19 @@ func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (views []aggValueV
 // reproduce, verbatim in behavior, countAcc/sumAcc/meanAcc/minAcc/maxAcc/
 // varAcc's update/merge/result from accumulator.go — that file remains the
 // documented reference and the 0.5.0 custom-aggregator extension point; this
-// is the fast lane the built-in engine now uses instead of calling it.
+// is the fast lane the built-in engine now uses instead of calling it. Any/All
+// have no accumulator.go equivalent — the engine's SoA path is their only
+// implementation (see the plan's Task 11 note on the obsolete accumulator
+// path).
 type reducibleState struct {
-	n    []int64   // COUNT, SUM, MEAN: row/value count per group
-	sum  []float64 // SUM, MEAN: running sum per group
-	val  []float64 // MIN, MAX: running extreme per group
-	set  []bool    // MIN, MAX: whether val has been set for that group yet
-	wn   []float64 // STD, VARIANCE: Welford sample count per group
-	mean []float64 // STD, VARIANCE: Welford running mean per group
-	m2   []float64 // STD, VARIANCE: Welford running sum of squared deviations
+	n     []int64   // COUNT, SUM, MEAN, ANY, ALL: row/value count per group
+	sum   []float64 // SUM, MEAN: running sum per group
+	val   []float64 // MIN, MAX: running extreme per group
+	set   []bool    // MIN, MAX: whether val has been set for that group yet
+	wn    []float64 // STD, VARIANCE: Welford sample count per group
+	mean  []float64 // STD, VARIANCE: Welford running mean per group
+	m2    []float64 // STD, VARIANCE: Welford running sum of squared deviations
+	bflag []bool    // ANY: any truthy value seen; ALL: any falsy value seen (per group)
 }
 
 // growReducible appends one zero-value slot (a new group) to exactly the
@@ -295,6 +299,9 @@ func growReducible(st *reducibleState, t AggregateType) {
 		st.wn = append(st.wn, 0)
 		st.mean = append(st.mean, 0)
 		st.m2 = append(st.m2, 0)
+	case AGGREGATE_ANY, AGGREGATE_ALL:
+		st.n = append(st.n, 0)
+		st.bflag = append(st.bflag, false)
 	}
 }
 
@@ -324,6 +331,16 @@ func updateReducible(st *reducibleState, t AggregateType, gid int, v float64) {
 		d := v - st.mean[gid]
 		st.mean[gid] += d / st.wn[gid]
 		st.m2[gid] += d * (v - st.mean[gid])
+	case AGGREGATE_ANY:
+		st.n[gid]++
+		if v != 0 {
+			st.bflag[gid] = true
+		}
+	case AGGREGATE_ALL:
+		st.n[gid]++
+		if v == 0 {
+			st.bflag[gid] = true
+		}
 	}
 }
 
@@ -362,6 +379,11 @@ func mergeReducible(dst *reducibleState, dgid int, src *reducibleState, sgid int
 		dst.m2[dgid] += src.m2[sgid] + delta*delta*an*bn/tot
 		dst.mean[dgid] += delta * bn / tot
 		dst.wn[dgid] = tot
+	case AGGREGATE_ANY, AGGREGATE_ALL:
+		dst.n[dgid] += src.n[sgid]
+		if src.bflag[sgid] {
+			dst.bflag[dgid] = true
+		}
 	}
 }
 
@@ -397,6 +419,22 @@ func finalizeReducible(st *reducibleState, gid int, t AggregateType, ddof int) (
 			return math.Sqrt(v), false
 		}
 		return v, false
+	case AGGREGATE_ANY:
+		if st.n[gid] == 0 {
+			return 0, true
+		}
+		if st.bflag[gid] {
+			return 1, false
+		}
+		return 0, false
+	case AGGREGATE_ALL:
+		if st.n[gid] == 0 {
+			return 0, true
+		}
+		if st.bflag[gid] {
+			return 0, false
+		}
+		return 1, false
 	}
 	panic("finalizeReducible: not a reducible aggregate")
 }
@@ -506,9 +544,11 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 // key columns (one row per group, taken from each group's representative
 // row) followed by one aggregate column per aggregator, sorted by key
 // ascending, nulls last, lexicographic across keyCols. Count is emitted as
-// Int64s; every other aggregate as Float64s with a null mask from the
-// per-row isNull flags (poisoned groups under removeNAs == false surface as
-// non-null NaN, matching aggregateSerial).
+// Int64s; Any/All are emitted as Bools with a null mask (poisoned or
+// empty/all-null groups are NULL — there is no bool NaN sentinel); every
+// other aggregate as Float64s with a null mask from the per-row isNull flags
+// (poisoned groups under removeNAs == false surface as non-null NaN,
+// matching aggregateSerial).
 func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, states []*reducibleState, cols [][]collector, poisoned [][]bool) DataFrame {
 	ctx := df.GetContext()
 	nGroups := gt.numGroups()
@@ -527,6 +567,33 @@ func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggrega
 				data[i] = int64(v)
 			}
 			result = result.AddSeries(agg.newName, series.NewSeriesInt64(data, nil, false, ctx))
+			continue
+		}
+
+		if agg.type_ == AGGREGATE_ANY || agg.type_ == AGGREGATE_ALL {
+			// Any/All are reducible and never poisoned into a non-null NaN
+			// sentinel like the other aggregates below — bool has no NaN, so
+			// a poisoned or empty/all-null group's result is NULL instead.
+			data := make([]bool, nGroups)
+			var nulls []bool
+			for i, gid := range order {
+				var v float64
+				var isNull bool
+				switch {
+				case !removeNAs && poisoned[j][gid]:
+					v, isNull = 0, true
+				default:
+					v, isNull = finalizeReducible(states[j], gid, agg.type_, agg.ddof)
+				}
+				data[i] = v != 0
+				if isNull {
+					if nulls == nil {
+						nulls = make([]bool, nGroups)
+					}
+					nulls[i] = true
+				}
+			}
+			result = result.AddSeries(agg.newName, series.NewSeriesBool(data, nulls, false, ctx))
 			continue
 		}
 

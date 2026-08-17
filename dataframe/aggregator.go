@@ -79,6 +79,8 @@ const (
 	AGGREGATE_STD
 	AGGREGATE_VARIANCE
 	AGGREGATE_QUANTILE
+	AGGREGATE_ANY
+	AGGREGATE_ALL
 )
 
 func (t AggregateType) isHolistic() bool {
@@ -130,6 +132,12 @@ func Median(name string, opts ...AggOption) aggregator {
 }
 func Quantile(name string, p float64, opts ...AggOption) aggregator {
 	return mkAgg(name, fmt.Sprintf("quantile_%g(%s)", p, name), AGGREGATE_QUANTILE, p, opts)
+}
+func Any(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("any(%s)", name), AGGREGATE_ANY, 0, opts)
+}
+func All(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("all(%s)", name), AGGREGATE_ALL, 0, opts)
 }
 
 ////////////////////////			SORT

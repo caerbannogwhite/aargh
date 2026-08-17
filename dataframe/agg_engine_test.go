@@ -406,3 +406,31 @@ func TestAggregateParallelInt64ValuePoisonCrossChunk(t *testing.T) {
 		}
 	}
 }
+
+func TestAggregateAnyAll(t *testing.T) {
+	ctx := enchanter.NewContext()
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString([]string{"a", "a", "b", "b"}, nil, false, ctx)).
+		AddSeries("b", series.NewSeriesBool([]bool{true, false, true, true}, nil, false, ctx)).(BaseDataFrame)
+	out := aggregate(df, []series.Series{df.C("g")}, []aggregator{Any("b"), All("b")}, true)
+	anyC := out.C("any(b)").(series.Bools) // sorted: a, b
+	allC := out.C("all(b)").(series.Bools)
+	if anyC.Get(0) != true || allC.Get(0) != false || anyC.Get(1) != true || allC.Get(1) != true {
+		t.Fatalf("any/all wrong: any=%v all=%v", anyC.Data_, allC.Data_)
+	}
+}
+
+func TestAggregateAnyAllPoisonNull(t *testing.T) {
+	ctx := enchanter.NewContext()
+	df := NewBaseDataFrame(ctx).
+		AddSeries("g", series.NewSeriesString([]string{"a", "a", "b"}, nil, false, ctx)).
+		AddSeries("b", series.NewSeriesBool([]bool{true, false, true}, []bool{false, true, false}, false, ctx)).(BaseDataFrame)
+	out := aggregate(df, []series.Series{df.C("g")}, []aggregator{All("b")}, false)
+	allC := out.C("all(b)").(series.Bools)
+	if !allC.IsNull(0) {
+		t.Fatalf("poisoned group a: all(b) should be null")
+	}
+	if allC.IsNull(1) || allC.Get(1) != true {
+		t.Fatalf("group b: all(b) should be true")
+	}
+}
