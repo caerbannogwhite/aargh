@@ -23,8 +23,8 @@ const aggMinParallel = 1 << 16
 // workers; see aggregate for the parallel entry point and merge semantics.
 //
 // It builds one group per distinct composite key of keyCols (via groupTable),
-// holding one accumulator (reducible) or collector (holistic) per aggregator
-// per group. A single pass over the rows updates the per-group state; each
+// holding one reducibleState slot (reducible) or collector (holistic) per
+// aggregator per group. A single pass over the rows updates the per-group state; each
 // value column is read inline through an aggValueView (see
 // prepAggValueColumns) rather than pre-copied to []float64, and a value is
 // missing iff the column's null mask says so, or (for a Float64 column) the
@@ -49,9 +49,9 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 	nRows := df.NRows()
 	views, isHol := prepAggValueColumns(df, aggs)
 
-	gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
+	gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
 
-	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, poisoned)
 }
 
 // aggregate is the public single-pass aggregation entry point. Below
@@ -83,8 +83,8 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 	views, isHol := prepAggValueColumns(df, aggs)
 
 	if nRows < aggMinParallel {
-		gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
-		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, accs, cols, poisoned)
+		gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
+		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, poisoned)
 	}
 
 	nWorkers := runtime.GOMAXPROCS(0)
@@ -98,7 +98,7 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 
 	type chunkState struct {
 		gt       *groupTable
-		accs     [][]accumulator
+		states   []*reducibleState
 		cols     [][]collector
 		poisoned [][]bool
 	}
@@ -120,8 +120,8 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 		wg.Add(1)
 		go func(w, lo, hi int) {
 			defer wg.Done()
-			gt, accs, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, lo, hi)
-			chunks[w] = chunkState{gt, accs, cols, poisoned}
+			gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, lo, hi)
+			chunks[w] = chunkState{gt, states, cols, poisoned}
 		}(w, lo, hi)
 	}
 	wg.Wait()
@@ -129,13 +129,19 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 	// Merge every chunk's local state into one global groupTable, re-keying
 	// each chunk-local group by its representative row (see doc comment
 	// above) and OR-merging poison flags. Chunks are merged in worker order
-	// for determinism; the merge itself is order-independent — accumulator
-	// and collector merge are commutative, and a group's representative row
-	// always carries the same key values no matter which chunk supplied it.
+	// for determinism; the merge itself is order-independent — reducible
+	// (mergeReducible) and collector merge are commutative, and a group's
+	// representative row always carries the same key values no matter which
+	// chunk supplied it.
 	global := newGroupTable(keyCols)
-	gAccs := make([][]accumulator, len(aggs))
+	gStates := make([]*reducibleState, len(aggs))
 	gCols := make([][]collector, len(aggs))
 	gPoisoned := make([][]bool, len(aggs))
+	for j := range aggs {
+		if !isHol[j] {
+			gStates[j] = &reducibleState{}
+		}
+	}
 
 	nGroups := 0
 	for _, chunk := range chunks {
@@ -151,18 +157,18 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 					if isHol[j] {
 						gCols[j] = append(gCols[j], newQuantileCollector(agg.p, agg.interp))
 					} else {
-						gAccs[j] = append(gAccs[j], newReducibleAcc(agg.type_, agg.ddof))
+						growReducible(gStates[j], agg.type_)
 					}
 					gPoisoned[j] = append(gPoisoned[j], false)
 				}
 				nGroups++
 			}
 
-			for j := range aggs {
+			for j, agg := range aggs {
 				if isHol[j] {
 					gCols[j][gid].merge(chunk.cols[j][localGid])
 				} else {
-					gAccs[j][gid].merge(chunk.accs[j][localGid])
+					mergeReducible(gStates[j], gid, chunk.states[j], localGid, agg.type_)
 				}
 				if chunk.poisoned[j][localGid] {
 					gPoisoned[j][gid] = true
@@ -171,7 +177,7 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 		}
 	}
 
-	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gAccs, gCols, gPoisoned)
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gStates, gCols, gPoisoned)
 }
 
 // aggValueKind identifies the element type backing an aggValueView, so
@@ -248,12 +254,158 @@ func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (views []aggValueV
 	return views, isHol
 }
 
+// reducibleState holds per-group struct-of-arrays state for one reducible
+// aggregator (Count/Sum/Mean/Min/Max/Std/Variance), indexed by group id. It
+// replaces the per-group accumulator OBJECTS behind the accumulator
+// interface (accumulator.go) with typed arrays, so accumulateChunk's row
+// loop can update them with a `switch kind` instead of a per-row virtual
+// call. Only the fields relevant to a given aggregator's AggregateType are
+// grown/read (see growReducible); the others stay nil for that aggregator.
+//
+// growReducible/updateReducible/mergeReducible/finalizeReducible below
+// reproduce, verbatim in behavior, countAcc/sumAcc/meanAcc/minAcc/maxAcc/
+// varAcc's update/merge/result from accumulator.go — that file remains the
+// documented reference and the 0.5.0 custom-aggregator extension point; this
+// is the fast lane the built-in engine now uses instead of calling it.
+type reducibleState struct {
+	n    []int64   // COUNT, SUM, MEAN: row/value count per group
+	sum  []float64 // SUM, MEAN: running sum per group
+	val  []float64 // MIN, MAX: running extreme per group
+	set  []bool    // MIN, MAX: whether val has been set for that group yet
+	wn   []float64 // STD, VARIANCE: Welford sample count per group
+	mean []float64 // STD, VARIANCE: Welford running mean per group
+	m2   []float64 // STD, VARIANCE: Welford running sum of squared deviations
+}
+
+// growReducible appends one zero-value slot (a new group) to exactly the
+// fields t's kind uses, mirroring the zero value newReducibleAcc(t, _) would
+// have produced for a fresh per-group accumulator.
+func growReducible(st *reducibleState, t AggregateType) {
+	switch t {
+	case AGGREGATE_COUNT:
+		st.n = append(st.n, 0)
+	case AGGREGATE_SUM, AGGREGATE_MEAN:
+		st.sum = append(st.sum, 0)
+		st.n = append(st.n, 0)
+	case AGGREGATE_MIN, AGGREGATE_MAX:
+		st.val = append(st.val, 0)
+		st.set = append(st.set, false)
+	case AGGREGATE_STD, AGGREGATE_VARIANCE:
+		st.wn = append(st.wn, 0)
+		st.mean = append(st.mean, 0)
+		st.m2 = append(st.m2, 0)
+	}
+}
+
+// updateReducible folds value v into group gid's state for aggregator kind
+// t. Copied verbatim (in behavior) from accumulator.go: countAcc.update,
+// sumAcc.update, meanAcc.update, minAcc.update, maxAcc.update, and
+// varAcc.update's Welford recurrence.
+func updateReducible(st *reducibleState, t AggregateType, gid int, v float64) {
+	switch t {
+	case AGGREGATE_COUNT:
+		st.n[gid]++
+	case AGGREGATE_SUM, AGGREGATE_MEAN:
+		st.sum[gid] += v
+		st.n[gid]++
+	case AGGREGATE_MIN:
+		if !st.set[gid] || v < st.val[gid] {
+			st.val[gid] = v
+			st.set[gid] = true
+		}
+	case AGGREGATE_MAX:
+		if !st.set[gid] || v > st.val[gid] {
+			st.val[gid] = v
+			st.set[gid] = true
+		}
+	case AGGREGATE_STD, AGGREGATE_VARIANCE:
+		st.wn[gid]++
+		d := v - st.mean[gid]
+		st.mean[gid] += d / st.wn[gid]
+		st.m2[gid] += d * (v - st.mean[gid])
+	}
+}
+
+// mergeReducible folds src's group sgid into dst's group dgid for aggregator
+// kind t (the parallel worker merge). Copied verbatim (in behavior) from
+// accumulator.go: countAcc.merge, sumAcc.merge, meanAcc.merge (min/max reuse
+// updateReducible exactly as minAcc.merge/maxAcc.merge call a.update(b.v)),
+// and varAcc.merge's pairwise Welford combination (Chan et al.).
+func mergeReducible(dst *reducibleState, dgid int, src *reducibleState, sgid int, t AggregateType) {
+	switch t {
+	case AGGREGATE_COUNT:
+		dst.n[dgid] += src.n[sgid]
+	case AGGREGATE_SUM, AGGREGATE_MEAN:
+		dst.sum[dgid] += src.sum[sgid]
+		dst.n[dgid] += src.n[sgid]
+	case AGGREGATE_MIN:
+		if src.set[sgid] {
+			updateReducible(dst, AGGREGATE_MIN, dgid, src.val[sgid])
+		}
+	case AGGREGATE_MAX:
+		if src.set[sgid] {
+			updateReducible(dst, AGGREGATE_MAX, dgid, src.val[sgid])
+		}
+	case AGGREGATE_STD, AGGREGATE_VARIANCE:
+		bn := src.wn[sgid]
+		if bn == 0 {
+			return
+		}
+		an := dst.wn[dgid]
+		if an == 0 {
+			dst.wn[dgid], dst.mean[dgid], dst.m2[dgid] = src.wn[sgid], src.mean[sgid], src.m2[sgid]
+			return
+		}
+		delta := src.mean[sgid] - dst.mean[dgid]
+		tot := an + bn
+		dst.m2[dgid] += src.m2[sgid] + delta*delta*an*bn/tot
+		dst.mean[dgid] += delta * bn / tot
+		dst.wn[dgid] = tot
+	}
+}
+
+// finalizeReducible computes group gid's (value, isNull) for aggregator kind
+// t (with ddof, applicable to STD/VARIANCE only). Copied verbatim (in
+// behavior) from accumulator.go: countAcc.result, sumAcc.result,
+// meanAcc.result, minAcc.result/maxAcc.result, and varAcc.result (sample
+// variance/std with n-ddof denominator, null when n==0 or n-ddof<=0).
+func finalizeReducible(st *reducibleState, gid int, t AggregateType, ddof int) (float64, bool) {
+	switch t {
+	case AGGREGATE_COUNT:
+		return float64(st.n[gid]), false
+	case AGGREGATE_SUM:
+		if st.n[gid] == 0 {
+			return 0, true
+		}
+		return st.sum[gid], false
+	case AGGREGATE_MEAN:
+		if st.n[gid] == 0 {
+			return 0, true
+		}
+		return st.sum[gid] / float64(st.n[gid]), false
+	case AGGREGATE_MIN, AGGREGATE_MAX:
+		return st.val[gid], !st.set[gid]
+	case AGGREGATE_STD, AGGREGATE_VARIANCE:
+		n := st.wn[gid]
+		denom := n - float64(ddof)
+		if n == 0 || denom <= 0 {
+			return 0, true
+		}
+		v := st.m2[gid] / denom
+		if t == AGGREGATE_STD {
+			return math.Sqrt(v), false
+		}
+		return v, false
+	}
+	panic("finalizeReducible: not a reducible aggregate")
+}
+
 // accumulateChunk is the single-chunk accumulation core shared by
 // aggregateSerial and aggregate's parallel workers. It builds a fresh
-// groupTable over rows [lo, hi) of keyCols, with one accumulator (reducible)
-// or collector (holistic) per aggregator per group encountered in that row
-// range, and returns the per-(aggregator, group) poison flags for
-// removeNAs == false (see aggregateSerial's doc comment for poison
+// groupTable over rows [lo, hi) of keyCols, with one reducibleState slot
+// (reducible) or collector (holistic) per aggregator per group encountered
+// in that row range, and returns the per-(aggregator, group) poison flags
+// for removeNAs == false (see aggregateSerial's doc comment for poison
 // semantics). views/isHol come from prepAggValueColumns and are read-only.
 //
 // A value at (j, row) is missing iff views[j].nullable and the column's own
@@ -265,17 +417,22 @@ func prepAggValueColumns(df BaseDataFrame, aggs []aggregator) (views []aggValueV
 // missing, exactly as before. For every other kind, only the null mask
 // applies — there is no NaN representation to alias against.
 //
-// The returned groupTable, accumulators, collectors and poison flags are
-// local to [lo, hi): group ids are dense in first-appearance order within
-// this chunk only and are not meaningful outside it (see aggregate's doc
-// comment on merging).
-func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValueView, isHol []bool, removeNAs bool, lo, hi int) (*groupTable, [][]accumulator, [][]collector, [][]bool) {
+// The returned groupTable, reducible states, collectors and poison flags
+// are local to [lo, hi): group ids are dense in first-appearance order
+// within this chunk only and are not meaningful outside it (see aggregate's
+// doc comment on merging).
+func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValueView, isHol []bool, removeNAs bool, lo, hi int) (*groupTable, []*reducibleState, [][]collector, [][]bool) {
 	gt := newGroupTable(keyCols)
 
 	// Per-aggregator, per-gid state; grown lazily as new gids appear.
-	accs := make([][]accumulator, len(aggs)) // reducible (incl. Count)
-	cols := make([][]collector, len(aggs))   // holistic
-	poisoned := make([][]bool, len(aggs))    // reducible poison (removeNAs == false)
+	states := make([]*reducibleState, len(aggs)) // reducible (incl. Count)
+	cols := make([][]collector, len(aggs))       // holistic
+	poisoned := make([][]bool, len(aggs))        // reducible poison (removeNAs == false)
+	for j := range aggs {
+		if !isHol[j] {
+			states[j] = &reducibleState{}
+		}
+	}
 
 	nGroups := 0
 	for row := lo; row < hi; row++ {
@@ -287,7 +444,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 				if isHol[j] {
 					cols[j] = append(cols[j], newQuantileCollector(agg.p, agg.interp))
 				} else {
-					accs[j] = append(accs[j], newReducibleAcc(agg.type_, agg.ddof))
+					growReducible(states[j], agg.type_)
 				}
 				poisoned[j] = append(poisoned[j], false)
 			}
@@ -296,7 +453,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 
 		for j, agg := range aggs {
 			if agg.type_ == AGGREGATE_COUNT {
-				accs[j][gid].update(0) // value ignored; Count counts rows
+				updateReducible(states[j], AGGREGATE_COUNT, gid, 0) // value ignored; Count counts rows
 				continue
 			}
 
@@ -335,12 +492,12 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 			if isHol[j] {
 				cols[j][gid].collect(vj)
 			} else {
-				accs[j][gid].update(vj)
+				updateReducible(states[j], agg.type_, gid, vj)
 			}
 		}
 	}
 
-	return gt, accs, cols, poisoned
+	return gt, states, cols, poisoned
 }
 
 // finalizeAggregate builds the sorted result DataFrame from a fully-populated
@@ -351,7 +508,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 // Int64s; every other aggregate as Float64s with a null mask from the
 // per-row isNull flags (poisoned groups under removeNAs == false surface as
 // non-null NaN, matching aggregateSerial).
-func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, accs [][]accumulator, cols [][]collector, poisoned [][]bool) DataFrame {
+func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, states []*reducibleState, cols [][]collector, poisoned [][]bool) DataFrame {
 	ctx := df.GetContext()
 	nGroups := gt.numGroups()
 	reps := gt.representativeRows()
@@ -365,7 +522,7 @@ func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggrega
 		if agg.type_ == AGGREGATE_COUNT {
 			data := make([]int64, nGroups)
 			for i, gid := range order {
-				v, _ := accs[j][gid].result()
+				v, _ := finalizeReducible(states[j], gid, AGGREGATE_COUNT, agg.ddof)
 				data[i] = int64(v)
 			}
 			result = result.AddSeries(agg.newName, series.NewSeriesInt64(data, nil, false, ctx))
@@ -384,7 +541,7 @@ func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggrega
 			case isHol[j]:
 				v, isNull = cols[j][gid].result()
 			default:
-				v, isNull = accs[j][gid].result()
+				v, isNull = finalizeReducible(states[j], gid, agg.type_, agg.ddof)
 			}
 			data[i] = v
 			if isNull {
