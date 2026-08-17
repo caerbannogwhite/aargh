@@ -141,23 +141,3 @@ func (a *varAcc) result() (float64, bool) {
 	}
 	return v, false
 }
-
-func newReducibleAcc(t AggregateType, ddof int) accumulator {
-	switch t {
-	case AGGREGATE_COUNT:
-		return newCountAcc()
-	case AGGREGATE_SUM:
-		return newSumAcc()
-	case AGGREGATE_MEAN:
-		return newMeanAcc()
-	case AGGREGATE_MIN:
-		return newMinAcc()
-	case AGGREGATE_MAX:
-		return newMaxAcc()
-	case AGGREGATE_STD:
-		return newVarAcc(ddof, true)
-	case AGGREGATE_VARIANCE:
-		return newVarAcc(ddof, false)
-	}
-	panic("newReducibleAcc: not a reducible aggregate")
-}

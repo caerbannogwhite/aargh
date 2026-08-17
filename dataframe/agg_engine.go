@@ -278,8 +278,9 @@ type reducibleState struct {
 }
 
 // growReducible appends one zero-value slot (a new group) to exactly the
-// fields t's kind uses, mirroring the zero value newReducibleAcc(t, _) would
-// have produced for a fresh per-group accumulator.
+// fields t's kind uses, initializing that group's state to its zero value
+// (0 count/sum, unset min/max, zeroed Welford accumulators) exactly as a
+// fresh built-in accumulator would start out.
 func growReducible(st *reducibleState, t AggregateType) {
 	switch t {
 	case AGGREGATE_COUNT:
