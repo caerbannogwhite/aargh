@@ -167,9 +167,18 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 | Map                  |   ❌   | planned                                  |
 | Stack / Append       |   ❌   | planned                                  |
 
-**Aggregations** (via `Agg`): `Count`, `Sum`, `Mean`, `Min`, `Max`, and
-`StdDev` (population) are supported; `Median`, `Variance`, and `Quantile` are
-planned.
+**Aggregations** (via `Agg`): `Count`, `Sum`, `Mean`, `Min`, `Max`, `Std`,
+`Variance`, `Median`, `Quantile`, `Any`, and `All` are all supported, with
+three deliberate behaviors:
+
+- Results are **sorted by group key** (ascending, nulls last).
+- Null values are **skipped by default**; `RemoveNAs(false)` restores
+  NaN-poisoning, so a null in a group's value column NaNs out every
+  aggregate for that group (holistic and reducible alike).
+- `Any` / `All` return a `Bools` column, not `Float64s`.
+
+Std/Variance take a `WithDDoF` option (default population, `ddof=0`);
+Median/Quantile take a `WithInterpolation` option.
 
 ### Development
 
@@ -188,18 +197,19 @@ and the race detector on Linux and Windows.
 Enchanter is pre-1.0. Releases are themed so each has a single focus, working
 toward a stable 1.0.
 
-**0.3.0 — measure & clean up** (current). Deprecation cleanup (`arrow.Record` →
+**0.3.0 — measure & clean up**. Deprecation cleanup (`arrow.Record` →
 `RecordBatch`), aggregation correctness fixes, CI + lint, and a *measured*
 decision on Arrow-native storage: **not worth it** — in pure Go, Arrow-backed
 columns only match plain Go slices, and arrow-go has no grouped-aggregation
 kernels, so Arrow stays an interop layer (Parquet, IPC, ecosystem handoff). See
 the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage-migration.md).
 
-**0.4.0 — make it fast.** The performance headline, validated by a
+**0.4.0 — make it fast** (current). The performance headline, validated by a
 [spike](benchmarking/README.md):
 
-- [ ] Single-pass, parallel hash aggregation for `GroupBy().Agg()` — ~10–17×
-      over today's groupby, and class-leading on the h2oai Q1 benchmark.
+- [x] Single-pass, parallel hash aggregation for `GroupBy().Agg()` — shipped;
+      on the h2oai-style Q1 sum-by-id benchmark (1e7 rows) it went from ~142ms
+      to ~31ms, beating Polars' ~43ms.
 - [ ] Fused combinators for element-wise op chains (no intermediate arrays).
 - [ ] Benchmark-regression tracking so the gains don't rot.
 
@@ -225,10 +235,9 @@ Parking lot (unversioned, picked up as they fit): dictionary-encoded (factor)
 strings; pivot longer/wider (in progress on `dev-pivot`); custom aggregators
 (archived on `archive/dev-fix-agg`); stricter CSV type guessing (archived on
 `archive/dev-0.1.3`); chunked series; SPSS reader/writer; JSON-by-records;
-`Median` / `Variance` / `Quantile`; configurable time format; `Set(i []int, …)`
-and `Slice(i []int)`; url resolvers and format options on the I/O builders;
-PrettyPrint and filtering-interface polish; memory-optimized `Bool` /
-`uint64` null mask.
+configurable time format; `Set(i []int, …)` and `Slice(i []int)`; url
+resolvers and format options on the I/O builders; PrettyPrint and
+filtering-interface polish; memory-optimized `Bool` / `uint64` null mask.
 
 ### Dependencies
 

@@ -219,6 +219,19 @@ func (g *groupTable) idOf(row int) int {
 		if g.f64Col.IsNull(row) {
 			return g.nullGroup(row)
 		}
+		// Bit-identity keying, not value equality: two float bit patterns
+		// group together iff Float64bits(a) == Float64bits(b). This means a
+		// single Float64 key column groups by *bit pattern*, not by ==: every
+		// non-null NaN bit pattern groups with identical NaN bit patterns
+		// (NaN != NaN under ==, but here NaNs with the same bits DO group
+		// together), and +0.0/-0.0 are DISTINCT groups (their bit patterns
+		// differ, even though +0.0 == -0.0). This differs from the
+		// multi-key/fallback path below (see makeCellCoder's series.Float64s
+		// case), which codes Float64 via a map[float64] keyed by ==
+		// value-equality: there, +0.0 and -0.0 collapse into one group, and
+		// each NaN value compares unequal to every other value (including
+		// itself), so every non-null NaN row becomes its own singleton group.
+		// In short: float64 grouping-key semantics differ by key arity.
 		v := math.Float64bits(g.f64Col.Data_[row])
 		if id, ok := g.f64Map[v]; ok {
 			return id

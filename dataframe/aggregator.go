@@ -44,6 +44,16 @@ func (ab aggregatorBuilder) Run() DataFrame {
 				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" not found", agg.name)
 				return df
 			}
+
+			// The value column must be a type the engine can accumulate
+			// (Float64s/Int64s/Ints/Bools/Durations — see newAggValueView).
+			// Anything else (e.g. Strings) would otherwise reach
+			// accumulateChunk's aggValUnsupported default case and panic with
+			// an out-of-range slice index.
+			if newAggValueView(df.C(agg.name)).kind == aggValUnsupported {
+				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" has unsupported type %s for aggregator \"%s\"", agg.name, df.C(agg.name).Type(), agg.newName)
+				return df
+			}
 		}
 	}
 
