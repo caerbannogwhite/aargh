@@ -31,12 +31,12 @@ const aggMinParallel = 1 << 16
 // raw value is NaN — see accumulateChunk.
 //
 //   - removeNAs == true  (the new default): null values are skipped for every
-//     aggregate; nothing is poisoned.
-//   - removeNAs == false: a null value poisons that (group, aggregator) so its
-//     result becomes NaN — for every aggregate alike, reducible (Mean, ...) and
+//     aggregate; no NA is propagated.
+//   - removeNAs == false: a null value propagates through that (group, aggregator) so its
+//     result becomes NA — for every aggregate alike, reducible (Mean, ...) and
 //     holistic (Median, Quantile). Count is the sole exception: it counts rows
 //     and is independent of value nulls. Collectors still never receive NaN; the
-//     poison flag overrides the collector's result at finalize.
+//     NA-propagation flag overrides the collector's result at finalize.
 //
 // The result is the key columns (one value per group, taken from each group's
 // representative row) followed by one aggregate column per aggregator, with the
@@ -49,9 +49,9 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 	nRows := df.NRows()
 	views, isHol := prepAggValueColumns(df, aggs)
 
-	gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
+	gt, states, cols, propagated := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
 
-	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, poisoned)
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, propagated)
 }
 
 // aggregate is the public single-pass aggregation entry point. Below
@@ -74,17 +74,17 @@ func aggregateSerial(df BaseDataFrame, keyCols []series.Series, aggs []aggregato
 //     same global id regardless of which chunk (or which local id) they came
 //     from.
 //
-//   - Under removeNAs == false, poison flags are OR-merged per (aggregator,
-//     group): a group poisoned in any one chunk is poisoned in the merged
-//     result. This matches the serial engine's per-row poisoning exactly,
-//     since a poisoned group there stays poisoned once any row in it is null.
+//   - Under removeNAs == false, NA-propagation flags are OR-merged per (aggregator,
+//     group): a group NA-propagated in any one chunk is NA-propagated in the merged
+//     result. This matches the serial engine's per-row NA propagation exactly,
+//     since an NA-propagated group there stays NA-propagated once any row in it is null.
 func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, removeNAs bool) DataFrame {
 	nRows := df.NRows()
 	views, isHol := prepAggValueColumns(df, aggs)
 
 	if nRows < aggMinParallel {
-		gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
-		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, poisoned)
+		gt, states, cols, propagated := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, 0, nRows)
+		return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, gt, states, cols, propagated)
 	}
 
 	nWorkers := runtime.GOMAXPROCS(0)
@@ -97,10 +97,10 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 	chunkSize := (nRows + nWorkers - 1) / nWorkers
 
 	type chunkState struct {
-		gt       *groupTable
-		states   []*reducibleState
-		cols     [][]collector
-		poisoned [][]bool
+		gt         *groupTable
+		states     []*reducibleState
+		cols       [][]collector
+		propagated [][]bool
 	}
 
 	// Each goroutine writes only its own index w; disjoint slice elements are
@@ -120,15 +120,15 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 		wg.Add(1)
 		go func(w, lo, hi int) {
 			defer wg.Done()
-			gt, states, cols, poisoned := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, lo, hi)
-			chunks[w] = chunkState{gt, states, cols, poisoned}
+			gt, states, cols, propagated := accumulateChunk(keyCols, aggs, views, isHol, removeNAs, lo, hi)
+			chunks[w] = chunkState{gt, states, cols, propagated}
 		}(w, lo, hi)
 	}
 	wg.Wait()
 
 	// Merge every chunk's local state into one global groupTable, re-keying
 	// each chunk-local group by its representative row (see doc comment
-	// above) and OR-merging poison flags. Chunks are merged in worker order
+	// above) and OR-merging NA-propagation flags. Chunks are merged in worker order
 	// for determinism; the merge itself is order-independent — reducible
 	// (mergeReducible) and collector merge are commutative, and a group's
 	// representative row always carries the same key values no matter which
@@ -136,7 +136,7 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 	global := newGroupTable(keyCols)
 	gStates := make([]*reducibleState, len(aggs))
 	gCols := make([][]collector, len(aggs))
-	gPoisoned := make([][]bool, len(aggs))
+	gPropagated := make([][]bool, len(aggs))
 	for j := range aggs {
 		if !isHol[j] {
 			gStates[j] = &reducibleState{}
@@ -159,7 +159,7 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 					} else {
 						growReducible(gStates[j], agg.type_)
 					}
-					gPoisoned[j] = append(gPoisoned[j], false)
+					gPropagated[j] = append(gPropagated[j], false)
 				}
 				nGroups++
 			}
@@ -170,14 +170,14 @@ func aggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, rem
 				} else {
 					mergeReducible(gStates[j], gid, chunk.states[j], localGid, agg.type_)
 				}
-				if chunk.poisoned[j][localGid] {
-					gPoisoned[j][gid] = true
+				if chunk.propagated[j][localGid] {
+					gPropagated[j][gid] = true
 				}
 			}
 		}
 	}
 
-	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gStates, gCols, gPoisoned)
+	return finalizeAggregate(df, keyCols, aggs, isHol, removeNAs, global, gStates, gCols, gPropagated)
 }
 
 // aggValueKind identifies the element type backing an aggValueView, so
@@ -443,8 +443,8 @@ func finalizeReducible(st *reducibleState, gid int, t AggregateType, ddof int) (
 // aggregateSerial and aggregate's parallel workers. It builds a fresh
 // groupTable over rows [lo, hi) of keyCols, with one reducibleState slot
 // (reducible) or collector (holistic) per aggregator per group encountered
-// in that row range, and returns the per-(aggregator, group) poison flags
-// for removeNAs == false (see aggregateSerial's doc comment for poison
+// in that row range, and returns the per-(aggregator, group) NA-propagation flags
+// for removeNAs == false (see aggregateSerial's doc comment for NA-propagation
 // semantics). views/isHol come from prepAggValueColumns and are read-only.
 //
 // A value at (j, row) is missing iff views[j].nullable and the column's own
@@ -456,7 +456,7 @@ func finalizeReducible(st *reducibleState, gid int, t AggregateType, ddof int) (
 // missing, exactly as before. For every other kind, only the null mask
 // applies — there is no NaN representation to alias against.
 //
-// The returned groupTable, reducible states, collectors and poison flags
+// The returned groupTable, reducible states, collectors and NA-propagation flags
 // are local to [lo, hi): group ids are dense in first-appearance order
 // within this chunk only and are not meaningful outside it (see aggregate's
 // doc comment on merging).
@@ -466,7 +466,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 	// Per-aggregator, per-gid state; grown lazily as new gids appear.
 	states := make([]*reducibleState, len(aggs)) // reducible (incl. Count)
 	cols := make([][]collector, len(aggs))       // holistic
-	poisoned := make([][]bool, len(aggs))        // reducible poison (removeNAs == false)
+	propagated := make([][]bool, len(aggs))      // reducible NA-propagation flags (removeNAs == false)
 	for j := range aggs {
 		if !isHol[j] {
 			states[j] = &reducibleState{}
@@ -485,7 +485,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 				} else {
 					growReducible(states[j], agg.type_)
 				}
-				poisoned[j] = append(poisoned[j], false)
+				propagated[j] = append(propagated[j], false)
 			}
 			nGroups++
 		}
@@ -522,9 +522,9 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 			}
 			if missing {
 				if !removeNAs {
-					// Poisons every aggregate for this group under RemoveNAs(false),
+					// Propagates the NA to every aggregate for this group under RemoveNAs(false),
 					// reducible and holistic alike (Count never reaches here).
-					poisoned[j][gid] = true
+					propagated[j][gid] = true
 				}
 				continue
 			}
@@ -536,7 +536,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 		}
 	}
 
-	return gt, states, cols, poisoned
+	return gt, states, cols, propagated
 }
 
 // finalizeAggregate builds the sorted result DataFrame from a fully-populated
@@ -544,12 +544,12 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 // key columns (one row per group, taken from each group's representative
 // row) followed by one aggregate column per aggregator, sorted by key
 // ascending, nulls last, lexicographic across keyCols. Count is emitted as
-// Int64s; Any/All are emitted as Bools with a null mask (poisoned or
+// Int64s; Any/All are emitted as Bools with a null mask (NA-propagated or
 // empty/all-null groups are NULL — there is no bool NaN sentinel); every
 // other aggregate as Float64s with a null mask from the per-row isNull flags
-// (poisoned groups under removeNAs == false surface as non-null NaN,
+// (NA-propagated groups under removeNAs == false surface as non-null NaN,
 // matching aggregateSerial).
-func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, states []*reducibleState, cols [][]collector, poisoned [][]bool) DataFrame {
+func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggregator, isHol []bool, removeNAs bool, gt *groupTable, states []*reducibleState, cols [][]collector, propagated [][]bool) DataFrame {
 	ctx := df.GetContext()
 	nGroups := gt.numGroups()
 	reps := gt.representativeRows()
@@ -571,16 +571,16 @@ func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggrega
 		}
 
 		if agg.type_ == AGGREGATE_ANY || agg.type_ == AGGREGATE_ALL {
-			// Any/All are reducible and never poisoned into a non-null NaN
+			// Any/All are reducible and never NA-propagated into a non-null NaN
 			// sentinel like the other aggregates below — bool has no NaN, so
-			// a poisoned or empty/all-null group's result is NULL instead.
+			// an NA-propagated or empty/all-null group's result is NULL instead.
 			data := make([]bool, nGroups)
 			var nulls []bool
 			for i, gid := range order {
 				var v float64
 				var isNull bool
 				switch {
-				case !removeNAs && poisoned[j][gid]:
+				case !removeNAs && propagated[j][gid]:
 					v, isNull = 0, true
 				default:
 					v, isNull = finalizeReducible(states[j], gid, agg.type_, agg.ddof)
@@ -603,8 +603,8 @@ func finalizeAggregate(df BaseDataFrame, keyCols []series.Series, aggs []aggrega
 			var v float64
 			var isNull bool
 			switch {
-			case !removeNAs && poisoned[j][gid]:
-				// Poison overrides both reducible and holistic results.
+			case !removeNAs && propagated[j][gid]:
+				// NA propagation overrides both reducible and holistic results.
 				v, isNull = math.NaN(), false
 			case isHol[j]:
 				v, isNull = cols[j][gid].result()

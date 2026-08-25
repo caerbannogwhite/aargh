@@ -49,10 +49,10 @@ func TestAggregateSerialSkipNullsDefault(t *testing.T) {
 	if got := f64(t, out, "mean(v)")[0]; got != 2 {
 		t.Fatalf("skip-null mean = %v, want 2", got)
 	}
-	// removeNAs=false: poisoned -> NaN
+	// removeNAs=false: NA-propagated -> NaN
 	out2 := aggregateSerial(df, []series.Series{df.C("g")}, []aggregator{Mean("v")}, false)
 	if got := f64(t, out2, "mean(v)")[0]; !math.IsNaN(got) {
-		t.Fatalf("poison mean = %v, want NaN", got)
+		t.Fatalf("NA-propagated mean = %v, want NaN", got)
 	}
 }
 
@@ -60,7 +60,7 @@ func TestAggregateSerialSkipNullsDefault(t *testing.T) {
 // TestAggregateSerialSkipNullsDefault: it exercises the copy-free
 // aggValueView I64 read path (accumulateChunk reading an Int64 value column
 // inline instead of a []float64 copy) under both the skip-null default and
-// RemoveNAs(false) poisoning.
+// RemoveNAs(false) NA propagation.
 func TestAggregateSerialSkipNullsDefaultInt64(t *testing.T) {
 	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
@@ -72,10 +72,10 @@ func TestAggregateSerialSkipNullsDefaultInt64(t *testing.T) {
 	if got := f64(t, out, "mean(v)")[0]; got != 2 {
 		t.Fatalf("skip-null mean = %v, want 2", got)
 	}
-	// removeNAs=false: poisoned -> NaN
+	// removeNAs=false: NA-propagated -> NaN
 	out2 := aggregateSerial(df, []series.Series{df.C("g")}, []aggregator{Mean("v")}, false)
 	if got := f64(t, out2, "mean(v)")[0]; !math.IsNaN(got) {
-		t.Fatalf("poison mean = %v, want NaN", got)
+		t.Fatalf("NA-propagated mean = %v, want NaN", got)
 	}
 }
 
@@ -93,9 +93,9 @@ func TestAggregateSerialMedianMultiKey(t *testing.T) {
 	}
 }
 
-// Under RemoveNAs(false) a null in a group must poison EVERY aggregate to NaN,
+// Under RemoveNAs(false) a null in a group must propagate an NA to EVERY aggregate,
 // holistic (Median) as well as reducible (Mean).
-func TestAggregateSerialPoisonAllAggregates(t *testing.T) {
+func TestAggregateSerialNAPropagationAllAggregates(t *testing.T) {
 	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeries("g", series.NewSeriesString([]string{"a", "a", "a"}, nil, false, ctx)).
@@ -103,10 +103,10 @@ func TestAggregateSerialPoisonAllAggregates(t *testing.T) {
 
 	out := aggregateSerial(df, []series.Series{df.C("g")}, []aggregator{Mean("v"), Median("v")}, false)
 	if got := f64(t, out, "mean(v)")[0]; !math.IsNaN(got) {
-		t.Fatalf("poison mean = %v, want NaN", got)
+		t.Fatalf("NA-propagated mean = %v, want NaN", got)
 	}
 	if got := f64(t, out, "median(v)")[0]; !math.IsNaN(got) {
-		t.Fatalf("poison median = %v, want NaN", got)
+		t.Fatalf("NA-propagated median = %v, want NaN", got)
 	}
 }
 
@@ -195,12 +195,12 @@ func TestAggregateParallelParity(t *testing.T) {
 	}
 }
 
-// TestAggregateParallelPoisonCrossChunk exercises the cross-chunk poison
-// OR-merge (agg_engine.go's merge loop, which must OR a group's poison flag
+// TestAggregateParallelNAPropagationCrossChunk exercises the cross-chunk NA-propagation
+// OR-merge (agg_engine.go's merge loop, which must OR a group's NA-propagation flag
 // across every worker chunk rather than reset it) and the holistic
 // (Median)/Count columns under the parallel path, neither of which
 // TestAggregateParallelParity exercises (it only runs removeNAs=true, which
-// never poisons anything).
+// never propagates anything).
 //
 // GOMAXPROCS is forced to 4 for the duration of the test so the null row and
 // this group's many non-null rows are guaranteed to land in different worker
@@ -208,8 +208,8 @@ func TestAggregateParallelParity(t *testing.T) {
 // every 4th row across the full 200,000-row range (50,000 rows total, spread
 // evenly across all 4 forced chunks of 50,000 rows each), with a single null
 // at row 0 (chunk 0) and ~49,999 non-null rows for "a" spread across every
-// chunk, including chunks 1-3 which see no poison locally at all.
-func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
+// chunk, including chunks 1-3 which see no NA propagation locally at all.
+func TestAggregateParallelNAPropagationCrossChunk(t *testing.T) {
 	ctx := enchanter.NewContext()
 	n := 200_000
 	keys := make([]string, n)
@@ -248,16 +248,16 @@ func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
 		t.Fatalf("group 'a' not found in parallel result")
 	}
 
-	// The poisoned group's reducible (Sum, Mean) and holistic (Median)
+	// The NA-propagated group's reducible (Sum, Mean) and holistic (Median)
 	// aggregates must all be non-null NaN, matching the serial engine's
-	// poison-overrides-everything semantics.
+	// NA-propagation-overrides-everything semantics.
 	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
 		s := par.C(col).(series.Float64s)
 		if s.IsNull(aIdx) {
-			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (poison)", col)
+			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (NA propagation)", col)
 		}
 		if !math.IsNaN(s.Data_[aIdx]) {
-			t.Fatalf("parallel %s[a] = %v, want NaN (poisoned)", col, s.Data_[aIdx])
+			t.Fatalf("parallel %s[a] = %v, want NaN (NA-propagated)", col, s.Data_[aIdx])
 		}
 	}
 
@@ -285,7 +285,7 @@ func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
 				t.Fatalf("%s[%d] null mask mismatch: serial=%v parallel=%v", col, i, sSer.IsNull(i), sPar.IsNull(i))
 			}
 			sv, pv := sSer.Data_[i], sPar.Data_[i]
-			// NaN-aware equality: NaN != NaN in Go, but poisoned cells on
+			// NaN-aware equality: NaN != NaN in Go, but NA-propagated cells on
 			// both sides must both be NaN for the rows to agree.
 			if math.IsNaN(sv) || math.IsNaN(pv) {
 				if !math.IsNaN(sv) || !math.IsNaN(pv) {
@@ -307,13 +307,13 @@ func TestAggregateParallelPoisonCrossChunk(t *testing.T) {
 	}
 }
 
-// TestAggregateParallelInt64ValuePoisonCrossChunk is the Int64 analogue of
-// TestAggregateParallelPoisonCrossChunk: it exercises the copy-free
+// TestAggregateParallelInt64ValueNAPropagationCrossChunk is the Int64 analogue of
+// TestAggregateParallelNAPropagationCrossChunk: it exercises the copy-free
 // aggValueView I64 read path (accumulateChunk reading an Int64 value column
 // inline, converting to float64 per row instead of pre-copying to
-// []float64) across the parallel engine's cross-chunk poison OR-merge, and
+// []float64) across the parallel engine's cross-chunk NA-propagation OR-merge, and
 // checks serial/parallel parity for the same inputs.
-func TestAggregateParallelInt64ValuePoisonCrossChunk(t *testing.T) {
+func TestAggregateParallelInt64ValueNAPropagationCrossChunk(t *testing.T) {
 	ctx := enchanter.NewContext()
 	n := 200_000
 	keys := make([]string, n)
@@ -352,16 +352,16 @@ func TestAggregateParallelInt64ValuePoisonCrossChunk(t *testing.T) {
 		t.Fatalf("group 'a' not found in parallel result")
 	}
 
-	// The poisoned group's reducible (Sum, Mean) and holistic (Median)
+	// The NA-propagated group's reducible (Sum, Mean) and holistic (Median)
 	// aggregates must all be non-null NaN, matching the serial engine's
-	// poison-overrides-everything semantics.
+	// NA-propagation-overrides-everything semantics.
 	for _, col := range []string{"sum(v)", "mean(v)", "median(v)"} {
 		s := par.C(col).(series.Float64s)
 		if s.IsNull(aIdx) {
-			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (poison)", col)
+			t.Fatalf("parallel %s[a] isNull = true, want non-null NaN (NA propagation)", col)
 		}
 		if !math.IsNaN(s.Data_[aIdx]) {
-			t.Fatalf("parallel %s[a] = %v, want NaN (poisoned)", col, s.Data_[aIdx])
+			t.Fatalf("parallel %s[a] = %v, want NaN (NA-propagated)", col, s.Data_[aIdx])
 		}
 	}
 
@@ -420,7 +420,7 @@ func TestAggregateAnyAll(t *testing.T) {
 	}
 }
 
-func TestAggregateAnyAllPoisonNull(t *testing.T) {
+func TestAggregateAnyAllNAPropagationNull(t *testing.T) {
 	ctx := enchanter.NewContext()
 	df := NewBaseDataFrame(ctx).
 		AddSeries("g", series.NewSeriesString([]string{"a", "a", "b"}, nil, false, ctx)).
@@ -428,7 +428,7 @@ func TestAggregateAnyAllPoisonNull(t *testing.T) {
 	out := aggregate(df, []series.Series{df.C("g")}, []aggregator{All("b")}, false)
 	allC := out.C("all(b)").(series.Bools)
 	if !allC.IsNull(0) {
-		t.Fatalf("poisoned group a: all(b) should be null")
+		t.Fatalf("NA-propagated group a: all(b) should be null")
 	}
 	if allC.IsNull(1) || allC.Get(1) != true {
 		t.Fatalf("group b: all(b) should be true")
@@ -438,7 +438,7 @@ func TestAggregateAnyAllPoisonNull(t *testing.T) {
 // TestAggregateParallelAnyAllCrossChunk exercises the cross-chunk OR-merge of
 // reducibleState.bflag for AGGREGATE_ANY/AGGREGATE_ALL (agg_engine.go's
 // mergeReducible ANY/ALL case, and the merge-time growReducible call), which
-// TestAggregateAnyAll/TestAggregateAnyAllPoisonNull never exercise: those use
+// TestAggregateAnyAll/TestAggregateAnyAllNAPropagationNull never exercise: those use
 // 3-4 rows, always below aggMinParallel, so aggregate() takes the
 // single-chunk inline branch and never calls mergeReducible at all.
 //
@@ -455,9 +455,9 @@ func TestAggregateAnyAllPoisonNull(t *testing.T) {
 //     chunk) -> any(b) must be true, symmetric to the above.
 //
 // A second phase re-runs the same shape under RemoveNAs(false) with a single
-// null value for group "a" in chunk 2, verifying the poison flag OR-merges
+// null value for group "a" in chunk 2, verifying the NA-propagation flag OR-merges
 // across chunks for Any/All exactly as it already does for Sum/Mean/Median
-// (see TestAggregateParallelPoisonCrossChunk).
+// (see TestAggregateParallelNAPropagationCrossChunk).
 func TestAggregateParallelAnyAllCrossChunk(t *testing.T) {
 	ctx := enchanter.NewContext()
 	n := 200_000
@@ -552,43 +552,43 @@ func TestAggregateParallelAnyAllCrossChunk(t *testing.T) {
 		}
 	}
 
-	// Poison across chunks (RemoveNAs(false)): a single null value for group
-	// "a" placed in chunk 2 must poison any(b)/all(b) to NULL for that
-	// group, in both engines — the parallel merge OR's the poison flag
+	// NA propagation across chunks (RemoveNAs(false)): a single null value for group
+	// "a" placed in chunk 2 must propagate an NA to any(b)/all(b) as NULL for that
+	// group, in both engines — the parallel merge OR's the NA-propagation flag
 	// exactly as it OR's bflag above.
 	nulls := make([]bool, n)
 	nulls[100000] = true // group "a" (100000 % 4 == 0), chunk 2
-	dfPoison := NewBaseDataFrame(ctx).
+	dfNAProp := NewBaseDataFrame(ctx).
 		AddSeries("g", series.NewSeriesString(keys, nil, false, ctx)).
 		AddSeries("b", series.NewSeriesBool(vals, nulls, false, ctx)).(BaseDataFrame)
 
-	aggsPoison := []aggregator{Any("b"), All("b")}
-	serP := aggregateSerial(dfPoison, []series.Series{dfPoison.C("g")}, aggsPoison, false)
-	parP := aggregate(dfPoison, []series.Series{dfPoison.C("g")}, aggsPoison, false)
+	aggsNAProp := []aggregator{Any("b"), All("b")}
+	serNA := aggregateSerial(dfNAProp, []series.Series{dfNAProp.C("g")}, aggsNAProp, false)
+	parNA := aggregate(dfNAProp, []series.Series{dfNAProp.C("g")}, aggsNAProp, false)
 
-	for _, d := range []DataFrame{serP, parP} {
+	for _, d := range []DataFrame{serNA, parNA} {
 		idx := findIdx(d, "a")
 		if idx == -1 {
-			t.Fatalf("group \"a\" not found in poisoned result")
+			t.Fatalf("group \"a\" not found in NA-propagated result")
 		}
 		anyD := d.C("any(b)").(series.Bools)
 		allD := d.C("all(b)").(series.Bools)
 		if !anyD.IsNull(idx) || !allD.IsNull(idx) {
-			t.Fatalf("poisoned group \"a\": any(b)/all(b) should be null, got any.IsNull=%v all.IsNull=%v", anyD.IsNull(idx), allD.IsNull(idx))
+			t.Fatalf("NA-propagated group \"a\": any(b)/all(b) should be null, got any.IsNull=%v all.IsNull=%v", anyD.IsNull(idx), allD.IsNull(idx))
 		}
 	}
 
-	// Unpoisoned groups must be unaffected by the other group's poison.
+	// Groups without an NA must be unaffected by the other group's NA propagation.
 	for _, key := range []string{"b", "c", "d"} {
-		for _, d := range []DataFrame{serP, parP} {
+		for _, d := range []DataFrame{serNA, parNA} {
 			idx := findIdx(d, key)
 			if idx == -1 {
-				t.Fatalf("group %q not found in poisoned result", key)
+				t.Fatalf("group %q not found in NA-propagated result", key)
 			}
 			anyD := d.C("any(b)").(series.Bools)
 			allD := d.C("all(b)").(series.Bools)
 			if anyD.IsNull(idx) || allD.IsNull(idx) {
-				t.Fatalf("group %q unexpectedly null after poisoning group \"a\"", key)
+				t.Fatalf("group %q unexpectedly null after NA-propagating group \"a\"", key)
 			}
 		}
 	}
