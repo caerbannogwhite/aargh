@@ -172,9 +172,10 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 three deliberate behaviors:
 
 - Results are **sorted by group key** (ascending, nulls last).
-- Null values are **skipped by default**; `RemoveNAs(false)` restores
-  NaN-poisoning, so a null in a group's value column NaNs out every
-  aggregate for that group (holistic and reducible alike).
+- Null values (NAs) are **skipped by default**; `RemoveNAs(false)` makes
+  NAs **propagate** — a single NA in a group's value column makes that
+  group's result NA for every aggregate (holistic and reducible alike),
+  surfaced as `NaN` for the numeric aggregates and as null for `Any`/`All`.
 - `Any` / `All` return a `Bools` column, not `Float64s`.
 
 Std/Variance take a `WithDDoF` option (default population, `ddof=0`);
