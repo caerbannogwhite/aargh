@@ -44,113 +44,37 @@ func (ab aggregatorBuilder) Run() DataFrame {
 				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" not found", agg.name)
 				return df
 			}
+
+			// The value column must be a type the engine can accumulate
+			// (Float64s/Int64s/Ints/Bools/Durations — see newAggValueView).
+			// Anything else (e.g. Strings) would otherwise reach
+			// accumulateChunk's aggValUnsupported default case and panic with
+			// an out-of-range slice index.
+			if newAggValueView(df.C(agg.name)).kind == aggValUnsupported {
+				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" has unsupported type %s for aggregator \"%s\"", agg.name, df.C(agg.name).Type(), agg.newName)
+				return df
+			}
 		}
 	}
 
-	var result DataFrame
+	// CHECK: option applicability — ddof only applies to Std/Variance,
+	// interpolation only applies to Median/Quantile.
+	for _, agg := range ab.aggregators {
+		if agg.ddofSet && agg.type_ != AGGREGATE_STD && agg.type_ != AGGREGATE_VARIANCE {
+			df.err = fmt.Errorf("BaseDataFrame.Agg: WithDDoF is only applicable to Std/Variance, not to \"%s\"", agg.newName)
+			return df
+		}
+		if agg.interpSet && agg.type_ != AGGREGATE_MEDIAN && agg.type_ != AGGREGATE_QUANTILE {
+			df.err = fmt.Errorf("BaseDataFrame.Agg: WithInterpolation is only applicable to Median/Quantile, not to \"%s\"", agg.newName)
+			return df
+		}
+	}
+
 	if df.isGrouped {
-		var indices [][]int
-		var flatIndices []int
-		result, indices, flatIndices, _ = df.groupHelper()
-
-		groupsNum := len(indices)
-
-		var _series series.Series
-		for _, agg := range ab.aggregators {
-			_series = df.__series(agg.name)
-
-			switch agg.type_ {
-			case AGGREGATE_COUNT:
-				counts := make([]int64, groupsNum)
-				for i, group := range indices {
-					counts[i] = int64(len(group))
-				}
-				result = result.AddSeries(agg.newName, series.NewSeriesInt64(counts, nil, false, df.ctx))
-
-			case AGGREGATE_SUM:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MIN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MAX:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MEAN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_STD:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, flatIndices, groupsNum, ab.removeNAs), nil, false, df.ctx))
-			}
-		}
-
-		// var wg sync.WaitGroup
-		// wg.Add(THREADS_NUMBER)
-
-		// buffer := make(chan __stats_thread_data)
-		// for i := 0; i < THREADS_NUMBER; i++ {
-		// 	go __stats_worker(&wg, buffer)
-		// }
-
-		// for _, agg := range aggregators {
-		// 	series := df.__series(agg.name)
-
-		// 	resultData := make([]float64, len(*indices))
-		// 	result = result.AddSeries(agg.name, NewSeriesFloat64(resultData, nil, false, df.ctx))
-		// 	for gi, group := range *indices {
-		// 		buffer <- __stats_thread_data{
-		// 			op:      agg.type_,
-		// 			gi:      gi,
-		// 			indices: group,
-		// 			series:  series,
-		// 			res:     resultData,
-		// 		}
-		// 	}
-		// }
-
-		// close(buffer)
-		// wg.Wait()
-
-	} else {
-		result = NewBaseDataFrame(df.ctx)
-
-		var _series series.Series
-		for _, agg := range ab.aggregators {
-			_series = df.__series(agg.name)
-
-			switch agg.type_ {
-			case AGGREGATE_COUNT:
-				result = result.AddSeries(agg.newName, series.NewSeriesInt64([]int64{int64(df.NRows())}, nil, false, df.ctx))
-
-			case AGGREGATE_SUM:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_sum(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MIN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_min(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MAX:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_max(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_MEAN:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_mean(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-
-			case AGGREGATE_STD:
-				dataF64 := __gdl_stats_preprocess(_series)
-				result = result.AddSeries(agg.newName, series.NewSeriesFloat64(__gdl_std(dataF64, nil, 1, ab.removeNAs), nil, false, df.ctx))
-			}
-		}
+		return aggregate(df, df.buildGroupKeyCols(), ab.aggregators, ab.removeNAs)
 	}
 
-	return result
+	return aggregate(df, nil, ab.aggregators, ab.removeNAs)
 }
 
 type AggregateType int8
@@ -163,42 +87,67 @@ const (
 	AGGREGATE_MIN
 	AGGREGATE_MAX
 	AGGREGATE_STD
+	AGGREGATE_VARIANCE
+	AGGREGATE_QUANTILE
+	AGGREGATE_ANY
+	AGGREGATE_ALL
 )
+
+func (t AggregateType) isHolistic() bool {
+	return t == AGGREGATE_MEDIAN || t == AGGREGATE_QUANTILE
+}
 
 const DEFAULT_COUNT_NAME = "n"
 
 type aggregator struct {
-	name    string
-	newName string
-	type_   AggregateType
+	name      string
+	newName   string
+	type_     AggregateType
+	p         float64       // quantile probability (AGGREGATE_QUANTILE)
+	ddof      int           // AGGREGATE_STD / AGGREGATE_VARIANCE
+	interp    Interpolation // AGGREGATE_MEDIAN / AGGREGATE_QUANTILE
+	ddofSet   bool
+	interpSet bool
+}
+
+func mkAgg(name, newName string, t AggregateType, p float64, opts []AggOption) aggregator {
+	c := newAggConfig(opts)
+	return aggregator{name, newName, t, p, c.ddof, c.interp, c.ddofSet, c.interpSet}
 }
 
 func Count() aggregator {
-	return aggregator{DEFAULT_COUNT_NAME, DEFAULT_COUNT_NAME, AGGREGATE_COUNT}
+	return aggregator{DEFAULT_COUNT_NAME, DEFAULT_COUNT_NAME, AGGREGATE_COUNT, 0, 0, Linear, false, false}
 }
 
-func Sum(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("sum(%s)", name), AGGREGATE_SUM}
+func Sum(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("sum(%s)", name), AGGREGATE_SUM, 0, opts)
 }
-
-func Mean(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("mean(%s)", name), AGGREGATE_MEAN}
+func Mean(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("mean(%s)", name), AGGREGATE_MEAN, 0, opts)
 }
-
-func Median(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("median(%s)", name), AGGREGATE_MEDIAN}
+func Min(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("min(%s)", name), AGGREGATE_MIN, 0, opts)
 }
-
-func Min(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("min(%s)", name), AGGREGATE_MIN}
+func Max(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("max(%s)", name), AGGREGATE_MAX, 0, opts)
 }
-
-func Max(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("max(%s)", name), AGGREGATE_MAX}
+func Std(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("std(%s)", name), AGGREGATE_STD, 0, opts)
 }
-
-func Std(name string) aggregator {
-	return aggregator{name, fmt.Sprintf("std(%s)", name), AGGREGATE_STD}
+func Variance(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("var(%s)", name), AGGREGATE_VARIANCE, 0, opts)
+}
+func Median(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("median(%s)", name), AGGREGATE_MEDIAN, 0.5, opts)
+}
+func Quantile(name string, p float64, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("quantile_%g(%s)", p, name), AGGREGATE_QUANTILE, p, opts)
+}
+func Any(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("any(%s)", name), AGGREGATE_ANY, 0, opts)
+}
+func All(name string, opts ...AggOption) aggregator {
+	return mkAgg(name, fmt.Sprintf("all(%s)", name), AGGREGATE_ALL, 0, opts)
 }
 
 ////////////////////////			SORT

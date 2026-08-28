@@ -20,13 +20,14 @@ type BaseDataFramePartitionEntry struct {
 }
 
 type BaseDataFrame struct {
-	isGrouped  bool
-	err        error
-	names      []string
-	series     []series.Series
-	partitions []BaseDataFramePartitionEntry
-	sortParams []SortParam
-	ctx        *enchanter.Context
+	isGrouped    bool
+	err          error
+	names        []string
+	series       []series.Series
+	partitions   []BaseDataFramePartitionEntry
+	groupByNames []string
+	sortParams   []SortParam
+	ctx          *enchanter.Context
 }
 
 func NewBaseDataFrame(ctx *enchanter.Context) DataFrame {
@@ -408,52 +409,64 @@ func (df BaseDataFrame) GroupBy(by ...string) DataFrame {
 		df = df.Ungroup().(BaseDataFrame)
 	}
 
-	{
-
-		// Check that all the group by columns exist
-		for _, name := range by {
-			found := false
-			for _, name_ := range df.names {
-				if name_ == name {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				df.err = fmt.Errorf("BaseDataFrame.GroupBy: column \"%s\" not found", name)
-				return df
+	// Check that all the group by columns exist
+	for _, name := range by {
+		found := false
+		for _, name_ := range df.names {
+			if name_ == name {
+				found = true
+				break
 			}
 		}
 
-		df.isGrouped = true
-		df.partitions = make([]BaseDataFramePartitionEntry, len(by))
-
-		for partitionsIndex, name := range by {
-			i := df.GetSeriesIndex(name)
-			series := df.series[i]
-
-			// First partition: group the series
-			if partitionsIndex == 0 {
-				df.partitions[partitionsIndex] = BaseDataFramePartitionEntry{
-					index:     i,
-					name:      name,
-					partition: series.Group().GetPartition(),
-				}
-			} else
-
-			// Subsequent partitions: sub-group the series
-			{
-				df.partitions[partitionsIndex] = BaseDataFramePartitionEntry{
-					index:     i,
-					name:      name,
-					partition: series.GroupBy(df.partitions[partitionsIndex-1].partition).GetPartition(),
-				}
-			}
+		if !found {
+			df.err = fmt.Errorf("BaseDataFrame.GroupBy: column \"%s\" not found", name)
+			return df
 		}
-
-		return df
 	}
+
+	// Lazy: just record the grouping. No partitions are built here; they are
+	// materialized on demand (see buildPartitions) by the few callers that
+	// still need them (Join).
+	df.isGrouped = true
+	df.groupByNames = by
+	df.partitions = nil
+
+	return df
+}
+
+// buildPartitions materializes the partition chain for the recorded
+// group-by columns (df.groupByNames). BaseDataFrame is passed by value, so
+// there is nowhere durable to cache the result across calls; it is rebuilt
+// fresh every time. Only the legacy Join path calls this — the new Agg
+// engine (Task 8) reads the raw series directly and never needs it.
+func (df BaseDataFrame) buildPartitions() []BaseDataFramePartitionEntry {
+	partitions := make([]BaseDataFramePartitionEntry, len(df.groupByNames))
+
+	for partitionsIndex, name := range df.groupByNames {
+		i := df.GetSeriesIndex(name)
+		s := df.series[i]
+
+		// First partition: group the series
+		if partitionsIndex == 0 {
+			partitions[partitionsIndex] = BaseDataFramePartitionEntry{
+				index:     i,
+				name:      name,
+				partition: s.Group().GetPartition(),
+			}
+		} else
+
+		// Subsequent partitions: sub-group the series
+		{
+			partitions[partitionsIndex] = BaseDataFramePartitionEntry{
+				index:     i,
+				name:      name,
+				partition: s.GroupBy(partitions[partitionsIndex-1].partition).GetPartition(),
+			}
+		}
+	}
+
+	return partitions
 }
 
 func (df BaseDataFrame) Ungroup() DataFrame {
@@ -462,6 +475,7 @@ func (df BaseDataFrame) Ungroup() DataFrame {
 	}
 
 	df.isGrouped = false
+	df.groupByNames = nil
 	df.partitions = nil
 	return df
 }
@@ -472,126 +486,15 @@ func (df BaseDataFrame) getPartitions() []series.SeriesPartition {
 	}
 
 	if df.isGrouped {
-		partitions := make([]series.SeriesPartition, len(df.partitions))
-		for i, partition := range df.partitions {
+		built := df.buildPartitions()
+		partitions := make([]series.SeriesPartition, len(built))
+		for i, partition := range built {
 			partitions[i] = partition.partition
 		}
 		return partitions
 	} else {
 		return nil
 	}
-}
-
-func (df BaseDataFrame) groupHelper() (DataFrame, [][]int, []int, []int) {
-
-	// Keep track of which series are not grouped
-	seriesIndices := make(map[int]bool)
-	for i := 0; i < df.NCols(); i++ {
-		seriesIndices[i] = true
-	}
-
-	result := NewBaseDataFrame(df.ctx).(BaseDataFrame)
-
-	// The last partition tells us how many groups there are
-	// and how many rows are in each group
-	indices := make([][]int, 0, df.partitions[len(df.partitions)-1].partition.GetSize())
-	for _, group := range df.partitions[len(df.partitions)-1].partition.GetMap() {
-		indices = append(indices, group)
-	}
-
-	// Keep only the grouped series
-	for _, partition := range df.partitions {
-		seriesIndices[partition.index] = false
-		old := df.series[partition.index]
-
-		result.names = append(result.names, partition.name)
-
-		// Each group is represented by its first row; nulls group together,
-		// so the key column keeps the null flag of that representative row.
-		var keyNulls []bool
-		if old.IsNullable() {
-			keyNulls = make([]bool, len(indices))
-			for i, group := range indices {
-				keyNulls[i] = old.IsNull(group[0])
-			}
-		}
-
-		switch _series := old.(type) {
-		case series.Bools:
-			values := make([]bool, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesBool(values, keyNulls, false, _series.GetContext()))
-
-		case series.Ints:
-			values := make([]int, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesInt(values, keyNulls, false, _series.GetContext()))
-
-		case series.Int64s:
-			values := make([]int64, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesInt64(values, keyNulls, false, _series.GetContext()))
-
-		case series.Float64s:
-			values := make([]float64, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesFloat64(values, keyNulls, false, _series.GetContext()))
-
-		case series.Strings:
-			values := make([]*string, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesStringFromPtrs(values, keyNulls, false, _series.GetContext()))
-
-		case series.Times:
-			values := make([]time.Time, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesTime(values, keyNulls, false, _series.GetContext()))
-
-		case series.Durations:
-			values := make([]time.Duration, len(indices))
-			for i, group := range indices {
-				values[i] = _series.Data_[group[0]]
-			}
-			result.series = append(result.series, series.NewSeriesDuration(values, keyNulls, false, _series.GetContext()))
-
-		default:
-			// Unsupported key type: keep names and series aligned.
-			result.series = append(result.series, series.NewSeriesNA(len(indices), df.ctx))
-		}
-	}
-
-	// Get the indices of the ungrouped series
-	ungroupedSeriesIndices := make([]int, 0)
-	for index, isGrouped := range seriesIndices {
-		if isGrouped {
-			ungroupedSeriesIndices = append(ungroupedSeriesIndices, index)
-		}
-	}
-
-	// sort the indices
-	sort.Ints(ungroupedSeriesIndices)
-
-	// Flatten the indices
-	flatIndices := make([]int, df.NRows())
-	for i, group := range indices {
-		for _, index := range group {
-			flatIndices[index] = i
-		}
-	}
-
-	return result, indices, flatIndices, ungroupedSeriesIndices
 }
 
 func (df BaseDataFrame) Join(how DataFrameJoinType, other DataFrame, on ...string) DataFrame {
@@ -1168,7 +1071,18 @@ func (df BaseDataFrame) OrderBy(params ...SortParam) DataFrame {
 ////////////////////////			SUMMARY
 
 func (df BaseDataFrame) Agg(aggregators ...aggregator) aggregatorBuilder {
-	return aggregatorBuilder{df, false, aggregators}
+	return aggregatorBuilder{df, true, aggregators}
+}
+
+// buildGroupKeyCols returns the group-by columns, in the order recorded by
+// GroupBy (df.groupByNames), for the aggregation engine (agg_engine.go) to
+// key its groups on.
+func (df BaseDataFrame) buildGroupKeyCols() []series.Series {
+	keyCols := make([]series.Series, len(df.groupByNames))
+	for i, name := range df.groupByNames {
+		keyCols[i] = df.series[df.GetSeriesIndex(name)]
+	}
+	return keyCols
 }
 
 ////////////////////////			PRINTING
@@ -1243,13 +1157,13 @@ func (df BaseDataFrame) PPrint(params PPrintParams) DataFrame {
 		} else {
 			buffer += "  Grouped by: "
 		}
-		for i, partition := range df.partitions {
+		for i, name := range df.groupByNames {
 			if params.useLipGloss {
-				buffer += params.styleTypes.Render(fmt.Sprintf("%s", partition.name))
+				buffer += params.styleTypes.Render(fmt.Sprintf("%s", name))
 			} else {
-				buffer += fmt.Sprintf("%s", partition.name)
+				buffer += fmt.Sprintf("%s", name)
 			}
-			if i < len(df.partitions)-1 {
+			if i < len(df.groupByNames)-1 {
 				if params.useLipGloss {
 					buffer += params.styleTypes.Render(",")
 				} else {
