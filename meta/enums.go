@@ -109,7 +109,7 @@ const (
 	SYMBOL_BINARY_LE       = "<="
 	SYMBOL_BINARY_GT       = ">"
 	SYMBOL_BINARY_LT       = "<"
-	SYMBOL_BINARY_AND      = "not"
+	SYMBOL_BINARY_AND      = "and"
 	SYMBOL_BINARY_OR       = "or"
 	SYMBOL_BINARY_MODEL    = "~"
 	SYMBOL_BINARY_COALESCE = "??"
