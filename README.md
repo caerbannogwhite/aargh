@@ -157,7 +157,7 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 
 | Operation            | Status | Notes                                    |
 | -------------------- | :----: | ---------------------------------------- |
-| Select               |   ✅   |                                          |
+| Select               |   ✅   | regex selectors; `^name$` for exact      |
 | Filter               |   ✅   | by a `Bools` series                      |
 | GroupBy + Agg        |   ✅   | null-aware group keys                    |
 | Join                 |   ✅   | inner / left / right / outer, null-aware |
@@ -166,6 +166,10 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 | Pivot (longer/wider) |   🚧   | in progress on `dev-pivot`               |
 | Map                  |   ❌   | planned                                  |
 | Stack / Append       |   ❌   | planned                                  |
+
+`Select` takes **regular expressions**, matched unanchored against the column
+names — so `Select("Car")` also selects a column named `CarOrigin`. Anchor a
+selector, `Select("^Car$")`, to match one column exactly.
 
 **Aggregations** (via `Agg`): `Count`, `Sum`, `Mean`, `Min`, `Max`, `Std`,
 `Variance`, `Median`, `Quantile`, `Any`, and `All` are all supported, with
@@ -218,6 +222,10 @@ the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage
 
 - [ ] Public API: hide internal fields (`Data_`, `NullMask_`), standardize the
       reader constructors.
+- [ ] `Select`: decide whether to split the regex behavior into an explicit
+      pattern API (exact `Select` plus a `SelectMatching`), so that a plain
+      column name cannot silently over-select (`"Car"` also matches
+      `"CarOrigin"`). Documented as-is in 0.4.1.
 - [ ] Generics to collapse the generated per-type code — *spike-gated* (only if
       it measurably shrinks the code without regressing speed).
 - [ ] Broaden test coverage; decide SAS7BDAT

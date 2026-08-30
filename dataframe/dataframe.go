@@ -73,6 +73,9 @@ type DataFrame interface {
 	// Returns the series with the given name as a bool series.
 	NameAt(index int) string
 
+	// Select keeps the columns matched by selectors, which are regular
+	// expressions matched unanchored: "Car" also selects "CarOrigin". Use
+	// "^Car$" to match a single column exactly.
 	Select(selectors ...string) DataFrame
 
 	SelectAt(indices ...int) DataFrame

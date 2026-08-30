@@ -307,6 +307,19 @@ func (df BaseDataFrame) NameAt(index int) string {
 	return df.names[index]
 }
 
+// Select returns a DataFrame holding the columns matched by selectors, in
+// selector order; a column matched by several selectors is kept once, at its
+// first match.
+//
+// Each selector is a regular expression, matched UNANCHORED against the column
+// name, so "Car" also selects a column named "CarOrigin". Anchor a selector to
+// match one column exactly:
+//
+//	df.Select("^Car$", "^Origin$") // exactly those two columns
+//	df.Select("^EX.*1$", "_RAW")   // patterns
+//
+// An invalid regular expression leaves the returned DataFrame in an error
+// state.
 func (df BaseDataFrame) Select(selectors ...string) DataFrame {
 	if df.err != nil {
 		return df
