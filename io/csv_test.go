@@ -396,3 +396,24 @@ func Test_IoCsv_ValidWrite(t *testing.T) {
 		t.Error(err.Error())
 	}
 }
+
+func Test_IoCsv_OverwriteTruncatesFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "data.csv")
+	if err := os.WriteFile(path, []byte("stale data that must be removed\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	iod := NewIoData(ctx)
+	iod.AddSeries(series.NewSeriesString([]string{"fresh"}, nil, false, ctx), SeriesMeta{Name: "value"})
+	if err := iod.ToCsv().SetPath(path).SetEol("\n").Write(); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "value\nfresh\n"; string(got) != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

@@ -326,6 +326,8 @@ func (w *CsvWriter) Write() (err error) {
 	}
 
 	if w.path != "" {
+		// os.Create is exactly O_CREATE|O_WRONLY|O_TRUNC; see #22, which fixed
+		// the missing truncation here first.
 		file, openErr := os.Create(w.path)
 		if openErr != nil {
 			return openErr
