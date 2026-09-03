@@ -174,7 +174,7 @@ func (w *XptWriter) Write() error {
 	}
 
 	if w.path != "" {
-		file, err := os.OpenFile(w.path, os.O_CREATE|os.O_WRONLY, 0666)
+		file, err := os.Create(w.path)
 		if err != nil {
 			return fmt.Errorf("XptWriter: %w", err)
 		}

@@ -215,7 +215,7 @@ func (w *XlsxWriter) Write() error {
 
 	if w.path != "" {
 		// make sure os.O_WRONLY arg is supplies so that file is not opened in read-only mode
-		file, err := os.OpenFile(w.path, os.O_CREATE|os.O_WRONLY, 0666)
+		file, err := os.Create(w.path)
 		if err != nil {
 			return err
 		}

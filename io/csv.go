@@ -1,6 +1,7 @@
 package io
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -289,7 +290,7 @@ func (w *CsvWriter) SetIoData(ioData *IoData) *CsvWriter {
 	return w
 }
 
-func (w *CsvWriter) Write() error {
+func (w *CsvWriter) Write() (err error) {
 	if w.ioData == nil {
 		return fmt.Errorf("CsvWriter: no ioData specified")
 	}
@@ -314,12 +315,32 @@ func (w *CsvWriter) Write() error {
 		w.quote = w.ioData.ctx.GetQuote()
 	}
 
+	// Reject an unusable quoting mode before the destination is opened. The
+	// file is truncated at open, so a configuration error caught halfway
+	// through writing would destroy the previous contents on behalf of a
+	// write that was never going to succeed.
+	switch w.quoting {
+	case CsvQuotingNone, CsvQuotingAll, CsvQuotingNeeded, CsvQuotingNonNumeric:
+	default:
+		return fmt.Errorf("CsvWriter: invalid quoting type")
+	}
+
 	if w.path != "" {
-		file, err := os.OpenFile(w.path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
-		if err != nil {
-			return err
+		// os.Create is exactly O_CREATE|O_WRONLY|O_TRUNC; see #22, which fixed
+		// the missing truncation here first.
+		file, openErr := os.Create(w.path)
+		if openErr != nil {
+			return openErr
 		}
-		defer file.Close()
+		defer func() {
+			// A close error can surface writes that the filesystem only
+			// completed at close time (network filesystems, delayed
+			// allocation), so it must not be discarded when the write itself
+			// reported success.
+			if cerr := file.Close(); err == nil {
+				err = cerr
+			}
+		}()
 		w.writer = file
 	}
 
@@ -327,58 +348,95 @@ func (w *CsvWriter) Write() error {
 		return fmt.Errorf("CsvWriter: no writer specified")
 	}
 
-	err := w.writeCsv()
-	if err != nil {
-		return err
-	}
+	return w.writeCsv()
+}
 
-	return nil
+// csvWriteBuf buffers CSV output and remembers the first write error.
+//
+// The writer used to emit every field with fmt.Fprintf and discard the
+// returned error, so a write that never reached the disk was reported as a
+// successful Write(). Recording the first failure and returning it turns
+// silent data loss into an error the caller can act on; buffering also
+// replaces roughly two write syscalls per cell with one per block.
+type csvWriteBuf struct {
+	w   *bufio.Writer
+	err error
+}
+
+func newCsvWriteBuf(w io.Writer) *csvWriteBuf {
+	return &csvWriteBuf{w: bufio.NewWriter(w)}
+}
+
+// writeString writes s unless a previous write already failed.
+func (b *csvWriteBuf) writeString(s string) {
+	if b.err != nil {
+		return
+	}
+	_, b.err = b.w.WriteString(s)
+}
+
+// writeRune writes r unless a previous write already failed.
+func (b *csvWriteBuf) writeRune(r rune) {
+	if b.err != nil {
+		return
+	}
+	_, b.err = b.w.WriteRune(r)
+}
+
+// flush returns the first write error, or the error from flushing the buffer.
+func (b *csvWriteBuf) flush() error {
+	if b.err != nil {
+		return b.err
+	}
+	return b.w.Flush()
 }
 
 func (w *CsvWriter) writeCsv() error {
+	buf := newCsvWriteBuf(w.writer)
+
 	if w.header {
 		for i, meta := range w.ioData.SeriesMeta {
 			if i > 0 {
-				fmt.Fprintf(w.writer, "%c", w.delimiter)
+				buf.writeRune(w.delimiter)
 			}
-			fmt.Fprintf(w.writer, "%s", meta.Name)
+			buf.writeString(meta.Name)
 		}
 
-		fmt.Fprintf(w.writer, "%s", w.eol)
+		buf.writeString(w.eol)
 	}
 
 	for i := 0; i < w.ioData.NRows(); i++ {
 		for j, s := range w.ioData.Series {
 			if j > 0 {
-				fmt.Fprintf(w.writer, "%c", w.delimiter)
+				buf.writeRune(w.delimiter)
 			}
 
 			if s.IsNull(i) {
-				fmt.Fprintf(w.writer, "%s", w.naText)
+				buf.writeString(w.naText)
 			} else {
 				switch w.quoting {
 				case CsvQuotingNone:
-					fmt.Fprintf(w.writer, "%s", s.GetAsString(i))
+					buf.writeString(s.GetAsString(i))
 
 				case CsvQuotingAll:
-					fmt.Fprintf(w.writer, "%s", w.quote+s.GetAsString(i)+w.quote)
+					buf.writeString(w.quote + s.GetAsString(i) + w.quote)
 
 				case CsvQuotingNeeded:
 					str := s.GetAsString(i)
 					if strings.Contains(str, w.quote) {
 						str = strings.ReplaceAll(str, w.quote, w.quote+w.quote)
-						fmt.Fprintf(w.writer, "%s", w.quote+str+w.quote)
+						buf.writeString(w.quote + str + w.quote)
 					} else if strings.Contains(str, string(w.delimiter)) || strings.Contains(str, w.eol) {
-						fmt.Fprintf(w.writer, "%s", w.quote+str+w.quote)
+						buf.writeString(w.quote + str + w.quote)
 					} else {
-						fmt.Fprintf(w.writer, "%s", str)
+						buf.writeString(str)
 					}
 
 				case CsvQuotingNonNumeric:
 					if s.Type() == meta.Float64Type || s.Type() == meta.Int64Type || s.Type() == meta.IntType {
-						fmt.Fprintf(w.writer, "%s", s.GetAsString(i))
+						buf.writeString(s.GetAsString(i))
 					} else {
-						fmt.Fprintf(w.writer, "%s", w.quote+s.GetAsString(i)+w.quote)
+						buf.writeString(w.quote + s.GetAsString(i) + w.quote)
 					}
 
 				default:
@@ -387,8 +445,8 @@ func (w *CsvWriter) writeCsv() error {
 			}
 		}
 
-		fmt.Fprintf(w.writer, "%s", w.eol)
+		buf.writeString(w.eol)
 	}
 
-	return nil
+	return buf.flush()
 }
