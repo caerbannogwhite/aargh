@@ -157,7 +157,7 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 
 | Operation            | Status | Notes                                    |
 | -------------------- | :----: | ---------------------------------------- |
-| Select               |   ✅   | regex selectors; `^name$` for exact      |
+| Select               |   ✅   | exact names; `SelectMatching` for regex  |
 | Filter               |   ✅   | by a `Bools` series                      |
 | GroupBy + Agg        |   ✅   | null-aware group keys                    |
 | Join                 |   ✅   | inner / left / right / outer, null-aware |
@@ -167,9 +167,10 @@ Not implemented (would be added on demand): narrower integers (`Int8/16/32`),
 | Map                  |   ❌   | planned                                  |
 | Stack / Append       |   ❌   | planned                                  |
 
-`Select` takes **regular expressions**, matched unanchored against the column
-names — so `Select("Car")` also selects a column named `CarOrigin`. Anchor a
-selector, `Select("^Car$")`, to match one column exactly.
+`Select` takes **exact column names**, in the order given; naming a column that
+does not exist is an error rather than a silently missing column. Pattern
+selection lives in `SelectMatching`, which takes regular expressions matched
+unanchored — so `SelectMatching("Car")` also selects `CarOrigin`.
 
 **Aggregations** (via `Agg`): `Count`, `Sum`, `Mean`, `Min`, `Max`, `Std`,
 `Variance`, `Median`, `Quantile`, `Any`, and `All` are all supported, with
@@ -222,17 +223,17 @@ the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage
 
 - [ ] Public API: hide internal fields (`Data_`, `NullMask_`), standardize the
       reader constructors.
-- [ ] `Select`: decide whether to split the regex behavior into an explicit
-      pattern API (exact `Select` plus a `SelectMatching`), so that a plain
-      column name cannot silently over-select (`"Car"` also matches
-      `"CarOrigin"`). Documented as-is in 0.4.1.
+- [x] `Select` split into an exact-name `Select` and a pattern-matching
+      `SelectMatching`, so a plain column name can no longer silently
+      over-select (`"Car"` used to also match `"CarOrigin"`).
 - [ ] Generics to collapse the generated per-type code — *spike-gated* (only if
       it measurably shrinks the code without regressing speed).
 - [ ] Broaden test coverage; decide SAS7BDAT
       ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)) —
       finish the data path or drop it.
-- [ ] Internal naming: retire the legacy `__gdl_` / leading-double-underscore
-      helper names (Gandalff-era, pre-rename) for idiomatic Go unexported names.
+- [x] Internal naming: the legacy `__gdl_` / leading-double-underscore helper
+      names (Gandalff-era, pre-rename) are retired for idiomatic Go unexported
+      names.
 - [ ] Generated `*_ops.go` readability: flatten the length×nullability `if`
       nesting via a generator-template refactor (the operand dispatch is already a
       type-switch, so the win is the template, not the emitted files) — likely

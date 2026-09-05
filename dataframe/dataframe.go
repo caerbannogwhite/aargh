@@ -73,10 +73,13 @@ type DataFrame interface {
 	// Returns the series with the given name as a bool series.
 	NameAt(index int) string
 
-	// Select keeps the columns matched by selectors, which are regular
-	// expressions matched unanchored: "Car" also selects "CarOrigin". Use
-	// "^Car$" to match a single column exactly.
-	Select(selectors ...string) DataFrame
+	// Select keeps the named columns, in the order given. Names are matched
+	// exactly, and naming a column the DataFrame does not have is an error.
+	Select(names ...string) DataFrame
+
+	// SelectMatching keeps the columns matched by patterns, which are regular
+	// expressions matched unanchored: "Car" also selects "CarOrigin".
+	SelectMatching(patterns ...string) DataFrame
 
 	SelectAt(indices ...int) DataFrame
 

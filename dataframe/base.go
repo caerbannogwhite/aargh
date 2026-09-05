@@ -307,29 +307,72 @@ func (df BaseDataFrame) NameAt(index int) string {
 	return df.names[index]
 }
 
-// Select returns a DataFrame holding the columns matched by selectors, in
-// selector order; a column matched by several selectors is kept once, at its
-// first match.
+// Select returns a DataFrame holding the named columns, in the order given.
+// Names are matched exactly; a name repeated in the argument list is kept once,
+// at its first position.
 //
-// Each selector is a regular expression, matched UNANCHORED against the column
-// name, so "Car" also selects a column named "CarOrigin". Anchor a selector to
-// match one column exactly:
+//	df.Select("Car", "Origin") // exactly those two columns
 //
-//	df.Select("^Car$", "^Origin$") // exactly those two columns
-//	df.Select("^EX.*1$", "_RAW")   // patterns
-//
-// An invalid regular expression leaves the returned DataFrame in an error
-// state.
-func (df BaseDataFrame) Select(selectors ...string) DataFrame {
+// It is an error to name a column the DataFrame does not have — a typo yields
+// an errored DataFrame rather than a silently missing column. Use
+// SelectMatching for pattern-based selection.
+func (df BaseDataFrame) Select(names ...string) DataFrame {
 	if df.err != nil {
 		return df
 	}
 
-	regexes := make([]*regexp.Regexp, len(selectors))
-	for i, selector := range selectors {
-		regex, err := regexp.Compile(selector)
+	have := make(map[string]bool, len(df.names))
+	for _, name := range df.names {
+		have[name] = true
+	}
+
+	taken := make(map[string]bool, len(names))
+	outNames := make([]string, 0, len(names))
+	seriesList := make([]series.Series, 0, len(names))
+
+	for _, name := range names {
+		if !have[name] {
+			df.err = fmt.Errorf("BaseDataFrame.Select: column \"%s\" not found", name)
+			return df
+		}
+		if taken[name] {
+			continue
+		}
+		taken[name] = true
+		outNames = append(outNames, name)
+		seriesList = append(seriesList, df.C(name))
+	}
+
+	return BaseDataFrame{
+		names:  outNames,
+		series: seriesList,
+		ctx:    df.ctx,
+	}
+}
+
+// SelectMatching returns a DataFrame holding the columns matched by patterns,
+// in pattern order; a column matched by several patterns is kept once, at its
+// first match.
+//
+// Each pattern is a regular expression, matched UNANCHORED against the column
+// name, so "Car" also selects a column named "CarOrigin". Anchor a pattern to
+// pin it to a whole name:
+//
+//	df.SelectMatching("^EX.*1$", "_RAW")
+//
+// An invalid regular expression leaves the returned DataFrame in an error
+// state. A pattern that matches nothing contributes no columns and is not an
+// error, since a pattern is not a claim that a particular column exists.
+func (df BaseDataFrame) SelectMatching(patterns ...string) DataFrame {
+	if df.err != nil {
+		return df
+	}
+
+	regexes := make([]*regexp.Regexp, len(patterns))
+	for i, pattern := range patterns {
+		regex, err := regexp.Compile(pattern)
 		if err != nil {
-			df.err = fmt.Errorf("BaseDataFrame.Select: invalid selector \"%s\"", selector)
+			df.err = fmt.Errorf("BaseDataFrame.SelectMatching: invalid pattern \"%s\"", pattern)
 			return df
 		}
 		regexes[i] = regex

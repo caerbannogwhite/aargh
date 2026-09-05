@@ -71,17 +71,17 @@ func Test_BaseDataFrame_Select(t *testing.T) {
 		df = df.AddSeries(name, series.NewSeriesFloat64([]float64{1.0}, nil, false, ctx))
 	}
 
-	names = df.Select("^_.*_$", "NUMMEN").Names()
+	names = df.SelectMatching("^_.*_$", "NUMMEN").Names()
 	if !utils.CheckEqSlice(names, []string{"_AGEG_", "NUMMEN"}, nil, "") {
 		t.Errorf("Expected %v, got %v", []string{"_AGEG_", "NUMMEN"}, names)
 	}
 
-	names = df.Select(".*BL[O]*D.*").Names()
+	names = df.SelectMatching(".*BL[O]*D.*").Names()
 	if !utils.CheckEqSlice(names, []string{"BLOODCHO", "BLOODAID", "BLDSTOOL"}, nil, "") {
 		t.Errorf("Expected %v, got %v", []string{"BLOODCHO", "BLOODAID", "BLDSTOOL"}, names)
 	}
 
-	names = df.Select("_RAW", "^EX.*1$", "HOWLONG", "EDUCA$").Names()
+	names = df.SelectMatching("_RAW", "^EX.*1$", "HOWLONG", "EDUCA$").Names()
 	if !utils.CheckEqSlice(names, []string{"_RAW", "EXERACT1", "EXERDIS1", "EXEROFT1", "EXERHMM1", "HOWLONG", "EDUCA"}, nil, "") {
 		t.Errorf("Expected %v, got %v", []string{"_RAW", "EXERACT1", "EXERDIS1", "EXEROFT1", "EXERHMM1", "HOWLONG", "EDUCA"}, names)
 	}
