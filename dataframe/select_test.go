@@ -40,13 +40,15 @@ func TestSelect_OrderAndDuplicates(t *testing.T) {
 	}
 }
 
-// A typo must be an error rather than a silently missing column.
+// An unknown column must be an error rather than a silently missing column,
+// which is what makes a mistyped name surface instead of quietly changing the
+// shape of the result.
 func TestSelect_UnknownColumnIsAnError(t *testing.T) {
-	got := selectTestFrame().Select("Car", "Orgin")
+	got := selectTestFrame().Select("Car", "NoSuchColumn")
 	if got.GetError() == nil {
 		t.Fatal("expected an error for an unknown column name, got nil")
 	}
-	if msg := got.GetError().Error(); !strings.Contains(msg, "Orgin") {
+	if msg := got.GetError().Error(); !strings.Contains(msg, "NoSuchColumn") {
 		t.Fatalf("error should name the missing column, got %q", msg)
 	}
 }
