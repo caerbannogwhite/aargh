@@ -40,7 +40,7 @@ func (ab aggregatorBuilder) Run() DataFrame {
 
 		// CASE: aggregator count doesn't need an input series
 		if agg.type_ != AGGREGATE_COUNT {
-			if df.__series(agg.name) == nil {
+			if df.seriesByName(agg.name) == nil {
 				df.err = fmt.Errorf("BaseDataFrame.Agg: series \"%s\" not found", agg.name)
 				return df
 			}

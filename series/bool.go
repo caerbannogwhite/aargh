@@ -252,7 +252,7 @@ func (s Bools) Group() Series {
 	}
 
 	Partition_ := SeriesBoolPartition{
-		Partition_: __series_groupby(
+		Partition_: seriesGroupBy(
 			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, s.Len(), s.HasNull(),
 			worker, workerNulls),
 	}
@@ -305,7 +305,7 @@ func (s Bools) GroupBy(Partition_ SeriesPartition) Series {
 	}
 
 	newPartition := SeriesBoolPartition{
-		Partition_: __series_groupby(
+		Partition_: seriesGroupBy(
 			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}

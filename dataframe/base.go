@@ -281,7 +281,7 @@ func (df BaseDataFrame) C(name string) series.Series {
 
 // Returns the series with the given name.
 // For internal use only: returns nil if the series is not found.
-func (df BaseDataFrame) __series(name string) series.Series {
+func (df BaseDataFrame) seriesByName(name string) series.Series {
 	for i, name_ := range df.names {
 		if name_ == name {
 			return df.series[i]
@@ -1066,7 +1066,7 @@ func (df BaseDataFrame) OrderBy(params ...SortParam) DataFrame {
 		}
 		paramNames[param.name] = true
 
-		if series := df.__series(param.name); series != nil {
+		if series := df.seriesByName(param.name); series != nil {
 			params[i]._series = series
 		} else {
 			df.err = fmt.Errorf("BaseDataFrame.OrderBy: series \"%s\" not found", param.name)

@@ -188,7 +188,7 @@ type aggValueKind uint8
 const (
 	// aggValUnsupported marks a value column whose type none of the other
 	// kinds cover (e.g. Strings). Reading such a view mirrors the previous
-	// behavior of __gdl_stats_preprocess returning nil for unsupported
+	// behavior of the former stats-preprocessing helper, which returned nil for unsupported
 	// types, which made accumulateChunk panic with an out-of-range index on
 	// the first row read; see accumulateChunk's default case.
 	aggValUnsupported aggValueKind = iota
@@ -219,7 +219,7 @@ type aggValueView struct {
 
 // newAggValueView builds the typed view for col. Unsupported column types
 // (anything but Float64s/Int64s/Ints/Bools/Durations — the same set
-// __gdl_stats_preprocess supported) yield aggValUnsupported.
+// the former stats-preprocessing helper supported) yield aggValUnsupported.
 func newAggValueView(col series.Series) aggValueView {
 	switch c := col.(type) {
 	case series.Float64s:
@@ -450,7 +450,7 @@ func finalizeReducible(st *reducibleState, gid int, t AggregateType, ddof int) (
 // A value at (j, row) is missing iff views[j].nullable and the column's own
 // null mask says row is null, OR — for a Float64 value column only —
 // math.IsNaN(views[j].f64[row]). The Float64 case preserves the historical
-// behavior of __gdl_stats_preprocess mapping nulls to NaN and the engine
+// behavior of the former stats-preprocessing helper, which mapped nulls to NaN, with the engine
 // detecting missing values with math.IsNaN: a genuine NaN stored in a
 // Float64 column (as opposed to a null cell) is therefore still treated as
 // missing, exactly as before. For every other kind, only the null mask
@@ -516,7 +516,7 @@ func accumulateChunk(keyCols []series.Series, aggs []aggregator, views []aggValu
 					vj = float64(view.dur[row])
 				default:
 					// Unsupported value column type: mirrors the previous
-					// __gdl_stats_preprocess(nil)[row] out-of-range panic.
+					// out-of-range panic the former stats-preprocessing helper produced.
 					vj = view.f64[row]
 				}
 			}

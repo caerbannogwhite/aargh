@@ -288,7 +288,7 @@ func (gp *SeriesInt64Partition) GetMap() map[int64][]int {
 
 		// Merge the nulls to the map
 		if gp.Partition_DenseNulls != nil && len(gp.Partition_DenseNulls) > 0 {
-			nullKey := __series_get_nullkey(map_, enchanter.HASH_NULL_KEY)
+			nullKey := seriesNullKey(map_, enchanter.HASH_NULL_KEY)
 			map_[nullKey] = gp.Partition_DenseNulls
 		}
 
@@ -398,7 +398,7 @@ func (s Int64s) Group() Series {
 
 		Partition_ = SeriesInt64Partition{
 			isDense: false,
-			Partition_: __series_groupby(
+			Partition_: seriesGroupBy(
 				enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
 				worker, workerNulls),
 		}
@@ -450,7 +450,7 @@ func (s Int64s) GroupBy(Partition_ SeriesPartition) Series {
 	}
 
 	newPartition := SeriesInt64Partition{
-		Partition_: __series_groupby(
+		Partition_: seriesGroupBy(
 			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}

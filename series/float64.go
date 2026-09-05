@@ -316,7 +316,7 @@ func (s Float64s) Group() Series {
 	}
 
 	Partition_ := SeriesFloat64Partition{
-		Partition_: __series_groupby(
+		Partition_: seriesGroupBy(
 			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_2, len(s.Data_), s.HasNull(),
 			worker, workerNulls),
 	}
@@ -363,7 +363,7 @@ func (s Float64s) GroupBy(Partition_ SeriesPartition) Series {
 	}
 
 	newPartition := SeriesFloat64Partition{
-		Partition_: __series_groupby(
+		Partition_: seriesGroupBy(
 			enchanter.THREADS_NUMBER, enchanter.MINIMUM_PARALLEL_SIZE_1, len(keys), s.HasNull(),
 			worker, workerNulls),
 	}
