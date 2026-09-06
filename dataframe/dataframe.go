@@ -48,7 +48,7 @@ type DataFrame interface {
 	AddSeries(name string, series series.Series) DataFrame
 	// AddSeriesFromBools adds a series of bools to the dataframe.
 	AddSeriesFromBools(name string, data []bool, nullMask []bool, makeCopy bool) DataFrame
-	// AddSeriesFromInt32s adds a series of ints to the dataframe.
+	// AddSeriesFromInts adds a series of ints to the dataframe.
 	AddSeriesFromInts(name string, data []int, nullMask []bool, makeCopy bool) DataFrame
 	// AddSeriesFromInt64s adds a series of ints to the dataframe.
 	AddSeriesFromInt64s(name string, data []int64, nullMask []bool, makeCopy bool) DataFrame
@@ -70,7 +70,7 @@ type DataFrame interface {
 	// Returns the series at the given index.
 	At(index int) series.Series
 
-	// Returns the series with the given name as a bool series.
+	// Returns the name of the series at the given index.
 	NameAt(index int) string
 
 	// Select keeps the named columns, in the order given. Names are matched

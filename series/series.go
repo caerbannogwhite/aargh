@@ -74,7 +74,7 @@ type Series interface {
 
 	// Cast the series to a given type.
 	Cast(t meta.BaseType) Series
-	// Copie the series.
+	// Copy the series.
 	Copy() Series
 
 	// Series operations.
