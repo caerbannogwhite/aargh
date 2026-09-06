@@ -15,18 +15,17 @@ import (
 )
 
 const (
-	GOROUTINES                = 4
-	RESULT_VAR_NAME           = "result"
-	RESULT_SIZE_VAR_NAME      = "resultSize"
-	RESULT_NULL_MASK_VAR_NAME = "resultNullMask"
-	FINAL_RETURN_FMT          = "Errors{fmt.Sprintf(\"Cannot %s %%s and %%s\", s.Type().String(), o.Type().String())}"
+	GOROUTINES                  = 4
+	RESULT_VAR_NAME             = "result"
+	RESULT_SIZE_VAR_NAME        = "resultSize"
+	RESULT_NULL_MASK_VAR_NAME   = "resultNullMask"
+	RESULT_IS_NULLABLE_VAR_NAME = "resultIsNullable"
+	FINAL_RETURN_FMT            = "Errors{fmt.Sprintf(\"Cannot %s %%s and %%s\", s.Type().String(), o.Type().String())}"
 )
 
 type BuildInfo struct {
 	OpCode        meta.OPCODE
-	Op1Nullable   bool
 	Op1Scalar     bool
-	Op2Nullable   bool
 	Op2Scalar     bool
 	Op1VarName    string
 	Op1SeriesType string
@@ -44,44 +43,19 @@ func (bi BuildInfo) UpdateScalarInfo(Op1Scalar, Op2Scalar bool) BuildInfo {
 	return bi
 }
 
-func (bi BuildInfo) UpdateNullableInfo(Op1Nullable, Op2Nullable bool) BuildInfo {
-	bi.Op1Nullable = Op1Nullable
-	bi.Op2Nullable = Op2Nullable
-	return bi
-}
-
-// Generate the code to define the result inner array
-// and to compute the result size and null mask
-func generateMakeResultStmt(info BuildInfo) []ast.Stmt {
-	var resSizeVariable string
-
-	if info.ResInnerType == info.Op1InnerType {
-		if info.Op1Scalar {
-			resSizeVariable = info.Op2VarName
-		} else {
-			resSizeVariable = info.Op1VarName
-		}
-	} else {
-		if info.Op1Scalar {
-			resSizeVariable = info.Op2VarName
-		} else {
-			resSizeVariable = info.Op1VarName
-		}
-	}
-
-	sizeCase := 0
+// Generate the code that defines the result inner array and computes the
+// result size and null mask. The second return value is the expression the
+// return statement must use for the result's IsNullable_ field.
+//
+// Nullability is resolved at run time by the binaryNullMask helper in the
+// series package, which collapses what used to be four generated variants
+// (one per nullability combination) into a single call per length case.
+func generateMakeResultStmt(info BuildInfo) ([]ast.Stmt, string) {
+	// The result size is the length of the non-scalar operand; with two
+	// scalars either length is 1, and the second operand is used.
+	resSizeVariable := info.Op1VarName
 	if info.Op1Scalar {
-		if info.Op2Scalar {
-			sizeCase = 0
-		} else {
-			sizeCase = 1
-		}
-	} else {
-		if info.Op2Scalar {
-			sizeCase = 2
-		} else {
-			sizeCase = 3
-		}
+		resSizeVariable = info.Op2VarName
 	}
 
 	resultGoType := info.ResInnerType.ToGoType()
@@ -102,251 +76,69 @@ func generateMakeResultStmt(info BuildInfo) []ast.Stmt {
 		},
 	}}
 
-	// One of the operands is NAs, take the null mask of the other operand
-	// if info.Op1InnerType == meta.NullType || info.Op2InnerType == meta.NullType {
-	// 	stmts = append(stmts, &ast.AssignStmt{
-	// 		Lhs: []ast.Expr{
-	// 			&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-	// 		},
-	// 		Tok: token.DEFINE,
-	// 		Rhs: []ast.Expr{
-	// 			&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", resSizeVariable)},
-	// 		},
-	// 	})
-	// }
-
-	if info.ResInnerType != meta.NullType {
-		stmts = append(stmts,
-
-			// make the result array
-			&ast.AssignStmt{
-				Lhs: []ast.Expr{
-					&ast.Ident{Name: RESULT_VAR_NAME},
-				},
-				Tok: token.DEFINE,
-				Rhs: []ast.Expr{
-					&ast.CallExpr{
-						Fun: &ast.Ident{Name: "make"},
-						Args: []ast.Expr{
-							&ast.Ident{Name: resultGoType},
-							&ast.Ident{Name: RESULT_SIZE_VAR_NAME},
-						},
-					},
-				},
-			})
-
-		// Make the result null mask
-
-		// Special case: one of the operands is NAs
-		if info.Op1InnerType == meta.NullType || info.Op2InnerType == meta.NullType {
-
-			nonNullOperand := info.Op1VarName
-			nonNullOperandIsScalar := info.Op1Scalar
-			if info.Op1InnerType == meta.NullType {
-				nonNullOperand = info.Op2VarName
-				nonNullOperandIsScalar = info.Op2Scalar
-			}
-
-			stmts = append(stmts, &ast.DeclStmt{
-				Decl: &ast.GenDecl{
-					Tok: token.VAR,
-					Specs: []ast.Spec{
-						&ast.ValueSpec{
-							Names: []*ast.Ident{
-								{Name: RESULT_NULL_MASK_VAR_NAME},
-							},
-							Type: &ast.Ident{Name: "[]uint8"},
-						},
-					},
-				},
-			})
-
-			// The non-null operand is a scalar
-			if nonNullOperandIsScalar {
-				stmts = append(stmts, &ast.IfStmt{
-					Cond: ast.NewIdent(fmt.Sprintf("%s.IsNullable_", nonNullOperand)),
-					Body: &ast.BlockStmt{List: []ast.Stmt{
-						&ast.AssignStmt{
-							Lhs: []ast.Expr{
-								&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-							},
-							Tok: token.ASSIGN,
-							Rhs: []ast.Expr{
-								&ast.Ident{Name: fmt.Sprintf("utils.BinVecInit(%s, %s.NullMask_[0] == 1)", RESULT_SIZE_VAR_NAME, nonNullOperand)},
-							}},
-					}},
-					Else: &ast.BlockStmt{List: []ast.Stmt{
-						&ast.AssignStmt{
-							Lhs: []ast.Expr{
-								&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-							},
-							Tok: token.ASSIGN,
-							Rhs: []ast.Expr{
-								&ast.Ident{Name: "make([]uint8, 0)"},
-							}},
-					}},
-				})
-			} else
-
-			// The non-null operand is vector
-			{
-				stmts = append(stmts,
-					&ast.IfStmt{
-						Cond: ast.NewIdent(fmt.Sprintf("%s.IsNullable_", nonNullOperand)),
-						Body: &ast.BlockStmt{List: []ast.Stmt{
-							&ast.AssignStmt{
-								Lhs: []ast.Expr{
-									&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-								},
-								Tok: token.ASSIGN,
-								Rhs: []ast.Expr{
-									&ast.Ident{Name: fmt.Sprintf("utils.BinVecInit(%s, %s)", RESULT_SIZE_VAR_NAME, "false")},
-								}},
-							&ast.ExprStmt{X: &ast.CallExpr{
-								Fun: &ast.Ident{Name: "copy"},
-								Args: []ast.Expr{
-									&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-									&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", nonNullOperand)},
-								}}},
-						}},
-						Else: &ast.BlockStmt{List: []ast.Stmt{
-							&ast.AssignStmt{
-								Lhs: []ast.Expr{
-									&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-								},
-								Tok: token.ASSIGN,
-								Rhs: []ast.Expr{
-									&ast.Ident{Name: "make([]uint8, 0)"},
-								}},
-						}},
-					})
-			}
-		} else
-
-		// Default: check the nullability of the operands
-		if info.Op1Nullable {
-			if info.Op2Nullable {
-
-				// Both operands are nullable:
-				// call the binary vector or function to merge the null masks
-				stmts = append(stmts, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.Ident{Name: fmt.Sprintf("utils.BinVecInit(%s, false)", RESULT_SIZE_VAR_NAME)},
-					},
-				})
-
-				funcName := "utils.BinVecOrSS"
-				switch sizeCase {
-				case 0:
-					funcName = "utils.BinVecOrSS"
-				case 1:
-					funcName = "utils.BinVecOrSV"
-				case 2:
-					funcName = "utils.BinVecOrVS"
-				case 3:
-					funcName = "utils.BinVecOrVV"
-				}
-
-				stmts = append(stmts, &ast.ExprStmt{
-					X: &ast.CallExpr{
-						Fun: &ast.Ident{Name: funcName},
-						Args: []ast.Expr{
-							&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", info.Op1VarName)},
-							&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", info.Op2VarName)},
-							&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-						},
-					},
-				})
-			} else {
-
-				// Only the second operand is nullable, so the reuslt null mask
-				// depends on the value of the second operand null mask
-
-				// 	1 - initialize the null mask to 0 or, if the second operand is a scalar,
-				// 		to the value of its null mask
-				nullMaskInitFlag := "false"
-				if info.Op1Scalar {
-					nullMaskInitFlag = fmt.Sprintf("%s.NullMask_[0] == 1", info.Op1VarName)
-				}
-
-				// 	2 - call the binary vector init function
-				stmts = append(stmts, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.Ident{Name: fmt.Sprintf("utils.BinVecInit(%s, %s)", RESULT_SIZE_VAR_NAME, nullMaskInitFlag)},
-					},
-				})
-
-				// 	3 - if the first operand is not a scalar, copy its null mask
-				if !info.Op1Scalar {
-					stmts = append(stmts, &ast.ExprStmt{X: &ast.CallExpr{
-						Fun: &ast.Ident{Name: "copy"},
-						Args: []ast.Expr{
-							&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-							&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", info.Op1VarName)},
-						}},
-					})
-				}
-			}
-		} else {
-			if info.Op2Nullable {
-
-				// Only the second operand is nullable, so the reuslt null mask
-				// depends on the value of the second operand null mask
-
-				// 	1 - initialize the null mask to 0 or, if the second operand is a scalar,
-				// 		to the value of its null mask
-				nullMaskInitFlag := "false"
-				if info.Op2Scalar {
-					nullMaskInitFlag = fmt.Sprintf("%s.NullMask_[0] == 1", info.Op2VarName)
-				}
-
-				// 	2 - call the binary vector init function
-				stmts = append(stmts, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.Ident{Name: fmt.Sprintf("utils.BinVecInit(%s, %s)", RESULT_SIZE_VAR_NAME, nullMaskInitFlag)},
-					},
-				})
-
-				// 	3 - if the second operand is not a scalar, copy its null mask
-				if !info.Op2Scalar {
-					stmts = append(stmts, &ast.ExprStmt{X: &ast.CallExpr{
-						Fun: &ast.Ident{Name: "copy"},
-						Args: []ast.Expr{
-							&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-							&ast.Ident{Name: fmt.Sprintf("%s.NullMask_", info.Op2VarName)},
-						}},
-					})
-				}
-			} else {
-
-				// None of the operands is nullable:
-				// initialize the null mask to 0
-				stmts = append(stmts, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.Ident{Name: "utils.BinVecInit(0, false)"},
-					},
-				})
-			}
-		}
+	// The result is NAs: only the size is needed.
+	if info.ResInnerType == meta.NullType {
+		return stmts, "false"
 	}
 
-	return stmts
+	// make the result array
+	stmts = append(stmts, &ast.AssignStmt{
+		Lhs: []ast.Expr{
+			&ast.Ident{Name: RESULT_VAR_NAME},
+		},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{
+			&ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.Ident{Name: resultGoType},
+					&ast.Ident{Name: RESULT_SIZE_VAR_NAME},
+				},
+			},
+		},
+	})
+
+	// Special case: one operand is NAs but the result is a typed series. The
+	// result inherits a copy of the typed operand's null mask and is marked
+	// not nullable, preserving the historical behavior of this case (see
+	// naOperandNullMask).
+	if info.Op1InnerType == meta.NullType || info.Op2InnerType == meta.NullType {
+		nonNullOperand := info.Op1VarName
+		nonNullOperandIsScalar := info.Op1Scalar
+		if info.Op1InnerType == meta.NullType {
+			nonNullOperand = info.Op2VarName
+			nonNullOperandIsScalar = info.Op2Scalar
+		}
+
+		stmts = append(stmts, &ast.AssignStmt{
+			Lhs: []ast.Expr{
+				&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
+			},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{
+				&ast.Ident{Name: fmt.Sprintf(
+					"naOperandNullMask(%s.IsNullable_, %s.NullMask_, %v, %s)",
+					nonNullOperand, nonNullOperand, nonNullOperandIsScalar, RESULT_SIZE_VAR_NAME)},
+			},
+		})
+		return stmts, "false"
+	}
+
+	// General case: one call resolves the mask and the nullability flag.
+	stmts = append(stmts, &ast.AssignStmt{
+		Lhs: []ast.Expr{
+			&ast.Ident{Name: RESULT_NULL_MASK_VAR_NAME},
+			&ast.Ident{Name: RESULT_IS_NULLABLE_VAR_NAME},
+		},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{
+			&ast.Ident{Name: fmt.Sprintf(
+				"binaryNullMask(%s.IsNullable_, %s.NullMask_, %v, %s.IsNullable_, %s.NullMask_, %v, %s)",
+				info.Op1VarName, info.Op1VarName, info.Op1Scalar,
+				info.Op2VarName, info.Op2VarName, info.Op2Scalar, RESULT_SIZE_VAR_NAME)},
+		},
+	})
+	return stmts, RESULT_IS_NULLABLE_VAR_NAME
 }
 
 // Generate the code to compute the operation
@@ -403,13 +195,12 @@ func generateOperationLoop(info BuildInfo) []ast.Stmt {
 }
 
 func generateOperation(info BuildInfo) []ast.Stmt {
-	resIsNullable := info.Op1Nullable || info.Op2Nullable
 	resSeriesType := computeResSeriesType(info.OpCode, info.Op1InnerType, info.Op2InnerType)
 
-	statements := make([]ast.Stmt, 0)
-
-	// 1 - Generate the result inner data array
-	statements = append(statements, generateMakeResultStmt(info)...)
+	// 1 - Generate the result inner data array, its size and its null mask.
+	// isNullableExpr is the expression the return statement below must use
+	// for the result's IsNullable_ field.
+	statements, isNullableExpr := generateMakeResultStmt(info)
 
 	// 2 - Generate the loop to compute the operation
 	if resSeriesType != "NAs" {
@@ -420,7 +211,7 @@ func generateOperation(info BuildInfo) []ast.Stmt {
 	params := []ast.Expr{
 		&ast.KeyValueExpr{
 			Key:   &ast.Ident{Name: "IsNullable_"},
-			Value: &ast.Ident{Name: fmt.Sprintf("%v", resIsNullable)},
+			Value: &ast.Ident{Name: isNullableExpr},
 		},
 		&ast.KeyValueExpr{
 			Key:   &ast.Ident{Name: "NullMask_"},
@@ -476,112 +267,34 @@ func generateOperation(info BuildInfo) []ast.Stmt {
 	return statements
 }
 
-// Generate the if statement to check the nullability of the operands
-func generateNullabilityCheck(info BuildInfo) []ast.Stmt {
-
-	// If one of the operands is nullable, just generate the operation
-	// There is no need to check the nullability of the operands
-	if info.Op1InnerType == meta.NullType || info.Op2InnerType == meta.NullType {
-		return generateOperation(info)
-	} else {
-		return []ast.Stmt{
-			&ast.IfStmt{
-				Cond: ast.NewIdent(fmt.Sprintf("%s.IsNullable_", info.Op1VarName)),
-				Body: &ast.BlockStmt{
-					List: []ast.Stmt{
-						&ast.IfStmt{
-							Cond: ast.NewIdent(fmt.Sprintf("%s.IsNullable_", info.Op2VarName)),
-							Body: &ast.BlockStmt{
-								List: generateOperation(info.UpdateNullableInfo(true, true)),
-							},
-							Else: &ast.BlockStmt{
-								List: generateOperation(info.UpdateNullableInfo(true, false)),
-							},
-						},
-					},
-				},
-				Else: &ast.BlockStmt{
-					List: []ast.Stmt{
-						&ast.IfStmt{
-							Cond: ast.NewIdent(fmt.Sprintf("%s.IsNullable_", info.Op2VarName)),
-							Body: &ast.BlockStmt{
-								List: generateOperation(info.UpdateNullableInfo(false, true)),
-							},
-							Else: &ast.BlockStmt{
-								List: generateOperation(info.UpdateNullableInfo(false, false)),
-							},
-						},
-					},
-				},
-			},
+// Generate the flat switch over the four length cases: scalar-scalar,
+// scalar-vector, vector-scalar and equal-length vectors. Every case ends in
+// a return, so the trailing default return is reached only on a length
+// mismatch between two vectors - exactly as the previous nested-if form
+// behaved.
+func generateSizeCheck(info BuildInfo, defaultReturn ast.Stmt) []ast.Stmt {
+	lenCase := func(cond string, op1Scalar, op2Scalar bool) *ast.CaseClause {
+		return &ast.CaseClause{
+			List: []ast.Expr{ast.NewIdent(cond)},
+			Body: generateOperation(info.UpdateScalarInfo(op1Scalar, op2Scalar)),
 		}
 	}
-}
 
-// Generate the if statement to check the size of the series
-func generateSizeCheck(info BuildInfo, defaultReturn ast.Stmt) ast.Stmt {
-	return &ast.IfStmt{
-		Cond: &ast.BinaryExpr{
-			X:  &ast.Ident{Name: fmt.Sprintf("%s.Len()", info.Op1VarName)},
-			Op: token.EQL,
-			Y:  &ast.Ident{Name: "1"},
-		},
+	op1Len := fmt.Sprintf("%s.Len()", info.Op1VarName)
+	op2Len := fmt.Sprintf("%s.Len()", info.Op2VarName)
 
-		// CASE OP1_SIZE == 1
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.IfStmt{
-					Cond: &ast.BinaryExpr{
-						X:  &ast.Ident{Name: fmt.Sprintf("%s.Len()", info.Op2VarName)},
-						Op: token.EQL,
-						Y:  &ast.Ident{Name: "1"},
-					},
-
-					// CASE OP1_SIZE == 1 AND OP2_SIZE == 1
-					Body: &ast.BlockStmt{
-						List: generateNullabilityCheck(info.UpdateScalarInfo(true, true)),
-					},
-
-					// CASE OP1_SIZE == 1 AND OP2_SIZE != 1
-					Else: &ast.BlockStmt{
-						List: generateNullabilityCheck(info.UpdateScalarInfo(true, false)),
-					},
+	return []ast.Stmt{
+		&ast.SwitchStmt{
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					lenCase(fmt.Sprintf("%s == 1 && %s == 1", op1Len, op2Len), true, true),
+					lenCase(fmt.Sprintf("%s == 1", op1Len), true, false),
+					lenCase(fmt.Sprintf("%s == 1", op2Len), false, true),
+					lenCase(fmt.Sprintf("%s == %s", op1Len, op2Len), false, false),
 				},
 			},
 		},
-
-		// CASE OP1_SIZE != 1
-		Else: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.IfStmt{
-					Cond: &ast.BinaryExpr{
-						X:  &ast.Ident{Name: fmt.Sprintf("%s.Len()", info.Op2VarName)},
-						Op: token.EQL,
-						Y:  &ast.Ident{Name: "1"},
-					},
-
-					// CASE OP1_SIZE != 1 AND OP2_SIZE == 1
-					Body: &ast.BlockStmt{
-						List: generateNullabilityCheck(info.UpdateScalarInfo(false, true)),
-					},
-
-					// CASE OP1_SIZE != 1 AND OP2_SIZE != 1
-					Else: &ast.IfStmt{
-						Cond: &ast.BinaryExpr{
-							X:  &ast.Ident{Name: fmt.Sprintf("%s.Len()", info.Op1VarName)},
-							Op: token.EQL,
-							Y:  &ast.Ident{Name: fmt.Sprintf("%s.Len()", info.Op2VarName)},
-						},
-
-						Body: &ast.BlockStmt{
-							List: generateNullabilityCheck(info.UpdateScalarInfo(false, false)),
-						},
-					},
-				},
-
-				defaultReturn,
-			},
-		},
+		defaultReturn,
 	}
 }
 
@@ -664,19 +377,17 @@ func generateSwitchType(
 		bigSwitch.Body.List = append(bigSwitch.Body.List,
 			&ast.CaseClause{
 				List: []ast.Expr{ast.NewIdent(op2.SeriesName)},
-				Body: []ast.Stmt{
-					generateSizeCheck(BuildInfo{
-						OpCode:        operation.OpCode,
-						Op1VarName:    op1VarName,
-						Op1SeriesType: op1SeriesType,
-						Op1InnerType:  op1InnerType,
-						Op2VarName:    op2VarNameTyped,
-						Op2SeriesType: op2.SeriesName,
-						Op2InnerType:  op2.SeriesType,
-						ResInnerType:  ComputeResInnerType(operation.OpCode, op1InnerType, op2.SeriesType),
-						MakeOperation: op2.MakeOperation,
-					}, defaultReturn),
-				},
+				Body: generateSizeCheck(BuildInfo{
+					OpCode:        operation.OpCode,
+					Op1VarName:    op1VarName,
+					Op1SeriesType: op1SeriesType,
+					Op1InnerType:  op1InnerType,
+					Op2VarName:    op2VarNameTyped,
+					Op2SeriesType: op2.SeriesName,
+					Op2InnerType:  op2.SeriesType,
+					ResInnerType:  ComputeResInnerType(operation.OpCode, op1InnerType, op2.SeriesType),
+					MakeOperation: op2.MakeOperation,
+				}, defaultReturn),
 			},
 		)
 	}

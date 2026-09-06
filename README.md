@@ -234,10 +234,10 @@ the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage
 - [x] Internal naming: the legacy `__gdl_` / leading-double-underscore helper
       names (Gandalff-era, pre-rename) are retired for idiomatic Go unexported
       names.
-- [ ] Generated `*_ops.go` readability: flatten the length×nullability `if`
-      nesting via a generator-template refactor (the operand dispatch is already a
-      type-switch, so the win is the template, not the emitted files) — likely
-      folded into the fused-combinators work.
+- [x] Generated `*_ops.go` readability: the length×nullability `if` nesting is
+      flattened — nullability is resolved at run time by a shared null-mask
+      helper and the length cases are a flat `switch` — shrinking the emitted
+      operator code from ~44k to ~13k lines with byte-identical behavior.
 
 **1.0 — commit** to the stable API.
 
