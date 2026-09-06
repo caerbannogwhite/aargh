@@ -86,7 +86,7 @@ documentation on [pkg.go.dev](https://pkg.go.dev/github.com/caerbannogwhite/ench
 | JSON                |  ✅  |  ✅   | record-oriented                          |
 | HTML                |  ✅  |  ✅   | tables                                   |
 | Markdown            |  ✅  |  ✅   | tables                                   |
-| SAS7BDAT            |  🚧  |   —   | header parsing only; data reading planned |
+| SAS7BDAT            |  ✅  |   —   | read-only, via kshedden/datareader        |
 
 All readers and writers share the same builder style:
 
@@ -228,9 +228,12 @@ the [storage measurement](docs/superpowers/specs/2026-08-08-arrow-native-storage
       over-select (`"Car"` used to also match `"CarOrigin"`).
 - [ ] Generics to collapse the generated per-type code — *spike-gated* (only if
       it measurably shrinks the code without regressing speed).
-- [ ] Broaden test coverage; decide SAS7BDAT
-      ([format notes](https://cran.r-project.org/web/packages/sas7bdat/vignettes/sas7bdat.pdf)) —
-      finish the data path or drop it.
+- [ ] Broaden test coverage.
+- [x] SAS7BDAT: decided — reading is delegated to
+      [kshedden/datareader](https://github.com/kshedden/datareader)
+      (BSD-3-Clause) rather than finishing the bespoke parser, verified
+      against that project's reference data; there is no write path (use XPT
+      to hand data to SAS).
 - [x] Internal naming: the legacy `__gdl_` / leading-double-underscore helper
       names (Gandalff-era, pre-rename) are retired for idiomatic Go unexported
       names.
@@ -256,6 +259,7 @@ Built with:
 - [arrow-go](https://github.com/apache/arrow-go)
 - [xslx](https://github.com/tealeg/xlsx/tree/master)
 - [lipgloss](https://github.com/charmbracelet/lipgloss)
+- [datareader](https://github.com/kshedden/datareader) (SAS7BDAT reading)
 
 ### License
 

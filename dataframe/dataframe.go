@@ -120,6 +120,9 @@ type DataFrame interface {
 	FromXpt() *xptReaderWrapper
 	ToXpt() *xptWriterWrapper
 
+	// FromSas7bdat reads a SAS7BDAT dataset (read-only; no writer exists).
+	FromSas7bdat() *sas7bdatReaderWrapper
+
 	FromXlsx() *xlsxReaderWrapper
 	ToXlsx() *xlsxWriterWrapper
 

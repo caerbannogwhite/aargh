@@ -270,6 +270,43 @@ func (r *xptReaderWrapper) Read() DataFrame {
 	return FromIoData(iod)
 }
 
+////////////////////////			SAS7BDAT READER
+
+type sas7bdatReaderWrapper struct {
+	reader *encio.Sas7bdatReader
+}
+
+func (df BaseDataFrame) FromSas7bdat() *sas7bdatReaderWrapper {
+	return &sas7bdatReaderWrapper{
+		reader: encio.NewSas7bdatReader(df.ctx),
+	}
+}
+
+func (r *sas7bdatReaderWrapper) SetPath(path string) *sas7bdatReaderWrapper {
+	r.reader = r.reader.SetPath(path)
+	return r
+}
+
+func (r *sas7bdatReaderWrapper) SetReader(reader io.ReadSeeker) *sas7bdatReaderWrapper {
+	r.reader = r.reader.SetReader(reader)
+	return r
+}
+
+func (r *sas7bdatReaderWrapper) SetTrimStrings(trim bool) *sas7bdatReaderWrapper {
+	r.reader = r.reader.SetTrimStrings(trim)
+	return r
+}
+
+func (r *sas7bdatReaderWrapper) SetConvertDates(convert bool) *sas7bdatReaderWrapper {
+	r.reader = r.reader.SetConvertDates(convert)
+	return r
+}
+
+func (r *sas7bdatReaderWrapper) Read() DataFrame {
+	iod := r.reader.Read()
+	return FromIoData(iod)
+}
+
 ////////////////////////			XPT WRITER
 
 type xptWriterWrapper struct {

@@ -5,6 +5,7 @@ go 1.26.5
 require (
 	github.com/apache/arrow-go/v18 v18.5.2
 	github.com/charmbracelet/lipgloss v0.9.1
+	github.com/kshedden/datareader v0.0.0-20210325133423-816b6ffdd011
 	github.com/tealeg/xlsx v1.0.5
 )
 
@@ -28,6 +29,7 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect

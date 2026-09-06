@@ -203,3 +203,7 @@ func FromXlsx(ctx *enchanter.Context) *XlsxReader {
 func FromXpt(ctx *enchanter.Context) *XptReader {
 	return NewXptReader(ctx)
 }
+
+func FromSas7bdat(ctx *enchanter.Context) *Sas7bdatReader {
+	return NewSas7bdatReader(ctx)
+}
